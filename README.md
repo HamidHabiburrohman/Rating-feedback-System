@@ -1,61 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center"> <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="350" alt="Laravel Logo"> </div>
+<div align="center">
+https://img.shields.io/badge/build-passing-22c55e?style=flat-square
+https://img.shields.io/badge/downloads-25M+-374151?style=flat-square
+https://img.shields.io/badge/version-11.x-0ea5e9?style=flat-square
+https://img.shields.io/badge/license-MIT-8b5cf6?style=flat-square
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+</div>
+Overview
+A web application framework with expressive, elegant syntax. Laravel makes development enjoyable by simplifying common tasks while providing powerful features for robust applications.
 
-## About Laravel
+✨ Features
+Lightning Fast Routing – Simple yet powerful routing engine
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Elegant ORM – Intuitive database interaction with Eloquent
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Secure Authentication – Built-in authentication system
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Queue Management – Robust background job processing
 
-## Learning Laravel
+Real-time Events – Event broadcasting for real-time features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Template Engine – Blade templating with inheritance
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+API Ready – Built-in API resource controllers
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+🚀 Quick Start
+bash
+# Create new project
+composer create-project laravel/laravel project-name
 
-## Laravel Sponsors
+# Serve application
+php artisan serve
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Run migrations
+php artisan migrate
+📁 Project Structure
+text
+app/
+├── Console/          # Artisan commands
+├── Http/            # Controllers, middleware
+├── Models/          # Eloquent models
+└── Providers/       # Service providers
 
-### Premium Partners
+database/
+├── migrations/      # Database schemas
+├── seeders/        # Test data
+└── factories/      # Model factories
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+resources/
+├── views/          # Blade templates
+├── js/             # JavaScript assets
+└── css/            # Style assets
 
-## Contributing
+config/             # Configuration files
+routes/             # Application routes
+tests/              # Automated tests
+🔧 Requirements
+PHP 8.1 or higher
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Composer
 
-## Code of Conduct
+Database (MySQL, PostgreSQL, SQLite, SQL Server)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Node.js & NPM (for frontend assets)
 
-## Security Vulnerabilities
+📚 Learning Resources
+Resource	Description
+Official Documentation	Complete API reference and guides
+Laracasts	Video tutorials and screencasts
+Laravel News	Community updates and articles
+Laravel Bootcamp	Interactive learning path
+🛠️ Development
+bash
+# Install dependencies
+composer install
+npm install
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Generate application key
+php artisan key:generate
 
-## License
+# Clear cache
+php artisan optimize:clear
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Run tests
+php artisan test
+🔒 Security
+Security is a top priority. Laravel provides:
+
+CSRF protection
+
+SQL injection prevention
+
+XSS filtering
+
+Encrypted cookies
+
+Secure password hashing
+
+Report vulnerabilities to security@laravel.com
+
+🤝 Contributing
+Contributions are welcome. Please review the contribution guide before submitting changes.
+
+📄 License
+Laravel is open-source software licensed under the MIT license.
+
+<div align="center"> <sub>Built with ❤️ by the Laravel community</sub> </div>
