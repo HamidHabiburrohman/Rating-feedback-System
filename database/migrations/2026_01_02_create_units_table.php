@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up()
     {
         Schema::create('units', function (Blueprint $table) {
@@ -13,7 +12,7 @@ return new class extends Migration
             $table->string('kode_unit')->unique();
             $table->string('nama_unit');
             $table->text('deskripsi')->nullable();
-            $table->enum('jenis_unit', ['kesehatan', 'akademik', 'administrasi', 'fasilitas', 'lainnya']);
+            $table->foreignId('type_id')->constrained('unit_types')->onDelete('restrict');
             $table->string('lokasi');
             $table->string('gedung')->nullable();
             $table->string('lantai')->nullable();

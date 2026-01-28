@@ -23,94 +23,160 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                    <!-- dropdown show data -->
                     <div class="dropdown">
                         <button
-                            class="btn btn-light border rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm btn-filter"
-                            type="button" id="filterDropdown" data-bs-toggle="dropdown"
-                            style="height: 44px; background-color: white; border-color: #d1d5db;">
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown"
+                            style="height:44px;background:white;border-color:#d1d5db;">
+                            <span class="fw-medium">
+                                {{ request('per_page', 10) }}
+                            </span>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+
+                        </button>
+
+                        <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
+                            @foreach ([10, 25, 50, 100] as $size)
+                                <li>
+                                    <a class="dropdown-item py-2 px-3 {{ request('per_page', 10) == $size ? 'active' : '' }}"
+                                        href="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}">
+                                        {{ $size }} Rows
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+
+                    <!-- dropdown filter type -->
+                    <div class="dropdown" id="filterContainer">
+                        <button
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown" id="filterDropdown"
+                            style="height:44px;background:white;border-color:#d1d5db;">
+
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                             </svg>
-                            <span id="filterText" class="fw-medium">Filter</span>
-                            @if(request('status') || request('type'))
-                                <span class="badge bg-primary rounded-circle ms-1" style="width: 6px; height: 6px;"></span>
-                            @endif
-                        </button>
 
-                        <div class="dropdown-menu p-3 border-0 shadow-lg rounded-3" style="min-width: 320px;">
-                            <div class="mb-3">
-                                <small class="text-uppercase text-muted fw-semibold mb-2 d-block"
-                                    style="font-size: 0.7rem;">STATUS</small>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ request()->fullUrlWithQuery(['status' => '']) }}"
-                                        class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                  {{ !request('status') ? 'bg-primary text-white' : 'bg-light text-dark border' }}">
-                                        All
-                                    </a>
-                                    <a href="{{ request()->fullUrlWithQuery(['status' => 'OPEN']) }}"
-                                        class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                  {{ request('status') == 'OPEN' ? 'bg-success text-white' : 'bg-light text-dark border' }}">
-                                        Open
-                                    </a>
-                                    <a href="{{ request()->fullUrlWithQuery(['status' => 'CLOSED']) }}"
-                                        class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                  {{ request('status') == 'CLOSED' ? 'bg-danger text-white' : 'bg-light text-dark border' }}">
-                                        Closed
-                                    </a>
-                                    <a href="{{ request()->fullUrlWithQuery(['status' => 'FULL']) }}"
-                                        class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                  {{ request('status') == 'FULL' ? 'bg-warning text-white' : 'bg-light text-dark border' }}">
-                                        Full
-                                    </a>
+                            <span class="fw-medium" id="filterText">Filter</span>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+
+                        </button>
+                        <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 overflow-hidden mt-2"
+                            style="min-width: 300px; background-color: #ffffff;">
+                            <div class="p-3">
+                                <div class="mb-4">
+                                    <label class="small fw-bold text-uppercase mb-2 mt-2 d-block"
+                                        style="color: #6b7280; letter-spacing: 0.05em;">Status Unit</label>
+                                    <div class="d-flex flex-wrap gap-2" id="statusFilter">
+                                        @php
+                                            $activeStyle = 'background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none; color: white;';
+                                            $inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
+                                            $currentStatus = request('status') ? explode(',', request('status')) : [];
+                                        @endphp
+
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
+                                            data-value=""
+                                            style="{{ empty($currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            All
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
+                                            data-value="OPEN"
+                                            style="{{ in_array('OPEN', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Open
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
+                                            data-value="CLOSED"
+                                            style="{{ in_array('CLOSED', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Closed
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="small fw-bold text-uppercase mb-2 d-block"
+                                        style="color: #6b7280; letter-spacing: 0.05em;">Tipe Unit</label>
+                                    <div class="d-flex flex-wrap gap-2" id="typeFilter">
+                                        @php
+                                            $currentType = request('type') ? explode(',', request('type')) : [];
+                                        @endphp
+
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-type"
+                                            data-value="" style="{{ empty($currentType) ? $activeStyle : $inactiveStyle }}">
+                                            All
+                                        </button>
+                                        @foreach ($types ?? [] as $type)
+                                            <button type="button"
+                                                class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-type"
+                                                data-value="{{ $type }}"
+                                                style="{{ in_array($type, $currentType) ? $activeStyle : $inactiveStyle }}">
+                                                {{ $type }}
+                                            </button>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <small class="text-uppercase text-muted fw-semibold mb-2 d-block"
-                                    style="font-size: 0.7rem;">TYPE</small>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ request()->fullUrlWithQuery(['type' => '']) }}"
-                                        class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                  {{ !request('type') ? 'bg-primary text-white' : 'bg-light text-dark border' }}">
-                                        All
-                                    </a>
-                                    @foreach($types ?? [] as $type)
-                                        <a href="{{ request()->fullUrlWithQuery(['type' => $type]) }}"
-                                            class="badge rounded-pill px-3 py-2 text-decoration-none 
-                                                              {{ request('type') == $type ? 'bg-primary text-white' : 'bg-light text-dark border' }}">
-                                            {{ $type }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="button" class="btn btn-sm btn-light flex-grow-1 rounded-2 border"
-                                    onclick="clearFilters()">
-                                    Clear All
+                            <div class="p-3 border-top d-flex gap-2 bg-white">
+                                @php
+                                    $resetStyle = 'background: white; border: 1px solid #d1d5db; color: #4b5563;';
+                                    $applyStyle = 'background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none; color: white;';
+                                @endphp
+
+                                <button type="button" id="resetFilter"
+                                    class="btn btn-sm rounded-pill w-100 fw-semibold d-flex align-items-center justify-content-center shadow-sm"
+                                    style="height: 40px; {{ $resetStyle }} transition: all 0.2s;">
+                                    Reset
                                 </button>
-                                <a href="{{ route('admin.units.view') }}"
-                                    class="btn btn-sm flex-grow-1 rounded-2 btn-reset">
-                                    Reset Filters
-                                </a>
+
+                                <button type="button" id="applyFilter"
+                                    class="btn btn-sm rounded-pill w-100 fw-semibold shadow-sm"
+                                    style="height: 40px; {{ $applyStyle }} transition: all 0.2s;">
+                                    Apply Filter
+                                </button>
                             </div>
                         </div>
                     </div>
 
+
+                    <!-- Export button -->
                     <div class="dropdown">
-                        <button
-                            class="btn btn-light border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm btn-export"
-                            type="button" data-bs-toggle="dropdown"
+                        <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false" id="filterDropdown"
                             style="height: 44px; background-color: white; border-color: #d1d5db;">
+
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                 <polyline points="7 10 12 15 17 10" />
                                 <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
+
                             <span class="fw-medium">Export</span>
+
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3">
-                            <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" href="#">
+
+                        <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-dark" href="#">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -120,8 +186,10 @@
                                         <polyline points="10 9 9 9 8 9" />
                                     </svg>
                                     PDF Report
-                                </a></li>
-                            <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" href="#">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-dark" href="#">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -131,8 +199,10 @@
                                         <path d="M10 9H9H8" />
                                     </svg>
                                     Excel Sheet
-                                </a></li>
-                            <li><a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2" href="#">
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 text-dark" href="#">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="6 9 6 2 18 2 18 9" />
@@ -141,10 +211,11 @@
                                         <rect x="6" y="14" width="12" height="8" />
                                     </svg>
                                     Print View
-                                </a></li>
+                                </a>
+                            </li>
                         </ul>
                     </div>
-                    
+
                     <a href="{{ route('admin.units.create') }}"
                         class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm"
                         style="height: 44px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none;">
@@ -159,7 +230,7 @@
         </div>
     </div>
 
-    @if(session('success'))
+    @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" class="me-2">
@@ -171,7 +242,7 @@
         </div>
     @endif
 
-    @if(session('error'))
+    @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" class="me-2">
@@ -184,25 +255,29 @@
         </div>
     @endif
 
-    <div class="card border-0 shadow-sm rounded-4">
+    @php
+        $units = $units ?? collect();
+    @endphp
+
+    <div class="card border-1 rounded-4">
         <div class="table-responsive">
             <table class="table align-middle mb-0">
-                <thead class="bg-light">
-                    <tr class="text-muted text-uppercase" style="font-size: .75rem; letter-spacing: 0.5px;">
-                        <th class="ps-4 py-3 fw-semibold">Unit</th>
-                        <th class="py-3 fw-semibold">Type</th>
+                <thead class="bg-transparent">
+                    <tr class="text-muted text-uppercase" style="font-size: .75rem;">
+                        <th class="ps-4 py-3 fw-semibold">Kode & Nama</th>
+                        <th class="py-3 fw-semibold">Jenis</th>
                         <th class="py-3 fw-semibold">Status</th>
-                        <th class="py-3 fw-semibold">Capacity</th>
-                        <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
+                        <th class="py-3 fw-semibold">Kapasitas</th>
+                        <th class="pe-4 py-3 fw-semibold text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @include('admin.units.partials.units_rows')
+                    @include('admin.units.partials.units_rows', ['units' => $units])
                 </tbody>
             </table>
         </div>
 
-        <div class="px-4 py-3 border-top">
+        <div class="px-4 py-3">
             @include('admin.units.partials.pagination', ['units' => $units])
         </div>
     </div>
@@ -215,7 +290,8 @@
         }
 
         .btn-filter,
-        .btn-export {
+        .btn-export,
+        .btn-per-page {
             color: #374151 !important;
             background-color: white;
             border: 1px solid #d1d5db;
@@ -223,12 +299,16 @@
 
         .btn-filter:hover,
         .btn-export:hover,
+        .btn-per-page:hover,
         .btn-filter:active,
         .btn-export:active,
+        .btn-per-page:active,
         .btn-filter:focus,
         .btn-export:focus,
+        .btn-per-page:focus,
         .btn-filter.show,
-        .btn-export.show {
+        .btn-export.show,
+        .btn-per-page.show {
             color: #374151 !important;
             background-color: #f9fafb !important;
             border-color: #9ca3af !important;
@@ -240,7 +320,8 @@
         }
 
         .btn-filter:hover .dropdown-toggle::after,
-        .btn-export:hover .dropdown-toggle::after {
+        .btn-export:hover .dropdown-toggle::after,
+        .btn-per-page:hover .dropdown-toggle::after {
             color: #374151;
         }
 
@@ -334,8 +415,14 @@
             transform: translateX(2px);
         }
 
+        .dropdown-item.active {
+            background-color: #f3f4f6 !important;
+            color: #2563eb !important;
+        }
+
         .btn-filter.show,
-        .btn-export.show {
+        .btn-export.show,
+        .btn-per-page.show {
             background-color: #f3f4f6 !important;
         }
 
@@ -361,7 +448,6 @@
             }
         }
 
-        /* Tambahkan di file CSS */
         .badge-status {
             font-size: 0.75rem;
             font-weight: 500;
@@ -385,179 +471,213 @@
             color: #ffc107;
             border: 1px solid rgba(255, 193, 7, 0.2);
         }
+
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
     </style>
 
     <script>
-        let searchTimeout;
-        document.getElementById('searchInput')?.addEventListener('input', function (e) {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                performSearch();
-            }, 500);
-        });
+        document.addEventListener('DOMContentLoaded', () => {
 
-        function performSearch() {
-            const searchTerm = document.getElementById('searchInput').value;
-            const url = new URL(window.location.href);
+            let status = new Set();
+            let type = new Set();
 
-            if (searchTerm) {
-                url.searchParams.set('search', searchTerm);
-            } else {
-                url.searchParams.delete('search');
+            const params = new URLSearchParams(location.search);
+
+
+            initState();
+            initIcons();
+            bind();
+            updateLabel();
+
+
+            function initState() {
+
+                const s = params.get('status');
+                const t = params.get('type');
+
+                if (s) s.split(',').forEach(v => v && status.add(v));
+                if (t) t.split(',').forEach(v => v && type.add(v));
+
+                paint();
+
             }
 
-            url.searchParams.set('page', '1');
-            window.location.href = url.toString();
-        }
 
-        function clearFilters() {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('status');
-            url.searchParams.delete('type');
-            url.searchParams.set('page', '1');
-            window.location.href = url.toString();
-        }
+            function initIcons() {
 
-        document.addEventListener('DOMContentLoaded', function () {
-            updateFilterIndicator();
+                document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
 
-            document.querySelectorAll('.filter-badge').forEach(badge => {
-                badge.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    window.location.href = this.href;
-                });
-            });
+                    const icon = btn.querySelector('.dropdown-icon');
 
-            const filterBtn = document.querySelector('.btn-filter');
-            const exportBtn = document.querySelector('.btn-export');
+                    if (!icon) return;
 
-            if (filterBtn) {
-                filterBtn.addEventListener('click', function () {
-                    this.style.color = '#374151';
-                });
-
-                filterBtn.addEventListener('show.bs.dropdown', function () {
-                    this.style.color = '#374151';
-                });
-            }
-
-            if (exportBtn) {
-                exportBtn.addEventListener('click', function () {
-                    this.style.color = '#374151';
-                });
-
-                exportBtn.addEventListener('show.bs.dropdown', function () {
-                    this.style.color = '#374151';
-                });
-            }
-
-            const dropdowns = document.querySelectorAll('.dropdown');
-            dropdowns.forEach(dropdown => {
-                const toggle = dropdown.querySelector('.dropdown-toggle');
-                const menu = dropdown.querySelector('.dropdown-menu');
-
-                toggle.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const isShown = menu.classList.contains('show');
-
-                    document.querySelectorAll('.dropdown-menu.show').forEach(openMenu => {
-                        if (openMenu !== menu) {
-                            openMenu.classList.remove('show');
-                        }
+                    btn.addEventListener('show.bs.dropdown', () => {
+                        icon.style.transform = 'rotate(180deg)';
                     });
 
-                    if (!isShown) {
-                        menu.classList.add('show');
-                    } else {
-                        menu.classList.remove('show');
+                    btn.addEventListener('hide.bs.dropdown', () => {
+                        icon.style.transform = 'rotate(0)';
+                    });
+
+                });
+
+            }
+
+
+            function bind() {
+
+                document.querySelectorAll('.filter-status')
+                    .forEach(b => b.addEventListener('click', e => toggle(e, status)));
+
+                document.querySelectorAll('.filter-type')
+                    .forEach(b => b.addEventListener('click', e => toggle(e, type)));
+
+                document.getElementById('applyFilter')?.addEventListener('click', apply);
+                document.getElementById('resetFilter')?.addEventListener('click', reset);
+
+                const search = document.getElementById('searchInput');
+
+                if (search) {
+                    let t;
+                    search.addEventListener('input', () => {
+                        clearTimeout(t);
+                        t = setTimeout(searchNow, 500);
+                    });
+                }
+
+            }
+
+
+            function toggle(e, set) {
+
+                e.stopPropagation();
+
+                const v = e.currentTarget.dataset.value;
+
+                v === '' ? set.clear() :
+                    set.has(v) ? set.delete(v) :
+                        set.add(v);
+
+                paint();
+
+            }
+
+
+            function paint() {
+
+                const on = 'background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:none;color:white;';
+                const off = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
+
+                document.querySelectorAll('.filter-status').forEach(b => {
+                    const v = b.dataset.value;
+                    b.style = v === '' ? (status.size ? off : on) : (status.has(v) ? on : off);
+                });
+
+                document.querySelectorAll('.filter-type').forEach(b => {
+                    const v = b.dataset.value;
+                    b.style = v === '' ? (type.size ? off : on) : (type.has(v) ? on : off);
+                });
+
+            }
+
+
+            function apply() {
+
+                const url = new URL(location.href);
+
+                status.size
+                    ? url.searchParams.set('status', [...status].join(','))
+                    : url.searchParams.delete('status');
+
+                type.size
+                    ? url.searchParams.set('type', [...type].join(','))
+                    : url.searchParams.delete('type');
+
+                url.searchParams.set('page', 1);
+
+                location.href = url;
+
+            }
+
+
+            function reset() {
+
+                const url = new URL(location.href);
+
+                status.clear();
+                type.clear();
+
+                url.searchParams.delete('status');
+                url.searchParams.delete('type');
+                url.searchParams.set('page', 1);
+
+                location.href = url;
+
+            }
+
+
+            function searchNow() {
+
+                const v = document.getElementById('searchInput').value;
+
+                const url = new URL(location.href);
+
+                v ? url.searchParams.set('search', v)
+                    : url.searchParams.delete('search');
+
+                url.searchParams.set('page', 1);
+
+                location.href = url;
+
+            }
+
+
+            function updateLabel() {
+
+                const btn = document.getElementById('filterDropdown');
+                const text = document.getElementById('filterText');
+
+                if (!btn || !text) return;
+
+                let badge = btn.querySelector('.badge');
+
+                const s = params.get('status');
+                const t = params.get('type');
+
+                if (s || t) {
+
+                    let v = 'Filter';
+
+                    if (s) v += ': ' + s.split(',').map(label).join(', ');
+                    if (t) v += s ? ', ' + t : ': ' + t;
+
+                    text.textContent = v;
+
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'badge bg-primary rounded-circle ms-1';
+                        badge.style = 'width:6px;height:6px;';
+                        btn.appendChild(badge);
                     }
-                });
-            });
 
-            document.addEventListener('click', function (e) {
-                if (!e.target.closest('.dropdown')) {
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        menu.classList.remove('show');
-                    });
-                }
-            });
-        });
+                } else {
 
-        function updateFilterIndicator() {
-            const filterBtn = document.getElementById('filterDropdown');
-            const filterText = document.getElementById('filterText');
-            const status = new URLSearchParams(window.location.search).get('status');
-            const type = new URLSearchParams(window.location.search).get('type');
+                    text.textContent = 'Filter';
+                    badge && badge.remove();
 
-            if (!filterBtn || !filterText) return;
-
-            let indicator = filterBtn.querySelector('.badge');
-
-            if (status || type) {
-                let text = 'Filter';
-                if (status && type) {
-                    text += `: ${getStatusLabel(status)}, ${type}`;
-                } else if (status) {
-                    text += `: ${getStatusLabel(status)}`;
-                } else if (type) {
-                    text += `: ${type}`;
                 }
 
-                filterText.textContent = text;
-
-                if (!indicator) {
-                    indicator = document.createElement('span');
-                    indicator.className = 'badge bg-primary rounded-circle ms-1';
-                    indicator.style.cssText = 'width: 6px; height: 6px;';
-                    filterBtn.appendChild(indicator);
-                }
-            } else {
-                filterText.textContent = 'Filter';
-
-                if (indicator) {
-                    indicator.remove();
-                }
             }
-        }
 
-        function getStatusLabel(status) {
-            const labels = {
-                'OPEN': 'Open',
-                'CLOSED': 'Closed',
-                'FULL': 'Full'
-            };
-            return labels[status] || status;
-        }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const style = document.createElement('style');
-            style.textContent = `
-                .btn-filter:hover span,
-                .btn-filter:active span,
-                .btn-filter.show span,
-                .btn-export:hover span,
-                .btn-export:active span,
-                .btn-export.show span {
-                    color: #374151 !important;
-                }
+            function label(v) {
+                return { OPEN: 'Open', CLOSED: 'Closed', FULL: 'Full' }[v] || v;
+            }
 
-                .btn-filter:hover svg,
-                .btn-filter:active svg,
-                .btn-filter.show svg,
-                .btn-export:hover svg,
-                .btn-export:active svg,
-                .btn-export.show svg {
-                    stroke: #374151 !important;
-                }
-
-                .btn-filter,
-                .btn-export {
-                    color: #374151 !important;
-                }
-            `;
-            document.head.appendChild(style);
         });
     </script>
+
+
 @endsection

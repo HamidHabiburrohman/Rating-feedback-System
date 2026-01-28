@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             UnitSeeder::class,
             RatingCategorySeeder::class,
-            PersonalAccessTokenSeeder::class
+            PersonalAccessTokenSeeder::class,
+            UnitTypeSeeder::class
         ]);
     }
 }

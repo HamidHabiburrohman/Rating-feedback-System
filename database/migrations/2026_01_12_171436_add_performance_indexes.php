@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
+        // Index untuk tabel-tabel yang sering di-query
         Schema::table('ratings', function (Blueprint $table) {
             $table->index(['created_at', 'unit_id']);
             $table->index(['status', 'created_at']);
@@ -18,7 +19,8 @@ return new class extends Migration
         });
 
         Schema::table('units', function (Blueprint $table) {
-            $table->index(['jenis_unit', 'status_aktif']);
+            $table->index(['type_id', 'status_aktif']);
+            $table->index(['gedung', 'lantai']); 
             $table->fulltext(['nama_unit', 'deskripsi', 'lokasi']);
         });
 
@@ -36,6 +38,11 @@ return new class extends Migration
             $table->index(['tanggal', 'unit_id']);
             $table->index(['waktu_masuk', 'waktu_keluar']);
         });
+
+        Schema::table('unit_types', function (Blueprint $table) {
+            $table->index(['is_active', 'sort_order']);
+            $table->index('name');
+        });
     }
 
     public function down()
@@ -50,7 +57,8 @@ return new class extends Migration
         });
 
         Schema::table('units', function (Blueprint $table) {
-            $table->dropIndex(['jenis_unit', 'status_aktif']);
+            $table->dropIndex(['type_id', 'status_aktif']);
+            $table->dropIndex(['gedung', 'lantai']);
             $table->dropFulltext(['nama_unit', 'deskripsi', 'lokasi']);
         });
 
@@ -67,6 +75,11 @@ return new class extends Migration
         Schema::table('unit_visits', function (Blueprint $table) {
             $table->dropIndex(['tanggal', 'unit_id']);
             $table->dropIndex(['waktu_masuk', 'waktu_keluar']);
+        });
+
+        Schema::table('unit_types', function (Blueprint $table) {
+            $table->dropIndex(['is_active', 'sort_order']);
+            $table->dropIndex(['name']);
         });
     }
 };

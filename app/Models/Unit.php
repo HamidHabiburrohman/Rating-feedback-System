@@ -10,13 +10,11 @@ class Unit extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'units';
-
     protected $fillable = [
         'kode_unit',
         'nama_unit',
         'deskripsi',
-        'jenis_unit',
+        'type_id',
         'lokasi',
         'gedung',
         'lantai',
@@ -36,6 +34,16 @@ class Unit extends Model
         'status_aktif' => 'boolean',
         'deleted_at' => 'datetime',
     ];
+
+    public function unitType()
+    {
+        return $this->belongsTo(UnitType::class, 'type_id');
+    }
+
+    public function getJenisUnitAttribute()
+    {
+        return $this->unitType?->name;
+    }
 
     public function employees()
     {
@@ -72,8 +80,8 @@ class Unit extends Model
         return $query->where('status_aktif', true);
     }
 
-    public function scopeJenis($query, $jenis)
+    public function scopeJenis($query, $typeId)
     {
-        return $query->where('jenis_unit', $jenis);
+        return $query->where('type_id', $typeId);
     }
 }

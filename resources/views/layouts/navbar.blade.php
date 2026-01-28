@@ -31,15 +31,6 @@
                     <img src="{{ asset('assets/images/profile/user1.jpg')}}" alt="" width="35" height="35"
                         class="rounded-circle">
                 </a>
-                <div class="dropdown">
-                    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        {{ auth()->user()->name ?? 'User' }}
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-                        <li><a class="dropdown-item" href="#" id="logoutAllBtn">Logout dari Semua Perangkat</a></li>
-                    </ul>
-                </div>
             </li>
         </ul>
     </div>

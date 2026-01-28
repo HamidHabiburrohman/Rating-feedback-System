@@ -1,28 +1,32 @@
-@if($units->count())
-    @foreach($units as $unit)
+@if($unitTypes->count())
+    @foreach($unitTypes as $type)
         @php
-            $capacity = $unit->kapasitas ?? 0;
-            $capacityPercent = $capacity > 0 ? min(100, ($capacity / 100) * 100) : 0;
-            $progressColor = $capacityPercent >= 90 ? 'bg-danger' : ($capacityPercent >= 70 ? 'bg-warning' : 'bg-primary');
             $statusMap = [
-                true => ['label' => 'Aktif', 'class' => 'bg-success-subtle text-success'],
-                false => ['label' => 'Nonaktif', 'class' => 'bg-danger-subtle text-danger']
+                true => ['label' => 'Active', 'class' => 'bg-success-subtle text-success'],
+                false => ['label' => 'Inactive', 'class' => 'bg-danger-subtle text-danger']
             ];
-            $status = $statusMap[$unit->status_aktif] ?? $statusMap[true];
+            $status = $statusMap[$type->is_active] ?? $statusMap[true];
         @endphp
 
-        <tr>
+        <tr class="border-bottom" data-id="{{ $type->id }}">
             <td class="ps-4">
-                <div class="fw-semibold">{{ $unit->nama_unit }}</div>
-                <div class="text-muted" style="font-size:.75rem">
-                    {{ $unit->kode_unit ?? 'No code' }}
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 40px; height: 40px; border: 1px solid #e5e7eb; background-color: #f9fafb;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="#6b7280" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <line x1="9" y1="3" x2="9" y2="21" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h6 class="fw-semibold mb-0" style="color: #1a1a1a;">{{ $type->name }}</h6>
+                    </div>
                 </div>
             </td>
 
             <td>
-                <span class="badge rounded-pill bg-light text-dark border px-3">
-                    {{ $unit->jenis_unit ?? 'N/A' }}
-                </span>
+                <span class="text-muted">{{ $type->description ?? 'No description' }}</span>
             </td>
 
             <td>
@@ -31,58 +35,44 @@
                 </span>
             </td>
 
-            <td style="min-width:160px">
-                <div class="progress" style="height:6px">
-                    <div class="progress-bar {{ $progressColor }}" style="width:{{ $capacityPercent }}%"></div>
-                </div>
-                <small class="text-muted">
-                    @if($capacity > 0)
-                        {{ $capacity }} orang
-                    @else
-                        Tidak ditentukan
-                    @endif
-                </small>
+            <td>
+                <span class="badge rounded-pill px-3 py-1 fw-medium"
+                    style="background: white; color: #374151; border: 1px solid #e5e7eb;">
+                    {{ $type->units_count ?? 0 }} units
+                </span>
             </td>
 
-            <td class="text-center pe-4">
-                <div class="d-flex justify-content-center gap-1">
-                    <a href="{{ route('admin.units.show', $unit->id) }}"
-                        class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn"
-                        data-bs-toggle="tooltip" data-bs-title="View Details">
+            <td class="pe-4">
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                    <a href="{{ route('admin.unit-types.edit', $type->id) }}"
+                        class="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center action-btn"
+                        style="width: 32px; height: 32px;" title="Edit" data-bs-toggle="tooltip" data-bs-title="Edit Type">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </a>
-
-                    <a href="{{ route('admin.units.edit', $unit->id) }}"
-                        class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn"
-                        data-bs-toggle="tooltip" data-bs-title="Edit Unit">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                     </a>
 
                     <button type="button"
-                        class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-delete"
-                        data-bs-toggle="tooltip" data-bs-title="Delete Unit"
-                        onclick="openModal('deleteModal{{ $unit->id }}')">
+                        class="btn btn-sm btn-outline-danger rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-delete"
+                        style="width: 32px; height: 32px;" data-id="{{ $type->id }}" data-name="{{ $type->name }}"
+                        title="Delete" data-bs-toggle="tooltip" data-bs-title="Delete Type"
+                        onclick="openModal('deleteModal{{ $type->id }}')">
                         <div class="pulse-ring"></div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
                         </svg>
                     </button>
                 </div>
 
-                <div class="custom-modal" id="deleteModal{{ $unit->id }}">
-                    <div class="custom-modal-backdrop" onclick="closeModal('deleteModal{{ $unit->id }}')"></div>
+                {{-- Delete Modal --}}
+                <div class="custom-modal" id="deleteModal{{ $type->id }}">
+                    <div class="custom-modal-backdrop" onclick="closeModal('deleteModal{{ $type->id }}')"></div>
                     <div class="custom-modal-dialog">
                         <div class="custom-modal-content">
                             <div class="custom-modal-header">
@@ -94,12 +84,12 @@
                                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                         </svg>
                                     </div>
-                                    <h2 class="modal-title">Delete Account</h2>
-                                    <p class="modal-subtitle">You're going to delete your
-                                        <strong>"{{ $unit->nama_unit }}"</strong>
+                                    <h2 class="modal-title">Delete Unit Type</h2>
+                                    <p class="modal-subtitle">You're going to delete unit type
+                                        <strong>"{{ $type->name }}"</strong>
                                     </p>
                                 </div>
-                                <button class="modal-close-btn" onclick="closeModal('deleteModal{{ $unit->id }}')">
+                                <button class="modal-close-btn" onclick="closeModal('deleteModal{{ $type->id }}')">
                                     <svg viewBox="0 0 24 24" width="20" height="20">
                                         <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" />
@@ -108,16 +98,20 @@
                             </div>
 
                             <div class="custom-modal-body">
-                                <p class="warning-text">This action cannot be undone. All data associated with this account
-                                    will be permanently deleted.</p>
+                                <p class="warning-text">This action cannot be undone.
+                                    @if($type->units_count > 0)
+                                        <strong class="text-danger">This type has {{ $type->units_count }} unit(s). Deleting it will
+                                            affect those units.</strong>
+                                    @endif
+                                </p>
                             </div>
 
                             <div class="custom-modal-footer">
                                 <div class="footer-buttons">
-                                    <button class="btn-cancel" onclick="closeModal('deleteModal{{ $unit->id }}')">
+                                    <button class="btn-cancel" onclick="closeModal('deleteModal{{ $type->id }}')">
                                         No, keep it.
                                     </button>
-                                    <form method="POST" action="{{ route('admin.units.destroy', $unit->id) }}"
+                                    <form method="POST" action="{{ route('admin.unit-types.destroy', $type->id) }}"
                                         class="delete-form">
                                         @csrf
                                         @method('DELETE')
@@ -131,14 +125,19 @@
                         </div>
                     </div>
                 </div>
-                
             </td>
         </tr>
     @endforeach
 @else
     <tr>
         <td colspan="6" class="text-center py-5 text-muted">
-            No units found
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1" class="mb-3 opacity-50">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+            <h5 class="fw-medium mb-2">No unit types found</h5>
+            <p class="mb-0">Start by adding your first unit type</p>
         </td>
     </tr>
 @endif
@@ -451,11 +450,11 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const deleteForms = document.querySelectorAll('.delete-form');
 
         deleteForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 const submitButton = this.querySelector('.btn-delete');
                 const buttonText = submitButton.querySelector('.btn-text');
@@ -471,13 +470,47 @@
             });
         });
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const openModalEl = document.querySelector('.custom-modal.show');
                 if (openModalEl) {
                     closeModal(openModalEl.id);
                 }
             }
+        });
+
+        // Toggle status functionality
+        document.querySelectorAll('.status-toggle').forEach(button => {
+            button.addEventListener('click', function () {
+                const form = this.closest('.toggle-status-form');
+                const typeId = form.dataset.id;
+                const isActive = this.dataset.active === 'true';
+
+                fetch(`/admin/unit-types/${typeId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.dataset.active = !isActive;
+                            if (!isActive) {
+                                this.classList.remove('btn-outline-secondary');
+                                this.classList.add('btn-success');
+                                this.textContent = 'Active';
+                            } else {
+                                this.classList.remove('btn-success');
+                                this.classList.add('btn-outline-secondary');
+                                this.textContent = 'Inactive';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
         });
     });
 </script>
