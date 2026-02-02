@@ -3,14 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
     use HasFactory, SoftDeletes;
-
-    protected $table = 'employees';
 
     protected $fillable = [
         'unit_id',
@@ -22,13 +20,12 @@ class Employee extends Model
         'status',
         'tanggal_mulai',
         'tanggal_selesai',
-        'keterangan',
+        'keterangan'
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
-        'deleted_at' => 'datetime',
     ];
 
     public function unit()
@@ -36,13 +33,34 @@ class Employee extends Model
         return $this->belongsTo(Unit::class);
     }
 
-    public function scopeAktif($query)
+    public function scopeActive($query)
     {
         return $query->where('status', 'aktif');
+    }
+
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('status', $status);
     }
 
     public function scopeUnit($query, $unitId)
     {
         return $query->where('unit_id', $unitId);
+    }
+
+    public function scopeBidang($query, $bidang)
+    {
+        return $query->where('bidang', $bidang);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('nama', 'LIKE', "%{$search}%")
+              ->orWhere('jabatan', 'LIKE', "%{$search}%")
+              ->orWhere('bidang', 'LIKE', "%{$search}%")
+              ->orWhere('email', 'LIKE', "%{$search}%")
+              ->orWhere('telepon', 'LIKE', "%{$search}%");
+        });
     }
 }

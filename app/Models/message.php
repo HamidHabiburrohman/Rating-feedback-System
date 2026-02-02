@@ -9,56 +9,123 @@ class Message extends Model
 {
     use HasFactory;
 
-    protected $table = 'messages';
-
     protected $fillable = [
-        'unit_id',
-        'admin_id',
+        'pengirim_tipe',
+        'pengirim_id',
+        'penerima_tipe',
+        'penerima_id',
         'judul',
         'pesan',
-        'tipe',
+        'kategori',
         'prioritas',
-        'dibaca',
+        'status',
+        'perlu_tindakan',
+        'tipe_tindakan',
+        'data_tindakan',
+        'unit_id',
+        'rating_id',
         'dibaca_pada',
-        'metadata',
+        'tindakan_diambil_pada'
     ];
 
     protected $casts = [
-        'metadata' => 'array',
-        'dibaca' => 'boolean',
+        'perlu_tindakan' => 'boolean',
+        'data_tindakan' => 'array',
         'dibaca_pada' => 'datetime',
+        'tindakan_diambil_pada' => 'datetime'
     ];
 
+    // Relations
     public function unit()
     {
         return $this->belongsTo(Unit::class);
     }
 
-    public function admin()
+    public function rating()
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(Rating::class);
     }
 
-    public function scopeBelumDibaca($query)
+    public function sender()
     {
-        return $query->where('dibaca', false);
+        return $this->morphTo('pengirim');
     }
 
-    public function scopePrioritasTinggi($query)
+    public function receiver()
     {
-        return $query->where('prioritas', 'sangat_penting');
+        return $this->morphTo('penerima');
     }
 
-    public function scopeUntukUnit($query, $unitId)
+    // Scopes
+    public function scopeUnread($query)
     {
-        return $query->where('unit_id', $unitId);
+        return $query->whereIn('status', ['terkirim', 'diterima']);
     }
 
+    public function scopeRequiresAction($query)
+    {
+        return $query->where('perlu_tindakan', true)
+                     ->whereNull('tindakan_diambil_pada');
+    }
+
+    public function scopePriority($query, $priority)
+    {
+        return $query->where('prioritas', $priority);
+    }
+
+    public function scopeCategory($query, $category)
+    {
+        return $query->where('kategori', $category);
+    }
+
+    public function scopeFromAdmin($query)
+    {
+        return $query->where('pengirim_tipe', 'admin');
+    }
+
+    public function scopeFromUnit($query)
+    {
+        return $query->where('pengirim_tipe', 'unit');
+    }
+
+    public function scopeToAdmin($query)
+    {
+        return $query->where('penerima_tipe', 'admin');
+    }
+
+    public function scopeToUnit($query)
+    {
+        return $query->where('penerima_tipe', 'unit');
+    }
+
+    // Helper methods
     public function markAsRead()
     {
-        $this->update([
-            'dibaca' => true,
-            'dibaca_pada' => now(),
-        ]);
+        if (!$this->dibaca_pada) {
+            $this->update([
+                'status' => 'dibaca',
+                'dibaca_pada' => now()
+            ]);
+        }
+    }
+
+    public function markAsResponded()
+    {
+        $this->update(['status' => 'ditanggapi']);
+    }
+
+    public function markAsCompleted()
+    {
+        $this->update(['status' => 'selesai']);
+    }
+
+    public function isUnread()
+    {
+        return in_array($this->status, ['terkirim', 'diterima']);
+    }
+
+    public function requiresAction()
+    {
+        return $this->perlu_tindakan && !$this->tindakan_diambil_pada;
     }
 }

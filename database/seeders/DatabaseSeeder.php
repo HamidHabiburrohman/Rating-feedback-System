@@ -10,10 +10,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
+            UnitTypeSeeder::class,
             UnitSeeder::class,
             RatingCategorySeeder::class,
             PersonalAccessTokenSeeder::class,
-            UnitTypeSeeder::class
+            EmployeeSeeder::class,
+            MessagesSeeder::class,
+            RatingSeeder::class,
+            ReportSeeder::class
         ]);
     }
 }

@@ -1,7 +1,12 @@
-@extends('layouts.admin')
+@extends('layouts.admin.app')
 
-@section('content')
-    <!--  Row 1 -->
+@section('title', 'dashboard')
+
+@push('admin-scripts')
+    <script src="{{ asset('assets/libs/apexcharts/dist/apexcharts.min.js') }}"></script>
+@endpush
+
+@section('admin-content')
     <div class="row">
         <div class="col-lg-8 d-flex align-items-strech">
             <div class="card w-100">
@@ -26,6 +31,7 @@
                             </ul>
                         </div>
                     </div>
+                    <!-- TAMBAHKAN ELEMENT INI -->
                     <div id="profit"></div>
                 </div>
             </div>
@@ -33,7 +39,6 @@
         <div class="col-lg-4">
             <div class="row">
                 <div class="col-lg-12 col-sm-6">
-                    <!-- Yearly Breakup -->
                     <div class="card overflow-hidden">
                         <div class="card-body p-4">
                             <h5 class="card-title mb-10 fw-semibold">Traffic Distribution</h5>
@@ -61,6 +66,7 @@
                                 </div>
                                 <div class="col-5">
                                     <div class="d-flex justify-content-center">
+                                        <!-- TAMBAHKAN ELEMENT INI -->
                                         <div id="grade"></div>
                                     </div>
                                 </div>
@@ -69,7 +75,6 @@
                     </div>
                 </div>
                 <div class="col-lg-12 col-sm-6">
-                    <!-- Monthly Earnings -->
                     <div class="card">
                         <div class="card-body">
                             <div class="row alig n-items-start">
@@ -95,6 +100,7 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- TAMBAHKAN ELEMENT INI -->
                         <div id="earning"></div>
                     </div>
                 </div>
@@ -102,7 +108,70 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-lg-14 d-flex align-items-stretch">
+        <div class="col-lg-4 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h5 class="card-title fw-semibold">Upcoming Schedules</h5>
+                    </div>
+                    <ul class="timeline-widget mb-0 position-relative mb-n5">
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-primary flex-shrink-0 my-2"></span>
+                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment received from John Doe of $385.90</div>
+                        </li>
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">10:00 am</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-info flex-shrink-0 my-2"></span>
+                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New sale recorded <a
+                                    href="javascript:void(0)" class="text-primary d-block fw-normal">#ML-3467</a>
+                            </div>
+                        </li>
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">12:00 am</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-success flex-shrink-0 my-2"></span>
+                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment was made of $64.95 to Michael</div>
+                        </li>
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30 am</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-warning flex-shrink-0 my-2"></span>
+                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New sale recorded <a
+                                    href="javascript:void(0)" class="text-primary d-block fw-normal">#ML-3467</a>
+                            </div>
+                        </li>
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30 am</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-danger flex-shrink-0 my-2"></span>
+                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New arrival recorded
+                            </div>
+                        </li>
+                        <li class="timeline-item d-flex position-relative overflow-hidden">
+                            <div class="timeline-time text-dark flex-shrink-0 text-end">12:00 am</div>
+                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
+                                <span class="timeline-badge border-2 border border-success flex-shrink-0 my-2"></span>
+                            </div>
+                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment Done</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 d-flex align-items-stretch">
             <div class="card w-100">
                 <div class="card-body p-4">
                     <div class="d-flex mb-4 justify-content-between align-items-center">
@@ -250,71 +319,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-lg-6 d-flex align-items-stretch">
-            <div class="card w-100">
-                <div class="card-body p-4">
-                    <div class="mb-4">
-                        <h5 class="card-title fw-semibold">Upcoming Schedules</h5>
-                    </div>
-                    <ul class="timeline-widget mb-0 position-relative mb-n5">
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-primary flex-shrink-0 my-2"></span>
-                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment received from John Doe of $385.90</div>
-                        </li>
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">10:00 am</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-info flex-shrink-0 my-2"></span>
-                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New sale recorded <a
-                                    href="javascript:void(0)" class="text-primary d-block fw-normal">#ML-3467</a>
-                            </div>
-                        </li>
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">12:00 am</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-success flex-shrink-0 my-2"></span>
-                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment was made of $64.95 to Michael</div>
-                        </li>
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30 am</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-warning flex-shrink-0 my-2"></span>
-                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New sale recorded <a
-                                    href="javascript:void(0)" class="text-primary d-block fw-normal">#ML-3467</a>
-                            </div>
-                        </li>
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">09:30 am</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-danger flex-shrink-0 my-2"></span>
-                                <span class="timeline-badge-border d-block flex-shrink-0"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1 fw-semibold">New arrival recorded
-                            </div>
-                        </li>
-                        <li class="timeline-item d-flex position-relative overflow-hidden">
-                            <div class="timeline-time text-dark flex-shrink-0 text-end">12:00 am</div>
-                            <div class="timeline-badge-wrap d-flex flex-column align-items-center">
-                                <span class="timeline-badge border-2 border border-success flex-shrink-0 my-2"></span>
-                            </div>
-                            <div class="timeline-desc fs-3 text-dark mt-n1">Payment Done</div>
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>

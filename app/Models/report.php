@@ -2,15 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Report extends Model
 {
-    use HasFactory;
-
-    protected $table = 'reports';
-
     protected $fillable = [
         'unit_id',
         'session_id',
@@ -23,51 +20,109 @@ class Report extends Model
         'admin_id',
         'tanggapan_admin',
         'ditanggapi_pada',
-        'lampiran',
+        'lampiran'
     ];
 
     protected $casts = [
         'lampiran' => 'array',
-        'ditanggapi_pada' => 'datetime',
+        'ditanggapi_pada' => 'datetime'
     ];
 
-    public function unit()
+    protected $appends = ['prioritas_warna', 'tipe_label', 'status_label'];
+
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    public function admin()
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
 
-    public function session()
+    protected function prioritasWarna(): Attribute
     {
-        return $this->belongsTo(VisitorSession::class, 'session_id', 'session_id');
+        return Attribute::make(
+            get: fn () => match($this->prioritas) {
+                'kritis' => 'danger',
+                'tinggi' => 'warning',
+                'sedang' => 'primary',
+                'rendah' => 'secondary',
+                default => 'secondary'
+            }
+        );
     }
 
-    public function scopeBaru($query)
+    protected function tipeLabel(): Attribute
     {
-        return $query->where('status', 'baru');
+        return Attribute::make(
+            get: fn () => match($this->tipe) {
+                'masalah' => 'Masalah',
+                'saran' => 'Saran',
+                'keluhan' => 'Keluhan',
+                'pujian' => 'Pujian',
+                'lainnya' => 'Lainnya',
+                default => $this->tipe
+            }
+        );
     }
 
-    public function scopeDiproses($query)
+    protected function statusLabel(): Attribute
     {
-        return $query->where('status', 'diproses');
+        return Attribute::make(
+            get: fn () => match($this->status) {
+                'baru' => 'Baru',
+                'diproses' => 'Diproses',
+                'selesai' => 'Selesai',
+                'ditolak' => 'Ditolak',
+                default => $this->status
+            }
+        );
     }
 
-    public function scopePrioritasTinggi($query)
+    public function scopeSearch($query, $search)
     {
-        return $query->whereIn('prioritas', ['tinggi', 'kritis']);
+        return $query->when($search, function ($q) use ($search) {
+            $q->where('judul', 'like', "%{$search}%")
+              ->orWhere('deskripsi', 'like', "%{$search}%")
+              ->orWhere('visitor_ip', 'like', "%{$search}%");
+        });
     }
 
-    public function scopeBelumDitanggapi($query)
+    public function scopeFilterByStatus($query, $status)
     {
-        return $query->whereNull('admin_id');
+        return $query->when($status, function ($q) use ($status) {
+            $q->whereIn('status', explode(',', $status));
+        });
     }
 
-    public function isBelumDitanggapi()
+    public function scopeFilterByTipe($query, $tipe)
     {
-        return $this->status === 'baru' && !$this->admin_id;
+        return $query->when($tipe, function ($q) use ($tipe) {
+            $q->whereIn('tipe', explode(',', $tipe));
+        });
+    }
+
+    public function scopeFilterByPrioritas($query, $prioritas)
+    {
+        return $query->when($prioritas, function ($q) use ($prioritas) {
+            $q->whereIn('prioritas', explode(',', $prioritas));
+        });
+    }
+
+    public function scopeFilterByUnit($query, $unit)
+    {
+        return $query->when($unit, function ($q) use ($unit) {
+            $q->whereIn('unit_id', explode(',', $unit));
+        });
+    }
+
+    public function scopeFilterByDate($query, $dateFrom, $dateTo)
+    {
+        return $query->when($dateFrom, function ($q) use ($dateFrom) {
+            $q->whereDate('created_at', '>=', $dateFrom);
+        })->when($dateTo, function ($q) use ($dateTo) {
+            $q->whereDate('created_at', '<=', $dateTo);
+        });
     }
 }

@@ -1,6 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.admin.app')
 
-@section('content')
+@section('title','Unit management')
+
+@section('admin-content')
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -76,6 +78,7 @@
                         <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 overflow-hidden mt-2"
                             style="min-width: 300px; background-color: #ffffff;">
                             <div class="p-3">
+                                <!-- Di bagian filter dropdown -->
                                 <div class="mb-4">
                                     <label class="small fw-bold text-uppercase mb-2 mt-2 d-block"
                                         style="color: #6b7280; letter-spacing: 0.05em;">Status Unit</label>
@@ -94,14 +97,26 @@
                                         </button>
                                         <button type="button"
                                             class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
-                                            data-value="OPEN"
-                                            style="{{ in_array('OPEN', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            data-value="open"
+                                            style="{{ in_array('open', $currentStatus) ? $activeStyle : $inactiveStyle }}">
                                             Open
                                         </button>
                                         <button type="button"
                                             class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
-                                            data-value="CLOSED"
-                                            style="{{ in_array('CLOSED', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            data-value="full"
+                                            style="{{ in_array('full', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Full
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
+                                            data-value="maintenance"
+                                            style="{{ in_array('maintenance', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Maintenance
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium shadow-sm filter-status"
+                                            data-value="closed"
+                                            style="{{ in_array('closed', $currentStatus) ? $activeStyle : $inactiveStyle }}">
                                             Closed
                                         </button>
                                     </div>
@@ -155,7 +170,8 @@
 
                     <!-- Export button -->
                     <div class="dropdown">
-                        <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                        <button
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown" aria-expanded="false" id="filterDropdown"
                             style="height: 44px; background-color: white; border-color: #d1d5db;">
 

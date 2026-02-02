@@ -6,6 +6,7 @@ use App\Models\Unit;
 use App\Models\UnitType;
 use App\Models\RatingCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UnitService
@@ -14,88 +15,95 @@ class UnitService
     {
         $query = Unit::with('unitType');
 
-        if (isset($filters['type'])) {
-            $typeFilters = explode(',', $filters['type']);
-            $typeIds = UnitType::whereIn('name', $typeFilters)
-                ->pluck('id')
-                ->toArray();
-            
-            if (!empty($typeIds)) {
-                $query->whereIn('type_id', $typeIds);
-            }
+        if (isset($filters['search'])) {
+            $this->applySearchFilter($query, $filters['search']);
         }
 
         if (isset($filters['status'])) {
-            $statusFilters = explode(',', $filters['status']);
-            $statusConditions = [];
-            
-            if (in_array('aktif', $statusFilters)) {
-                $statusConditions[] = true;
-            }
-            if (in_array('nonaktif', $statusFilters)) {
-                $statusConditions[] = false;
-            }
-            
-            if (!empty($statusConditions)) {
-                $query->whereIn('status_aktif', $statusConditions);
-            }
+            $this->applyStatusFilter($query, $filters['status']);
         }
 
-        if (isset($filters['gedung'])) {
-            $query->where('gedung', $filters['gedung']);
+        if (isset($filters['type'])) {
+            $this->applyTypeFilter($query, $filters['type']);
         }
 
-        if (isset($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_unit', 'like', "%$search%")
-                  ->orWhere('kode_unit', 'like', "%$search%")
-                  ->orWhere('lokasi', 'like', "%$search%");
-            });
-        }
+        $sort = $filters['sort'] ?? 'created_at';
+        $order = $filters['order'] ?? 'desc';
+        $perPage = $filters['per_page'] ?? 10;
 
-        return $query->orderBy($filters['sort'] ?? 'nama_unit', $filters['order'] ?? 'asc')
-            ->paginate($filters['per_page'] ?? 20)
+        return $query->orderBy($sort, $order)
+            ->paginate($perPage)
             ->withQueryString();
     }
 
-    public function createUnit(array $data): Unit
+    public function getAllUnitTypes()
     {
+        return UnitType::active()->ordered()->pluck('name');
+    }
+
+    public function createUnit(array $data, $fotoFile = null): Unit
+    {
+        if ($fotoFile) {
+            $data['foto_unit'] = $this->storeFotoUnit($fotoFile);
+        }
+
         return Unit::create($data);
     }
 
     public function getUnitDetail(string $id): array
     {
-        $unit = Unit::with('unitType')
-            ->withCount(['ratings', 'visits', 'employees', 'reports'])
-            ->with(['employees' => fn($q) => $q->orderBy('status')->orderBy('nama')])
-            ->findOrFail($id);
-
+        $unit = Unit::with('unitType')->findOrFail($id);
+        
         return [
             'unit' => $unit,
-            'stats' => [
-                'average_rating' => round($unit->ratings()->avg('rata_rata') ?? 0, 1),
-                'total_ratings' => $unit->ratings_count,
-                'total_visits' => $unit->visits_count,
-                'total_employees' => $unit->employees_count,
-                'total_reports' => $unit->reports_count
-            ],
+            'stats' => $this->getUnitStats($unit),
             'rating_by_category' => $this->getCategoryStats($id),
             'recent_visits' => $unit->visits()->latest('waktu_masuk')->limit(10)->get(),
             'recent_ratings' => $unit->ratings()->with('scores.category')->latest()->limit(10)->get()
         ];
     }
 
-    public function updateUnit(string $id, array $data): Unit
+    public function findUnit(string $id): Unit
+    {
+        return Unit::with('unitType')->findOrFail($id);
+    }
+
+    public function updateUnit(string $id, array $data, $fotoFile = null, bool $removeFoto = false): Unit
     {
         $unit = Unit::findOrFail($id);
+
+        if ($removeFoto && $unit->foto_unit) {
+            $this->deleteFotoUnit($unit->foto_unit);
+            $data['foto_unit'] = null;
+        }
+
+        if ($fotoFile) {
+            if ($unit->foto_unit) {
+                $this->deleteFotoUnit($unit->foto_unit);
+            }
+            $data['foto_unit'] = $this->storeFotoUnit($fotoFile);
+        }
+
         $unit->update($data);
         return $unit;
     }
 
     public function deleteUnit(string $id): void
     {
-        Unit::findOrFail($id)->delete();
+        $unit = Unit::findOrFail($id);
+        
+        if ($unit->foto_unit) {
+            $this->deleteFotoUnit($unit->foto_unit);
+        }
+        
+        $unit->delete();
+    }
+
+    public function updateUnitStatus(string $id, string $status): Unit
+    {
+        $unit = Unit::findOrFail($id);
+        $unit->update(['status' => $status]);
+        return $unit;
     }
 
     public function toggleUnitStatus(string $id): Unit
@@ -110,6 +118,54 @@ class UnitService
         return RatingCategory::where('unit_id', $unitId)
             ->orderBy('urutan')
             ->get();
+    }
+
+    private function applySearchFilter($query, string $search): void
+    {
+        $query->where(function ($q) use ($search) {
+            $q->where('nama_unit', 'LIKE', "%{$search}%")
+              ->orWhere('kode_unit', 'LIKE', "%{$search}%")
+              ->orWhere('lokasi', 'LIKE', "%{$search}%");
+        });
+    }
+
+    private function applyStatusFilter($query, string $status): void
+    {
+        $statusFilters = explode(',', $status);
+        $query->whereIn('status', $statusFilters);
+    }
+
+    private function applyTypeFilter($query, string $type): void
+    {
+        $typeFilters = explode(',', $type);
+        $typeIds = UnitType::whereIn('name', $typeFilters)
+            ->pluck('id')
+            ->toArray();
+        
+        if (!empty($typeIds)) {
+            $query->whereIn('type_id', $typeIds);
+        }
+    }
+
+    private function storeFotoUnit($fotoFile): string
+    {
+        return $fotoFile->store('units', 'public');
+    }
+
+    private function deleteFotoUnit(string $fotoPath): void
+    {
+        Storage::disk('public')->delete($fotoPath);
+    }
+
+    private function getUnitStats(Unit $unit): array
+    {
+        return [
+            'average_rating' => round($unit->ratings()->avg('rata_rata') ?? 0, 1),
+            'total_ratings' => $unit->ratings()->count(),
+            'total_visits' => $unit->visits()->count(),
+            'total_employees' => $unit->employees()->count(),
+            'total_reports' => $unit->reports()->count()
+        ];
     }
 
     private function getCategoryStats(string $unitId)

@@ -1,6 +1,8 @@
-@extends('layouts.admin')
+@extends('layouts.admin.app')
 
-@section('content')
+@section('title','Type management')
+
+@section('admin-content')
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -26,19 +28,14 @@
                 <div class="d-flex align-items-center gap-2">
                     @if(!($hidePerPage ?? false))
                         <div class="dropdown">
-                            <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm"
+                            <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
                                 type="button" data-bs-toggle="dropdown"
                                 style="height: 44px; background-color: white; border-color: #d1d5db;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="8" y1="6" x2="21" y2="6"></line>
-                                    <line x1="8" y1="12" x2="21" y2="12"></line>
-                                    <line x1="8" y1="18" x2="21" y2="18"></line>
-                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                <span class="fw-medium">{{ request('per_page', 10) }}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                                    <path d="M6 9l6 6 6-6" />
                                 </svg>
-                                <span class="fw-medium">Show: {{ request('per_page', 10) }}</span>
                             </button>
                             <ul class="dropdown-menu border-0 shadow-lg rounded-3">
                                 @foreach ([10, 25, 50, 100] as $size)
@@ -57,22 +54,27 @@
                         @php
                             $currentSort = request('sort', 'sort_order');
                             $currentOrder = request('order', 'asc');
-
-                            // Determine icon rotation - arrow down by default, up when asc (A-Z, Oldest)
-                            $iconRotation = $currentOrder === 'asc' ? 'rotate-180' : '';
+                            
+                            $sortTexts = [
+                                'name_asc' => 'Name A-Z',
+                                'name_desc' => 'Name Z-A',
+                                'created_at_desc' => 'Newest First',
+                                'created_at_asc' => 'Oldest First',
+                                'sort_order_asc' => 'Sort Order'
+                            ];
+                            
+                            $currentSortKey = $currentSort . '_' . $currentOrder;
+                            $buttonText = $sortTexts[$currentSortKey] ?? 'Sort';
                         @endphp
 
-                        <button
-                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm sort-toggle"
+                        <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown"
-                            style="height: 44px; background-color: white; border-color: #d1d5db;"
-                            data-sort="{{ $currentSort }}" data-order="{{ $currentOrder }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class="sort-icon {{ $iconRotation }}" style="transition: transform 0.3s ease;">
+                            style="height: 44px; background-color: white; border-color: #d1d5db;">
+                            <span class="fw-medium">{{ $buttonText }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
-                            <span class="fw-medium">Sort</span>
                         </button>
                         <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
                             <li>
@@ -173,9 +175,8 @@
                 <thead class="bg-transparent">
                     <tr class="text-muted text-uppercase" style="font-size: .75rem;">
                         <th class="ps-4 py-3 fw-semibold">Name</th>
-                        <th class="py-3 fw-semibold">Description</th>
-                        <th class="py-3 fw-semibold">Status</th>
                         <th class="py-3 fw-semibold">Units Count</th>
+                        <th class="py-3 fw-semibold">Status</th>
                         <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
                     </tr>
                 </thead>
@@ -190,7 +191,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4">
@@ -315,24 +315,26 @@
             outline: none;
         }
 
-        /* Sort icon rotation */
-        .sort-icon.rotate-180 {
+        .rotate-180 {
             transform: rotate(180deg);
         }
 
-        /* Smooth transition */
         .sort-icon {
             transition: transform 0.3s ease;
         }
 
-        /* Hide per-page dropdown conditionally */
         .per-page-hidden {
             display: none !important;
+        }
+
+        .dropdown-toggle::after {
+            color: #6b7280;
         }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            initIcons();
 
             const searchInput = document.getElementById('searchInput');
             let searchTimeout;
@@ -356,10 +358,8 @@
                 });
             }
 
-
             document.querySelectorAll('.status-toggle').forEach(button => {
                 button.addEventListener('click', function () {
-
                     const form = this.closest('.toggle-status-form');
                     const typeId = form.dataset.id;
                     const isActive = this.dataset.active === 'true';
@@ -374,7 +374,6 @@
                     })
                         .then(res => res.json())
                         .then(data => {
-
                             if (!data.success) return;
 
                             this.dataset.active = !isActive;
@@ -388,12 +387,9 @@
                                 this.classList.add('btn-outline-secondary');
                                 this.textContent = 'Inactive';
                             }
-
                         });
-
                 });
             });
-
 
             const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             const deleteForm = document.getElementById('deleteForm');
@@ -401,24 +397,19 @@
 
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', function () {
-
                     const id = this.dataset.id;
                     const name = this.dataset.name;
 
-                    deleteModalText.textContent =
-                        `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+                    deleteModalText.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
 
                     deleteForm.action = `/admin/unit-types/${id}`;
                     deleteModal.show();
-
                 });
             });
-
 
             const dropdown = document.getElementById('sortDropdown');
 
             if (dropdown) {
-
                 const toggle = dropdown.querySelector('.sort-toggle');
                 const icon = dropdown.querySelector('.sort-icon');
 
@@ -429,10 +420,23 @@
                 dropdown.addEventListener('hide.bs.dropdown', function () {
                     icon.classList.remove('rotate-180');
                 });
-
             }
-
         });
-    </script>
 
+        function initIcons() {
+            document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
+                const icon = btn.querySelector('.dropdown-icon');
+
+                if (!icon) return;
+
+                btn.addEventListener('show.bs.dropdown', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+
+                btn.addEventListener('hide.bs.dropdown', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            });
+        }
+    </script>
 @endsection

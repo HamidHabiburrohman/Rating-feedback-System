@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Admin\Unit;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateUnitRequest extends FormRequest
 {
@@ -14,50 +13,28 @@ class UpdateUnitRequest extends FormRequest
 
     public function rules()
     {
-        $unitId = $this->route('unit') ?? $this->route('id');
-        
-        return [
-            'kode_unit' => [
-                'sometimes',
-                'string',
-                'max:20',
-                Rule::unique('units', 'kode_unit')->ignore($unitId)
-            ],
-            'nama_unit' => 'sometimes|string|max:100',
-            'deskripsi' => 'nullable|string|max:500',
-            'type_id' => 'sometimes|exists:unit_types,id',
-            'lokasi' => 'sometimes|string|max:200',
-            'gedung' => 'nullable|string|max:50',
+        $rules = [
+            'nama_unit' => 'required|string|max:255',
+            'kode_unit' => 'required|string|max:50',
+            'deskripsi' => 'nullable|string',
+            'type_id' => 'required|exists:unit_types,id',
+            'lokasi' => 'required|string|max:500',
+            'gedung' => 'nullable|string|max:100',
             'lantai' => 'nullable|string|max:10',
             'kontak_telepon' => 'nullable|string|max:20',
-            'kontak_email' => 'nullable|email|max:100',
+            'kontak_email' => 'nullable|email|max:255',
             'jam_buka' => 'nullable|date_format:H:i',
-            'jam_tutup' => 'nullable|date_format:H:i|after:jam_buka',
+            'jam_tutup' => 'nullable|date_format:H:i',
             'kapasitas' => 'nullable|integer|min:0',
-            'status_aktif' => 'sometimes|boolean',
+            'status_aktif' => 'boolean',
+            'status' => 'nullable|in:open,full,maintenance,closed',
+            'remove_foto' => 'nullable|boolean'
         ];
-    }
 
-    public function messages()
-    {
-        return [
-            'kode_unit.max' => 'Kode unit maksimal 20 karakter',
-            'kode_unit.unique' => 'Kode unit sudah digunakan',
-            'nama_unit.max' => 'Nama unit maksimal 100 karakter',
-            'deskripsi.max' => 'Deskripsi maksimal 500 karakter',
-            'type_id.exists' => 'Tipe unit tidak valid',
-            'lokasi.max' => 'Lokasi maksimal 200 karakter',
-            'gedung.max' => 'Nama gedung maksimal 50 karakter',
-            'lantai.max' => 'Lantai maksimal 10 karakter',
-            'kontak_telepon.max' => 'Nomor telepon maksimal 20 karakter',
-            'kontak_email.email' => 'Format email tidak valid',
-            'kontak_email.max' => 'Email maksimal 100 karakter',
-            'jam_buka.date_format' => 'Format jam buka tidak valid (HH:mm)',
-            'jam_tutup.date_format' => 'Format jam tutup tidak valid (HH:mm)',
-            'jam_tutup.after' => 'Jam tutup harus setelah jam buka',
-            'kapasitas.integer' => 'Kapasitas harus berupa angka',
-            'kapasitas.min' => 'Kapasitas minimal 0',
-            'status_aktif.boolean' => 'Status aktif harus benar atau salah',
-        ];
+        if ($this->hasFile('foto_unit')) {
+            $rules['foto_unit'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:2048';
+        }
+
+        return $rules;
     }
 }

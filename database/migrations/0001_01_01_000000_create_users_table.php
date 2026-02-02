@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,8 +14,9 @@ return new class extends Migration
             $table->id();
             $table->string('nama');
             $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable(); 
             $table->string('password');
-            $table->enum('role', ['admin', 'super_admin'])->default('admin');
+            $table->enum('role', ['admin', 'super_admin', 'unit'])->default('admin'); 
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

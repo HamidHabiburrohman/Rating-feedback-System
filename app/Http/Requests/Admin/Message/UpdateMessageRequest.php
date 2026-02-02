@@ -6,31 +6,32 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateMessageRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'judul' => 'sometimes|string|max:200',
-            'pesan' => 'sometimes|string|min:10|max:5000',
-            'tipe' => 'sometimes|in:saran,instruksi,pengumuman,lainnya',
-            'prioritas' => 'sometimes|in:biasa,penting,sangat_penting',
-            'dibaca' => 'sometimes|boolean',
+            'status' => 'sometimes|in:terkirim,diterima,dibaca,ditanggapi,selesai',
+            'perlu_tindakan' => 'boolean',
+            'tipe_tindakan' => 'nullable|string|max:100',
+            'data_tindakan' => 'nullable|array',
+            'dibaca_pada' => 'nullable|date',
+            'tindakan_diambil_pada' => 'nullable|date',
         ];
     }
 
-    public function messages()
+    public function messages(): array
     {
         return [
-            'judul.max' => 'Judul maksimal 200 karakter',
-            'pesan.min' => 'Isi pesan minimal 10 karakter',
-            'pesan.max' => 'Isi pesan maksimal 5000 karakter',
-            'tipe.in' => 'Tipe pesan tidak valid',
-            'prioritas.in' => 'Prioritas pesan tidak valid',
-            'dibaca.boolean' => 'Status baca harus benar atau salah',
+            'status.in' => 'Status pesan tidak valid',
+            'perlu_tindakan.boolean' => 'Perlu tindakan harus berupa boolean',
+            'tipe_tindakan.max' => 'Tipe tindakan maksimal 100 karakter',
+            'data_tindakan.array' => 'Data tindakan harus berupa array',
+            'dibaca_pada.date' => 'Tanggal dibaca tidak valid',
+            'tindakan_diambil_pada.date' => 'Tanggal tindakan tidak valid',
         ];
     }
 }

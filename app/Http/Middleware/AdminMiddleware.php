@@ -2,29 +2,21 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        $user = $request->user();
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Please login.',
-            ], 401);
+        if (!Auth::check()) {
+            return redirect()->route('admin.login');
         }
 
-        if (!in_array($user->role, [UserRole::ADMIN->value, UserRole::SUPER_ADMIN->value])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Access denied. Admin privileges required.',
-            ], 403);
+        if (!in_array(Auth::user()->role, ['admin', 'super_admin'])) {
+            Auth::logout();
+            return redirect()->route('admin.login')->with('error', 'Access denied. Admin only.');
         }
 
         return $next($request);

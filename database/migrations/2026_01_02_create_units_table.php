@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->text('deskripsi')->nullable();
             $table->foreignId('type_id')->constrained('unit_types')->onDelete('restrict');
             $table->string('lokasi');
+            $table->string('foto_unit')->nullable();
             $table->string('gedung')->nullable();
             $table->string('lantai')->nullable();
             $table->string('kontak_telepon')->nullable();
@@ -22,9 +23,13 @@ return new class extends Migration {
             $table->time('jam_tutup')->nullable();
             $table->integer('kapasitas')->nullable();
             $table->boolean('status_aktif')->default(true);
+            $table->enum('status', ['open', 'full', 'maintenance', 'closed'])->default('open');
             $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // Index untuk status
+            $table->index('status');
         });
     }
 

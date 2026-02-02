@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\Unit\StoreUnitRequest;
 use App\Http\Requests\Admin\Unit\UpdateUnitRequest;
 use App\Models\Unit;
 use App\Models\UnitType;
-use App\Services\Admin\UnitTypeService;
 use App\Services\Admin\UnitService;
 use Illuminate\Http\Request;
 
@@ -15,10 +14,9 @@ class UnitController extends Controller
 {
     protected $unitService;
 
-    public function __construct(UnitService $unitService, UnitTypeService $unitTypeService)
+    public function __construct(UnitService $unitService)
     {
         $this->unitService = $unitService;
-        $this->unitTypeService = $unitTypeService;
     }
 
     public function index(Request $request)
@@ -29,25 +27,14 @@ class UnitController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama_unit', 'LIKE', "%{$search}%")
-                  ->orWhere('kode_unit', 'LIKE', "%{$search}%")
-                  ->orWhere('lokasi', 'LIKE', "%{$search}%");
+                    ->orWhere('kode_unit', 'LIKE', "%{$search}%")
+                    ->orWhere('lokasi', 'LIKE', "%{$search}%");
             });
         }
 
         if ($request->filled('status')) {
             $statusFilters = explode(',', $request->status);
-            $statusConditions = [];
-            
-            if (in_array('OPEN', $statusFilters)) {
-                $statusConditions[] = true;
-            }
-            if (in_array('CLOSED', $statusFilters)) {
-                $statusConditions[] = false;
-            }
-            
-            if (!empty($statusConditions)) {
-                $query->whereIn('status_aktif', $statusConditions);
-            }
+            $query->whereIn('status', $statusFilters);
         }
 
         if ($request->filled('type')) {
@@ -55,14 +42,17 @@ class UnitController extends Controller
             $typeIds = UnitType::whereIn('name', $typeFilters)
                 ->pluck('id')
                 ->toArray();
-            
+
             if (!empty($typeIds)) {
                 $query->whereIn('type_id', $typeIds);
             }
         }
 
-        $units = $query->latest()
-            ->paginate($request->input('per_page', 10))
+        $sort = $request->input('sort', 'created_at');
+        $order = $request->input('order', 'desc');
+        $query->orderBy($sort, $order);
+
+        $units = $query->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         $types = UnitType::active()->ordered()->pluck('name');
@@ -101,31 +91,51 @@ class UnitController extends Controller
 
     public function update(UpdateUnitRequest $request, $id)
     {
-        $unit = $this->unitService->updateUnit($id, $request->validated());
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit berhasil diperbarui',
-            'data' => $unit
-        ]);
+        try {
+            $this->unitService->updateUnit(
+                $id,
+                $request->validated(),
+                $request->file('foto_unit'), // Pastikan ini
+                $request->has('remove_foto') && $request->remove_foto == '1'
+            );
+
+            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil diperbarui');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Gagal memperbarui unit: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)
     {
-        $this->unitService->deleteUnit($id);
-        return response()->json([
-            'success' => true,
-            'message' => 'Unit berhasil dihapus'
-        ]);
+        try {
+            $unit = Unit::findOrFail($id);
+            $unit->delete();
+            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dihapus');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus unit: ' . $e->getMessage());
+        }
     }
 
-    public function toggleStatus($id)
+    public function updateStatus(Request $request, $id)
     {
-        $unit = $this->unitService->toggleUnitStatus($id);
-        return response()->json([
-            'success' => true,
-            'message' => 'Status unit berhasil diubah',
-            'data' => $unit
-        ]);
+        try {
+            $request->validate([
+                'status' => 'required|in:open,full,maintenance,closed'
+            ]);
+
+            $unit = Unit::findOrFail($id);
+            $unit->update(['status' => $request->status]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status unit berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function categories($id)

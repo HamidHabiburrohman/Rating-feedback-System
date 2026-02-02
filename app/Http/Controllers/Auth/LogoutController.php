@@ -3,29 +3,20 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class LogoutController extends Controller
 {
     public function logout(Request $request)
-{
-
-    $request->user()->currentAccessToken()->delete();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Logout berhasil',
-    ]);
-}
-
-    public function logoutAll(Request $request): JsonResponse
     {
-        $request->user()->tokens()->delete();
+        $user = $request->user();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout dari semua perangkat berhasil',
-        ]);
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login');
     }
 }

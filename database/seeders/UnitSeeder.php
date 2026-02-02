@@ -10,17 +10,54 @@ class UnitSeeder extends Seeder
 {
     public function run()
     {
+        if (UnitType::count() === 0) {
+            $this->command->warn('⚠️  UnitType masih kosong, membuat data dummy...');
+            
+            $dummyTypes = [
+                ['name' => 'Kesehatan', 'status' => true, 'sort_order' => 1],
+                ['name' => 'Akademik', 'status' => true, 'sort_order' => 2],
+                ['name' => 'Administrasi', 'status' => true, 'sort_order' => 3],
+                ['name' => 'Fasilitas', 'status' => true, 'sort_order' => 4],
+                ['name' => 'Teknologi', 'status' => true, 'sort_order' => 5],
+                ['name' => 'Olahraga', 'status' => true, 'sort_order' => 6],
+                ['name' => 'Kesenian', 'status' => true, 'sort_order' => 7],
+                ['name' => 'Kemahasiswaan', 'status' => true, 'sort_order' => 8],
+                ['name' => 'Penelitian', 'status' => true, 'sort_order' => 9],
+                ['name' => 'Layanan Umum', 'status' => true, 'sort_order' => 10],
+                ['name' => 'Lainnya', 'status' => true, 'sort_order' => 11],
+            ];
+            
+            foreach ($dummyTypes as $type) {
+                UnitType::create($type);
+            }
+            
+            $this->command->info('✅ UnitType dummy berhasil dibuat!');
+        }
+        
         $unitTypes = UnitType::all();
         $units = [];
         
         $gedungList = ['Rektorat', 'Teknik', 'Perpustakaan', 'Sains', 'Ekonomi', 'Hukum', 'Kedokteran', 'Bahasa', 'Seni', 'Olahraga', 'Teknologi', 'FISIP', 'Pasca Sarjana'];
         $fakultasList = ['Teknik', 'Sains', 'Ekonomi', 'Hukum', 'Kedokteran', 'Psikologi', 'Bahasa', 'Seni', 'Pertanian', 'Teknologi', 'FISIP'];
         $prodiList = ['Informatika', 'Sistem Informasi', 'Teknik Elektro', 'Teknik Mesin', 'Arsitektur', 'Akuntansi', 'Manajemen', 'Hukum', 'Kedokteran Umum', 'Psikologi', 'Sastra Inggris', 'Desain Komunikasi Visual'];
+        $fotoList = [
+            'kesehatan' => ['klinik1.jpg', 'klinik2.jpg', 'klinik3.jpg'],
+            'akademik' => ['akademik1.jpg', 'akademik2.jpg', 'akademik3.jpg'],
+            'fasilitas' => ['fasilitas1.jpg', 'fasilitas2.jpg', 'fasilitas3.jpg'],
+            'teknologi' => ['teknologi1.jpg', 'teknologi2.jpg', 'teknologi3.jpg'],
+            'olahraga' => ['olahraga1.jpg', 'olahraga2.jpg', 'olahraga3.jpg'],
+            'kesenian' => ['seni1.jpg', 'seni2.jpg', 'seni3.jpg'],
+            'administrasi' => ['admin1.jpg', 'admin2.jpg', 'admin3.jpg']
+        ];
         
-        // Buat mapping name => id dari unit types
         $unitTypeNames = [];
         foreach ($unitTypes as $type) {
             $unitTypeNames[$type->name] = $type->id;
+        }
+
+        if (empty($unitTypeNames)) {
+            $this->command->error('❌ UnitType masih kosong setelah dibuat ulang!');
+            return;
         }
 
         for ($i = 1; $i <= 60; $i++) {
@@ -30,13 +67,20 @@ class UnitSeeder extends Seeder
             $gedung = $gedungList[array_rand($gedungList)];
             $lantai = rand(1, 8);
             $kapasitas = rand(20, 500);
-            $status = rand(0, 4) > 0;
+            $statusAktif = rand(0, 4) > 0;
+            $status = $this->generateUnitStatus($typeName, $statusAktif);
             
             $nama = $this->generateUnitName($typeName, $i, $fakultasList, $prodiList, $gedungList);
             $deskripsi = $this->generateDescription($typeName, $nama, $gedung);
             
             $jamBuka = $this->generateJamBuka($typeName);
             $jamTutup = $this->generateJamTutup($typeName);
+            
+            $fotoUnit = null;
+            $jenisUnitKey = strtolower($typeName);
+            if (isset($fotoList[$jenisUnitKey]) && rand(0, 3) > 0) {
+                $fotoUnit = 'units/' . $fotoList[$jenisUnitKey][array_rand($fotoList[$jenisUnitKey])];
+            }
             
             $units[] = [
                 'kode_unit' => 'U' . str_pad($i, 3, '0', STR_PAD_LEFT),
@@ -51,33 +95,49 @@ class UnitSeeder extends Seeder
                 'jam_buka' => $jamBuka,
                 'jam_tutup' => $jamTutup,
                 'kapasitas' => $kapasitas,
-                'status_aktif' => $status,
+                'status_aktif' => $statusAktif,
+                'status' => $status,
+                'foto_unit' => $fotoUnit,
                 'metadata' => json_encode(['created_by' => 'seeder', 'unit_type' => $typeName]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
         }
         
-        foreach ($units as $unit) {
-            Unit::create($unit);
+        foreach (array_chunk($units, 20) as $chunk) {
+            Unit::insert($chunk);
         }
         
         $this->command->info('✅ 60 units berhasil di-seed!');
     }
     
-    private function determineType($unitTypeNames)
+    private function generateUnitStatus($typeName, $statusAktif)
     {
-        // Match dengan key yang ada di $unitTypeNames
-        $weights = [];
-        
-        // Cek tipe apa saja yang ada di database
-        foreach (array_keys($unitTypeNames) as $typeName) {
-            $weights[$typeName] = $this->getWeightForType($typeName);
+        if (!$statusAktif) {
+            return 'closed';
         }
         
-        // Jika weights kosong, beri default
-        if (empty($weights)) {
-            return array_values($unitTypeNames)[0] ?? null;
+        $weights = ['open' => 70, 'full' => 15, 'maintenance' => 10, 'closed' => 5];
+        $total = array_sum($weights);
+        $rand = rand(1, $total);
+        $current = 0;
+        
+        foreach ($weights as $status => $weight) {
+            $current += $weight;
+            if ($rand <= $current) {
+                return $status;
+            }
+        }
+        
+        return 'open';
+    }
+    
+    private function determineType($unitTypeNames)
+    {
+        $weights = [];
+        
+        foreach (array_keys($unitTypeNames) as $typeName) {
+            $weights[$typeName] = $this->getWeightForType($typeName);
         }
         
         $total = array_sum($weights);
@@ -91,7 +151,6 @@ class UnitSeeder extends Seeder
             }
         }
         
-        // Fallback ke tipe pertama
         return array_values($unitTypeNames)[0];
     }
     
@@ -111,7 +170,7 @@ class UnitSeeder extends Seeder
             'Lainnya' => 3,
         ];
         
-        return $weights[$typeName] ?? 5; // Default 5 untuk tipe yang tidak terdaftar
+        return $weights[$typeName] ?? 5;
     }
     
     private function generateUnitName($typeName, $index, $fakultasList, $prodiList, $gedungList)

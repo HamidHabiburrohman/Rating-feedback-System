@@ -1,8 +1,7 @@
-@extends('layouts.admin')
+@extends('layouts.admin.app')
 
-@section('content')
+@section('admin-content')
     <div class="container-fluid px-4 py-4">
-        <!-- Hero Section - Centered -->
         <div class="mb-6 text-center">
             <div class="d-inline-flex align-items-start gap-5 mb-4">
                 <a href="{{ route('admin.units.index') }}"
@@ -18,6 +17,108 @@
                     <div class="d-flex align-items-center gap-3 mb-2 justify-content-center">
                         <h1 class="h3 fw-bold mb-3" style="color: #111827;">{{ $unit->nama_unit }}</h1>
                     </div>
+
+                    @if($unit->foto_unit)
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-center">
+                                <div class="unit-photo-container" style="position: relative; max-width: 400px;">
+                                    <img src="{{ asset('storage/' . $unit->foto_unit) }}" alt="{{ $unit->nama_unit }}"
+                                        class="unit-photo img-fluid rounded-3"
+                                        style="border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); max-height: 300px; object-fit: cover; width: 100%;">
+
+                                    <div class="unit-photo-overlay rounded-3"
+                                        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                                                border-radius: 16px; background: linear-gradient(to bottom, transparent 70%, rgba(0,0,0,0.1));">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-center">
+                                @php
+                                    $icon = match ($unit->jenis_unit ?? 'default') {
+                                        'kesehatan', 'Kesehatan' => 'health',
+                                        'akademik', 'Akademik' => 'academic',
+                                        'fasilitas', 'Fasilitas' => 'facility',
+                                        'teknologi', 'Teknologi' => 'technology',
+                                        'olahraga', 'Olahraga' => 'sports',
+                                        'kesenian', 'Kesenian' => 'art',
+                                        'administrasi', 'Administrasi' => 'administration',
+                                        default => 'general'
+                                    };
+                                @endphp
+
+                                <div class="unit-photo-placeholder rounded-3 d-flex flex-column align-items-center justify-content-center"
+                                    style="width: 100%; max-width: 400px; height: 250px; 
+                                            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                                            border-radius: 16px; border: 2px dashed #d1d5db;">
+
+                                    @if($icon === 'health')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#10b981" stroke-width="1.5">
+                                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                                        </svg>
+                                    @elseif($icon === 'academic')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#3b82f6" stroke-width="1.5">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                        </svg>
+                                    @elseif($icon === 'facility')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#8b5cf6" stroke-width="1.5">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <circle cx="8.5" cy="8.5" r="1.5" />
+                                            <polyline points="21 15 16 10 5 21" />
+                                        </svg>
+                                    @elseif($icon === 'technology')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#f59e0b" stroke-width="1.5">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                            <line x1="8" y1="21" x2="16" y2="21" />
+                                            <line x1="12" y1="17" x2="12" y2="21" />
+                                        </svg>
+                                    @elseif($icon === 'sports')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#ef4444" stroke-width="1.5">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
+                                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                                        </svg>
+                                    @elseif($icon === 'art')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#ec4899" stroke-width="1.5">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                                            <line x1="9" y1="9" x2="9.01" y2="9" />
+                                            <line x1="15" y1="9" x2="15.01" y2="9" />
+                                        </svg>
+                                    @elseif($icon === 'administration')
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#6366f1" stroke-width="1.5">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        </svg>
+                                    @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                            fill="none" stroke="#6b7280" stroke-width="1.5">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                            <line x1="3" y1="9" x2="21" y2="9" />
+                                            <line x1="9" y1="21" x2="9" y2="9" />
+                                        </svg>
+                                    @endif
+
+                                    <span class="mt-3 text-muted" style="font-size: 0.875rem;">
+                                        Tidak ada foto unit
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="d-flex align-items-center gap-3 justify-content-center" style="font-size: 0.875rem;">
                         <div
                             class="status-indicator {{ $unit->status_aktif ? 'active' : 'inactive' }} d-flex align-items-center gap-1">
@@ -49,14 +150,11 @@
             </div>
         @endif
 
-        <!-- Single Column Layout -->
         <div class="mx-auto" style="max-width: 800px;">
-            <!-- Key Metrics Grid -->
             <div class="row g-4 mb-7">
                 @if($unit->kapasitas)
                     <div class="col-md-4">
                         <div class="card-base p-4 text-center">
-                            <!-- Icon Kapasitas -->
                             <div class="d-flex justify-content-center mb-3">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center"
                                     style="width: 48px; height: 48px; background-color: #eff6ff;">
@@ -80,7 +178,6 @@
 
                 <div class="col-md-4">
                     <div class="card-base p-4 text-center">
-                        <!-- Icon Lokasi -->
                         <div class="d-flex justify-content-center mb-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 48px; height: 48px; background-color: #f0fdf4;">
@@ -107,7 +204,6 @@
 
                 <div class="col-md-4">
                     <div class="card-base p-4 text-center">
-                        <!-- Icon Kontak -->
                         <div class="d-flex justify-content-center mb-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center"
                                 style="width: 48px; height: 48px; background-color: #fef3c7;">
@@ -132,7 +228,6 @@
                 </div>
             </div>
 
-            <!-- Description -->
             <div class="mb-7">
                 <h3 class="h5 fw-semibold mb-4" style="color: #374151;">Deskripsi Unit</h3>
                 <div class="description-box p-5" style="background-color: #f9fafb;">
@@ -142,12 +237,10 @@
                 </div>
             </div>
 
-            <!-- Details Grid -->
             <div class="mb-6">
                 <h3 class="h5 fw-semibold mb-4" style="color: #374151;">Detail Informasi</h3>
 
                 <div class="row g-4">
-                    <!-- Spesifikasi -->
                     <div class="col-md-6">
                         <div class="card-base p-4">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -181,7 +274,6 @@
                         </div>
                     </div>
 
-                    <!-- Lokasi -->
                     <div class="col-md-6">
                         <div class="card-base p-4">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -220,7 +312,6 @@
                         </div>
                     </div>
 
-                    <!-- Kontak -->
                     <div class="col-md-6">
                         <div class="card-base p-4">
                             <div class="d-flex align-items-center gap-2 mb-3">
@@ -256,7 +347,6 @@
                         </div>
                     </div>
 
-                    <!-- Jam Operasional -->
                     @if($unit->jam_buka || $unit->jam_tutup)
                         <div class="col-md-6">
                             <div class="card-base p-4">
@@ -298,7 +388,6 @@
             </div>
         </div>
     </div>
-    </div>
 
     <style>
         :root {
@@ -317,7 +406,6 @@
             border-radius: 12px;
             transition: all .2s ease;
         }
-
 
         .text-main {
             color: var(--text-main);
@@ -383,7 +471,6 @@
             border-color: var(--primary);
         }
 
-
         .btn-back {
             width: 40px;
             height: 40px;
@@ -392,15 +479,35 @@
             transition: all .2s ease;
         }
 
+        .unit-photo {
+            transition: all 0.3s ease;
+        }
+
+        .unit-photo:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .unit-photo-placeholder {
+            transition: all 0.3s ease;
+        }
+
+        .unit-photo-placeholder:hover {
+            border-color: #9ca3af;
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        }
 
         @media (max-width:768px) {
             .mx-auto {
                 max-width: 100% !important;
                 padding: 0 16px;
             }
+
+            .unit-photo-container {
+                max-width: 100% !important;
+            }
         }
     </style>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

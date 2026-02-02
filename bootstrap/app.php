@@ -13,9 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
-        
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'auth' => \App\Http\Middleware\Authenticate::class,
             'guest.rate_limit' => \App\Http\Middleware\GuestRateLimit::class,
             'visitor.cooldown' => \App\Http\Middleware\VisitorCooldown::class,
             'unit.access' => \App\Http\Middleware\UnitAccessMiddleware::class,
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // HAPUS BARIS INI: \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
         $middleware->appendToGroup('api', [

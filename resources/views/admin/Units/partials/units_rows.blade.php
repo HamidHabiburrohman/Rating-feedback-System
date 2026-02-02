@@ -21,13 +21,29 @@
 
             <td>
                 <span class="badge rounded-pill bg-light text-dark border px-3">
-                    {{ $unit->jenis_unit ?? 'N/A' }}
+                    {{ $unit->unitType->name ?? 'N/A' }}
                 </span>
             </td>
 
             <td>
-                <span class="badge rounded-pill px-3 {{ $status['class'] }}">
-                    {{ $status['label'] }}
+                @php
+                    $statusColors = [
+                        'open' => 'bg-success-subtle text-success',
+                        'full' => 'bg-warning-subtle text-warning',
+                        'maintenance' => 'bg-info-subtle text-info',
+                        'closed' => 'bg-danger-subtle text-danger'
+                    ];
+                    $statusLabels = [
+                        'open' => 'Open',
+                        'full' => 'Full',
+                        'maintenance' => 'Maintenance',
+                        'closed' => 'Closed'
+                    ];
+                    $statusClass = $statusColors[$unit->status] ?? 'bg-secondary-subtle text-secondary';
+                    $statusLabel = $statusLabels[$unit->status] ?? $unit->status;
+                @endphp
+                <span class="badge rounded-pill px-3 {{ $statusClass }}">
+                    {{ $statusLabel }}
                 </span>
             </td>
 
@@ -68,8 +84,7 @@
 
                     <button type="button"
                         class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-delete"
-                        data-bs-toggle="tooltip" data-bs-title="Delete Unit"
-                        onclick="openModal('deleteModal{{ $unit->id }}')">
+                        data-bs-toggle="tooltip" data-bs-title="Delete Unit" onclick="openModal('deleteModal{{ $unit->id }}')">
                         <div class="pulse-ring"></div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -81,57 +96,9 @@
                     </button>
                 </div>
 
-                <div class="custom-modal" id="deleteModal{{ $unit->id }}">
-                    <div class="custom-modal-backdrop" onclick="closeModal('deleteModal{{ $unit->id }}')"></div>
-                    <div class="custom-modal-dialog">
-                        <div class="custom-modal-content">
-                            <div class="custom-modal-header">
-                                <div class="header-content">
-                                    <div class="warning-icon-container">
-                                        <svg class="warning-icon" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                        </svg>
-                                    </div>
-                                    <h2 class="modal-title">Delete Account</h2>
-                                    <p class="modal-subtitle">You're going to delete your
-                                        <strong>"{{ $unit->nama_unit }}"</strong>
-                                    </p>
-                                </div>
-                                <button class="modal-close-btn" onclick="closeModal('deleteModal{{ $unit->id }}')">
-                                    <svg viewBox="0 0 24 24" width="20" height="20">
-                                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" />
-                                    </svg>
-                                </button>
-                            </div>
+                <x-delete-modal id="deleteModal{{ $unit->id }}" title="Delete Unit" itemName="{{ $unit->nama_unit }}"
+                    itemType="unit" deleteRoute="{{ route('admin.units.destroy', $unit->id) }}" deleteMethod="DELETE" />
 
-                            <div class="custom-modal-body">
-                                <p class="warning-text">This action cannot be undone. All data associated with this account
-                                    will be permanently deleted.</p>
-                            </div>
-
-                            <div class="custom-modal-footer">
-                                <div class="footer-buttons">
-                                    <button class="btn-cancel" onclick="closeModal('deleteModal{{ $unit->id }}')">
-                                        No, keep it.
-                                    </button>
-                                    <form method="POST" action="{{ route('admin.units.destroy', $unit->id) }}"
-                                        class="delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-delete">
-                                            <span class="btn-text">Yes, Delete!</span>
-                                            <span class="loading-spinner" style="display: none;"></span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
             </td>
         </tr>
     @endforeach
@@ -451,11 +418,11 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const deleteForms = document.querySelectorAll('.delete-form');
 
         deleteForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 const submitButton = this.querySelector('.btn-delete');
                 const buttonText = submitButton.querySelector('.btn-text');
@@ -471,7 +438,7 @@
             });
         });
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const openModalEl = document.querySelector('.custom-modal.show');
                 if (openModalEl) {
