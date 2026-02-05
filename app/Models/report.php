@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Report extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
+        'tracking_code',
         'unit_id',
-        'session_id',
-        'visitor_ip',
+        'visitor_session_id',
         'judul',
         'deskripsi',
         'tipe',
@@ -19,20 +22,19 @@ class Report extends Model
         'status',
         'admin_id',
         'tanggapan_admin',
-        'ditanggapi_pada',
-        'lampiran'
+        'ditanggapi_pada'
     ];
 
     protected $casts = [
-        'lampiran' => 'array',
-        'ditanggapi_pada' => 'datetime'
+        'ditanggapi_pada' => 'datetime',
+        'created_at' => 'datetime'
     ];
 
     protected $appends = ['prioritas_warna', 'tipe_label', 'status_label'];
 
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(Unit::class, 'unit_id');
     }
 
     public function admin(): BelongsTo
@@ -60,9 +62,8 @@ class Report extends Model
                 'masalah' => 'Masalah',
                 'saran' => 'Saran',
                 'keluhan' => 'Keluhan',
-                'pujian' => 'Pujian',
                 'lainnya' => 'Lainnya',
-                default => $this->tipe
+                default => ucfirst($this->tipe)
             }
         );
     }
@@ -75,7 +76,7 @@ class Report extends Model
                 'diproses' => 'Diproses',
                 'selesai' => 'Selesai',
                 'ditolak' => 'Ditolak',
-                default => $this->status
+                default => ucfirst($this->status)
             }
         );
     }
@@ -85,7 +86,7 @@ class Report extends Model
         return $query->when($search, function ($q) use ($search) {
             $q->where('judul', 'like', "%{$search}%")
               ->orWhere('deskripsi', 'like', "%{$search}%")
-              ->orWhere('visitor_ip', 'like', "%{$search}%");
+              ->orWhere('tracking_code', 'like', "%{$search}%");
         });
     }
 

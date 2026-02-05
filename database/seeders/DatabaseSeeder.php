@@ -9,15 +9,15 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            AdminUserSeeder::class,
-            UnitTypeSeeder::class,
-            UnitSeeder::class,
-            RatingCategorySeeder::class,
+            AdminUserSeeder::class,         // 1. User/Admin dulu (dibutuhkan Report & Rating)
+            UnitTypeSeeder::class,          // 2. Tipe Unit (dibutuhkan Unit)
+            UnitSeeder::class,              // 3. Unit (dibutuhkan Report & Visit)
+            VisitorSessionSeeder::class,    // 4. Session (dibutuhkan Report & Visit)
+            ReportSeeder::class,            // 5. Report (butuh Admin, Unit, Session)
+            UnitVisitSeeder::class,         // 6. Visit (butuh Unit & Session)
+            RatingCategorySeeder::class,    // 7. Kategori Rating
+            RatingSeeder::class,            // 8. Rating (biasanya butuh Unit/Report & Session)
             PersonalAccessTokenSeeder::class,
-            EmployeeSeeder::class,
-            MessagesSeeder::class,
-            RatingSeeder::class,
-            ReportSeeder::class
         ]);
     }
 }

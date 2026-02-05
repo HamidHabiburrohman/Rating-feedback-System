@@ -28,7 +28,7 @@
                 <div class="d-flex align-items-center gap-2">
                     @if(!($hidePerPage ?? false))
                         <div class="dropdown">
-                            <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                            <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                                 type="button" data-bs-toggle="dropdown"
                                 style="height: 44px; background-color: white; border-color: #d1d5db;">
                                 <span class="fw-medium">{{ request('per_page', 10) }}</span>
@@ -50,6 +50,75 @@
                         </div>
                     @endif
 
+                    <div class="dropdown" id="filterContainer">
+                        <button
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown" id="filterDropdown"
+                            style="height:44px;background:white;border-color:#d1d5db;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                            </svg>
+                            <span class="fw-medium" id="filterText">Filter</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 overflow-hidden mt-2"
+                            style="min-width: 300px; background-color: #ffffff;">
+                            <div class="p-3">
+                                <!-- STATUS FILTER -->
+                                <div class="mb-1">
+                                    <label class="small fw-bold text-uppercase mb-2 mt-2 d-block"
+                                        style="color: #6b7280; letter-spacing: 0.05em;">Status</label>
+                                    <div class="d-flex flex-wrap gap-2" id="statusFilter">
+                                        @php
+                                        $activeStyle = 'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;';
+                                        $inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
+                                        $currentStatus = request('status') ? explode(',', request('status')) : [];
+                                        @endphp
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
+                                            data-value=""
+                                            style="{{ empty($currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            All
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
+                                            data-value="active"
+                                            style="{{ in_array('active', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Active
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
+                                            data-value="inactive"
+                                            style="{{ in_array('inactive', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                            Inactive
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 border-top d-flex gap-2 bg-white">
+                                @php
+                                $resetStyle = 'background: white; border: 1px solid #d1d5db; color: #4b5563;';
+                                $applyStyle = 'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;';
+                                @endphp
+                                <button type="button" id="resetFilter"
+                                    class="btn btn-sm rounded-pill w-100 fw-semibold d-flex align-items-center justify-content-center"
+                                    style="height: 40px; {{ $resetStyle }} transition: all 0.2s;">
+                                    Reset
+                                </button>
+                                <button type="button" id="applyFilter"
+                                    class="btn btn-sm rounded-pill w-100 fw-semibold"
+                                    style="height: 40px; {{ $applyStyle }} transition: all 0.2s;">
+                                    Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SORT BUTTON - UPDATE STYLE -->
                     <div class="dropdown" id="sortDropdown">
                         @php
                             $currentSort = request('sort', 'sort_order');
@@ -67,9 +136,10 @@
                             $buttonText = $sortTexts[$currentSortKey] ?? 'Sort';
                         @endphp
 
-                        <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm dropdown-toggle-btn"
+                        <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown"
                             style="height: 44px; background-color: white; border-color: #d1d5db;">
+
                             <span class="fw-medium">{{ $buttonText }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
@@ -78,7 +148,7 @@
                         </button>
                         <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
                             <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'asc' ? 'active bg-light text-primary fw-bold' : '' }}"
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'asc' ? 'active' : '' }}"
                                     href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'asc', 'page' => 1]) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
@@ -88,7 +158,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'desc' ? 'active bg-light text-primary fw-bold' : '' }}"
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'desc' ? 'active' : '' }}"
                                     href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'desc', 'page' => 1]) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
@@ -98,7 +168,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active bg-light text-primary fw-bold' : '' }}"
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active' : '' }}"
                                     href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'desc', 'page' => 1]) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
@@ -108,7 +178,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active bg-light text-primary fw-bold' : '' }}"
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active' : '' }}"
                                     href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'asc', 'page' => 1]) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
@@ -118,7 +188,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'sort_order' ? 'active bg-light text-primary fw-bold' : '' }}"
+                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'sort_order' ? 'active' : '' }}"
                                     href="{{ request()->fullUrlWithQuery(['sort' => 'sort_order', 'order' => 'asc', 'page' => 1]) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
@@ -130,9 +200,10 @@
                         </ul>
                     </div>
 
+                    <!-- CREATE BUTTON - UPDATE STYLE SAMA DENGAN UNIT -->
                     <a href="{{ route('admin.unit-types.create') }}"
                         class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2 shadow-sm"
-                        style="height: 44px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none;">
+                        style="height: 44px; background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="white" stroke-width="2.5">
                             <path d="M12 5v14M5 12h14" />
@@ -227,216 +298,7 @@
         </div>
     </div>
 
-    <style>
-        .btn {
-            transition: all 0.2s ease;
-            border-radius: 50px;
-            font-weight: 500;
-        }
 
-        .btn-outline-primary,
-        .btn-outline-secondary {
-            border: 1px solid #d1d5db;
-        }
 
-        .btn-outline-primary:hover {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        .btn-outline-danger:hover {
-            background-color: #dc2626;
-            border-color: #dc2626;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
-        }
-
-        .status-toggle.btn-success {
-            background-color: #10b981;
-            border-color: #10b981;
-            color: white;
-        }
-
-        .status-toggle.btn-outline-secondary {
-            background-color: transparent;
-            color: #6b7280;
-        }
-
-        .table {
-            --bs-table-bg: transparent;
-            --bs-table-striped-bg: rgba(59, 130, 246, 0.02);
-            --bs-table-hover-bg: rgba(59, 130, 246, 0.04);
-        }
-
-        .table> :not(:first-child) {
-            border-top: 2px solid #e5e7eb;
-        }
-
-        .card {
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-
-        .dropdown-item {
-            color: #374151 !important;
-            transition: all 0.15s ease;
-        }
-
-        .dropdown-item:hover,
-        .dropdown-item:focus {
-            color: #1f2937 !important;
-            background-color: #f9fafb;
-            transform: translateX(2px);
-        }
-
-        .dropdown-item.active {
-            background-color: #f3f4f6 !important;
-            color: #2563eb !important;
-        }
-
-        #searchInput {
-            border-color: #d1d5db !important;
-            transition: all 0.2s ease;
-        }
-
-        #searchInput:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-            outline: none;
-        }
-
-        .rotate-180 {
-            transform: rotate(180deg);
-        }
-
-        .sort-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .per-page-hidden {
-            display: none !important;
-        }
-
-        .dropdown-toggle::after {
-            color: #6b7280;
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            initIcons();
-
-            const searchInput = document.getElementById('searchInput');
-            let searchTimeout;
-
-            if (searchInput) {
-                searchInput.addEventListener('input', function () {
-                    clearTimeout(searchTimeout);
-
-                    searchTimeout = setTimeout(() => {
-                        const url = new URL(window.location.href);
-
-                        if (this.value) {
-                            url.searchParams.set('search', this.value);
-                        } else {
-                            url.searchParams.delete('search');
-                        }
-
-                        url.searchParams.set('page', '1');
-                        window.location.href = url.toString();
-                    }, 500);
-                });
-            }
-
-            document.querySelectorAll('.status-toggle').forEach(button => {
-                button.addEventListener('click', function () {
-                    const form = this.closest('.toggle-status-form');
-                    const typeId = form.dataset.id;
-                    const isActive = this.dataset.active === 'true';
-
-                    fetch(`/admin/unit-types/${typeId}/toggle-status`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        }
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (!data.success) return;
-
-                            this.dataset.active = !isActive;
-
-                            if (!isActive) {
-                                this.classList.remove('btn-outline-secondary');
-                                this.classList.add('btn-success');
-                                this.textContent = 'Active';
-                            } else {
-                                this.classList.remove('btn-success');
-                                this.classList.add('btn-outline-secondary');
-                                this.textContent = 'Inactive';
-                            }
-                        });
-                });
-            });
-
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            const deleteForm = document.getElementById('deleteForm');
-            const deleteModalText = document.getElementById('deleteModalText');
-
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const id = this.dataset.id;
-                    const name = this.dataset.name;
-
-                    deleteModalText.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
-
-                    deleteForm.action = `/admin/unit-types/${id}`;
-                    deleteModal.show();
-                });
-            });
-
-            const dropdown = document.getElementById('sortDropdown');
-
-            if (dropdown) {
-                const toggle = dropdown.querySelector('.sort-toggle');
-                const icon = dropdown.querySelector('.sort-icon');
-
-                dropdown.addEventListener('show.bs.dropdown', function () {
-                    icon.classList.add('rotate-180');
-                });
-
-                dropdown.addEventListener('hide.bs.dropdown', function () {
-                    icon.classList.remove('rotate-180');
-                });
-            }
-        });
-
-        function initIcons() {
-            document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
-                const icon = btn.querySelector('.dropdown-icon');
-
-                if (!icon) return;
-
-                btn.addEventListener('show.bs.dropdown', () => {
-                    icon.style.transform = 'rotate(180deg)';
-                });
-
-                btn.addEventListener('hide.bs.dropdown', () => {
-                    icon.style.transform = 'rotate(0)';
-                });
-            });
-        }
-    </script>
+    <script src="{{ asset("assets/js/unit-type.js") }}"></script>
 @endsection

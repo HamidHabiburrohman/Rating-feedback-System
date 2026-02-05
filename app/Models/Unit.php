@@ -91,4 +91,15 @@ class Unit extends Model
     {
         return $this->unitType->name ?? null;
     }
+    public function ratingScores()
+    {
+        return $this->hasManyThrough(
+            RatingScore::class,
+            Rating::class,
+            'unit_id', 
+            'rating_id', 
+            'id', 
+            'id' 
+        );
+    }
 }

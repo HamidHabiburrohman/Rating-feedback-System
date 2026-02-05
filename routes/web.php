@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -31,12 +33,12 @@ Route::prefix('visitor')->name('visitor.')->group(function () {
     Route::get('/rate/{unit}', function ($unitCode) {
         return view('visitor.rate', ['unitCode' => $unitCode]);
     })->name('rate');
-    
+
     // Halaman thank you setelah submit rating
     Route::get('/thank-you', function () {
         return view('visitor.thank-you');
     })->name('thank-you');
-    
+
     // Browse units available
     Route::get('/browse', function () {
         return view('visitor.browse');
@@ -56,7 +58,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/admin/login', function () {
         return view('admin.auth.login');
     })->name('admin.login');
-    
+
     // Proses login admin
     Route::post('/admin/login', [LoginController::class, 'login'])->name('admin.login.submit');
 });
@@ -71,12 +73,24 @@ Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 | Routes yang hanya bisa diakses oleh admin yang sudah login
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
+
     // Dashboard admin
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
-    
+
+
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+        Route::get('/charts', [DashboardController::class, 'charts'])->name('dashboard.charts');
+        Route::get('/overview', [DashboardController::class, 'overview'])->name('dashboard.overview');
+    });
+
+
+    Route::get('reports/export', [ExportController::class, 'exportReports'])->name('reports.export');
+    Route::get('ratings/export', [ExportController::class, 'exportRatings'])->name('ratings.export');
+    Route::get('units/export', [ExportController::class, 'exportUnits'])->name('units.export');
+    Route::get('unit-types/export', [ExportController::class, 'exportUnitTypes'])->name('unit-types.export');
     /*
     |--------------------------------------------------------------------------
     | UNIT TYPE MANAGEMENT ROUTES
@@ -93,8 +107,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{unit_type}', [UnitTypeController::class, 'destroy'])->name('destroy');
         Route::post('/{unit_type}/toggle-status', [UnitTypeController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/reorder', [UnitTypeController::class, 'reorder'])->name('reorder');
+        Route::post('unit-types/{id}/toggle-status', [UnitTypeController::class, 'toggleStatus'])
+            ->name('unit-types.toggle-status');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | UNIT MANAGEMENT ROUTES
@@ -111,8 +127,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('/{unit}', [UnitController::class, 'destroy'])->name('destroy');
         Route::post('/{unit}/toggle-status', [UnitController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/{unit}/categories', [UnitController::class, 'categories'])->name('categories');
+
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | RATING MANAGEMENT ROUTES
@@ -130,8 +147,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/analytics', [RatingController::class, 'analytics'])->name('analytics');
         Route::get('/export', [RatingController::class, 'export'])->name('export');
         Route::get('/stats', [RatingController::class, 'getStats'])->name('stats');
+        Route::put('/admin/ratings/{id}/status', [RatingController::class, 'updateStatus'])->name('update-status');
+        Route::post('/admin/ratings/{id}/reply', [RatingController::class, 'reply'])->name('reply');
+        Route::get('ratings/{id}/reply', [RatingController::class, 'replyPage'])->name('reply-page');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | REPORT MANAGEMENT ROUTES
@@ -148,34 +168,34 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{report}/update-status', [ReportController::class, 'updateStatus'])->name('update-status');
         Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | OTHER ADMIN MODULES
     |--------------------------------------------------------------------------
     | Modul tambahan untuk admin
     */
-    
+
     // Analytics dashboard
     Route::get('/analytics', function () {
         return view('admin.analytics.index');
     })->name('analytics.index');
-    
+
     // Export data
     Route::get('/export', function () {
         return view('admin.export.index');
     })->name('export.index');
-    
+
     // User management
     Route::get('/users', function () {
         return view('admin.users.index');
     })->name('users.index');
-    
+
     // Settings
     Route::get('/settings', function () {
         return view('admin.settings.index');
     })->name('settings.index');
-    
+
     // Audit logs
     Route::get('/audit-logs', function () {
         return view('admin.audit-logs.index');
@@ -192,7 +212,7 @@ Route::prefix('docs')->name('docs.')->group(function () {
     Route::get('/', function () {
         return view('docs.index');
     })->name('index');
-    
+
     Route::get('/api', function () {
         return view('docs.api');
     })->name('api');
@@ -202,7 +222,7 @@ Route::prefix('help')->name('help.')->group(function () {
     Route::get('/', function () {
         return view('help.index');
     })->name('index');
-    
+
     Route::get('/faq', function () {
         return view('help.faq');
     })->name('faq');
@@ -218,7 +238,7 @@ Route::prefix('contact')->name('contact.')->group(function () {
     Route::get('/', function () {
         return view('contact.index');
     })->name('index');
-    
+
     Route::get('/support', function () {
         return view('contact.support');
     })->name('support');

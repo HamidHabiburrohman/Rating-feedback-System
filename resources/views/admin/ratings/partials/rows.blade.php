@@ -39,9 +39,10 @@
         </td>
 
         <td class="text-center pe-4">
-            <div class="d-flex justify-content-center gap-1">
+            <div class="d-flex justify-content-center align-items-center gap-1">
+                <!-- View Details -->
                 <a href="{{ route('admin.ratings.show', $rating->id) }}"
-                    class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn"
+                    class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-show"
                     data-bs-toggle="tooltip" data-bs-title="View Details">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -50,10 +51,12 @@
                     </svg>
                 </a>
 
+                <!-- Reply Button - Show for pending ratings -->
                 @if($rating->status === 'pending')
                     <button type="button"
-                        class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn"
-                        data-bs-toggle="tooltip" data-bs-title="Respond">
+                        class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-reply"
+                        data-bs-toggle="tooltip" data-bs-title="Reply Rating"
+                        onclick="openModal('replyModalRating{{ $rating->id }}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -61,11 +64,11 @@
                     </button>
                 @endif
 
+                <!-- Delete Button -->
                 <button type="button"
                     class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center action-btn btn-trigger-delete"
-                    data-bs-toggle="tooltip" data-bs-title="Delete Rating"
-                    onclick="openModal('deleteModalRating{{ $rating->id }}')">
-                    <div class="pulse-ring"></div>
+                    onclick="openModal('deleteModalRating{{ $rating->id }}')" data-bs-toggle="tooltip"
+                    data-bs-title="Delete Rating">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -74,350 +77,99 @@
                         <line x1="14" y1="11" x2="14" y2="17"></line>
                     </svg>
                 </button>
-
-                <x-delete-modal id="deleteModalRating{{ $rating->id }}" title="Delete Rating" itemName="Rating from Visitor"
-                    itemType="rating" deleteRoute="{{ route('admin.ratings.destroy', $rating->id) }}"
-                    deleteMethod="DELETE" />
             </div>
         </td>
     </tr>
+
+    <!-- Modal Balas Rating - Landscape Version -->
+    <div class="custom-modal" id="replyModalRating{{ $rating->id }}">
+        <div class="custom-modal-backdrop" onclick="closeModal('replyModalRating{{ $rating->id }}')"></div>
+        <div class="custom-modal-dialog" style="max-width: 500px;">
+            <div class="custom-modal-content">
+                <div class="custom-modal-header">
+                    <button class="modal-close-btn" onclick="closeModal('replyModalRating{{ $rating->id }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="message-icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                            stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="message-icon">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="modal-title">Balas Rating</h2>
+                    <p class="modal-subtitle">Balas komentar dari pengunjung</p>
+                </div>
+
+                <div class="custom-modal-body">
+                    <form action="{{ route('admin.ratings.reply', $rating->id) }}" method="POST" class="reply-form">
+                        @csrf
+
+                        <!-- Unit Info - Compact Layout -->
+                        <div class="mb-4 p-3 rounded-3" style="background-color: #f9fafb; border: 1px solid #e5e7eb;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold mb-1" style="color: #1a1a1a;">
+                                        {{ $rating->unit->nama_unit ?? 'N/A' }}
+                                    </div>
+                                    <div class="text-muted small">Kode: {{ $rating->unit->kode_unit ?? 'N/A' }}</div>
+                                </div>
+                                <div>
+                                    <span class="badge rounded-pill px-3 bg-warning-subtle text-warning">
+                                        {{ ucfirst($rating->status) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Original Comment - More Compact -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium mb-2 d-flex align-items-center gap-1">
+                                Komentar Pengunjung
+                            </label>
+                            <div class="p-3 rounded-3"
+                                style="background-color: #f9fafb; border: 1px solid #e5e7eb; min-height: 60px;">
+                                <p class="mb-0" style="line-height: 1.5;">
+                                    {{ $rating->komentar ?: 'Tidak ada komentar' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Reply Textarea -->
+                        <div class="mb-1">
+                            <label for="reply_message_{{ $rating->id }}"
+                                class="form-label fw-medium mb-2 d-flex align-items-center gap-1">
+                                Balasan Anda
+                            </label>
+                            <textarea class="form-control rounded-3" id="reply_message_{{ $rating->id }}"
+                                name="reply_message" rows="3" placeholder="Tulis balasan Anda di sini..."
+                                style="border: 1px solid #e5e7eb; resize: vertical; min-height: 80px;"></textarea>
+                        </div>
+
+                        <div class="custom-modal-footer mb-3" style="border-top: 0; padding: 24px 0 0;">
+                            <div class="footer-buttons">
+                                <button type="button" class="btn-cancel"
+                                    onclick="closeModal('replyModalRating{{ $rating->id }}')"
+                                    style="padding: 10px 20px; font-size: 14px;">
+                                    <span class="btn-text">Batal</span>
+                                </button>
+                                <button type="submit" class="btn-submit" style="padding: 10px 20px; font-size: 14px;">
+                                    <span class="btn-text">Kirim Balasan</span>
+                                    <div class="loading-spinner" style="display: none;"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete (existing) -->
+    <x-delete-modal id="deleteModalRating{{ $rating->id }}" title="Delete Rating" :itemName="($rating->unit->nama_unit ?? 'Unknown Unit') . ' Rating'" itemType="rating" :deleteRoute="route('admin.ratings.destroy', $rating->id)"
+        deleteMethod="DELETE" />
 @endforeach
-
-<style>
-    .action-btn {
-        width: 32px;
-        height: 32px;
-        border-color: #d1d5db;
-        color: #6b7280;
-        transition: all 0.2s ease;
-        position: relative;
-        overflow: visible;
-        background: white;
-    }
-
-    .action-btn:hover {
-        background-color: #f3f4f6;
-        color: #111827;
-        border-color: #9ca3af;
-    }
-
-    .btn-trigger-delete:hover {
-        background-color: #fef2f2;
-        border-color: #dc2626;
-        color: #dc2626;
-    }
-
-    .pulse-ring {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .btn-trigger-delete:hover .pulse-ring {
-        animation: rippleEffect 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes rippleEffect {
-        0% {
-            width: 0%;
-            height: 0%;
-            opacity: 0.5;
-        }
-
-        100% {
-            width: 250%;
-            height: 250%;
-            opacity: 0;
-        }
-    }
-
-    .custom-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        visibility: hidden;
-        opacity: 0;
-        transition: visibility 0.3s, opacity 0.3s ease;
-        pointer-events: none;
-    }
-
-    .custom-modal.show {
-        visibility: visible;
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    .custom-modal-backdrop {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(5px);
-    }
-
-    .custom-modal-dialog {
-        position: relative;
-        width: 90%;
-        max-width: 420px;
-        z-index: 10000;
-        margin: auto;
-        transform: scale(0.9) translateY(10px);
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .custom-modal.show .custom-modal-dialog {
-        transform: scale(1) translateY(0);
-    }
-
-    .custom-modal-content {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .custom-modal-header {
-        padding: 32px 28px 16px;
-        position: relative;
-        text-align: center;
-    }
-
-    .warning-icon-container {
-        width: 72px;
-        height: 72px;
-        margin: 0 auto 20px;
-        background: #fee2e2;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #dc2626;
-        animation: iconPulse 2s infinite ease-in-out;
-    }
-
-    .warning-icon {
-        width: 36px;
-        height: 36px;
-        stroke: currentColor;
-        stroke-width: 2;
-        fill: none;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-
-    .modal-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #111827;
-        margin: 0 0 8px;
-        letter-spacing: -0.01em;
-    }
-
-    .modal-subtitle {
-        font-size: 15px;
-        color: #6b7280;
-        margin: 0;
-        line-height: 1.5;
-    }
-
-    .modal-close-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        border: none;
-        background: #f3f4f6;
-        color: #6b7280;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .modal-close-btn:hover {
-        background: #e5e7eb;
-        color: #374151;
-        transform: rotate(90deg);
-    }
-
-    .custom-modal-body {
-        padding: 0 32px;
-    }
-
-    .warning-text {
-        font-size: 14px;
-        color: #6b7280;
-        text-align: center;
-        line-height: 1.6;
-        margin: 0;
-        padding: 0 0 28px;
-    }
-
-    .custom-modal-footer {
-        padding: 20px 32px 32px;
-        background: #f9fafb;
-        border-top: 1px solid #f3f4f6;
-    }
-
-    .footer-buttons {
-        display: flex;
-        gap: 12px;
-    }
-
-    .btn-cancel,
-    .btn-delete {
-        flex: 1;
-        padding: 12px 20px;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .btn-cancel {
-        background: white;
-        color: #374151;
-        border: 1px solid #d1d5db;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .btn-cancel:hover {
-        background: #f9fafb;
-        border-color: #9ca3af;
-    }
-
-    .btn-delete {
-        background: #dc2626;
-        color: white;
-        box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
-    }
-
-    .btn-delete:hover {
-        background: #b91c1c;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(220, 38, 38, 0.4);
-    }
-
-    .loading-spinner {
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top: 2px solid white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes iconPulse {
-
-        0%,
-        100% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.1);
-        }
-
-        50% {
-            transform: scale(1.05);
-        }
-
-        70% {
-            box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
-        }
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @media (max-width: 480px) {
-        .custom-modal-dialog {
-            width: 95%;
-        }
-
-        .footer-buttons {
-            flex-direction: column;
-        }
-
-        .btn-cancel,
-        .btn-delete {
-            width: 100%;
-        }
-    }
-</style>
-
-<script>
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            document.body.style.overflow = 'hidden';
-            modal.classList.add('show');
-        }
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('show');
-            document.body.style.overflow = '';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const deleteForms = document.querySelectorAll('.delete-form');
-
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                const submitButton = this.querySelector('.btn-delete');
-                const buttonText = submitButton.querySelector('.btn-text');
-                const spinner = submitButton.querySelector('.loading-spinner');
-
-                if (submitButton && !submitButton.disabled) {
-                    buttonText.style.display = 'none';
-                    spinner.style.display = 'block';
-                    submitButton.disabled = true;
-                    submitButton.style.opacity = '0.7';
-                    this.submit();
-                }
-            });
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                const openModalEl = document.querySelector('.custom-modal.show');
-                if (openModalEl) {
-                    closeModal(openModalEl.id);
-                }
-            }
-        });
-    });
-</script>

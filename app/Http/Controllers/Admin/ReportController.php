@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateReportRequest;
 use App\Models\Report;
 use App\Models\Unit;
 use App\Services\Admin\ReportService;
+use App\Services\ExportService;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
@@ -22,44 +23,11 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-
         $reports = $this->reportService->getReports($request->all(), $perPage);
-
-        // Debug: Cek pagination
-        \Log::info('Reports Pagination Debug', [
-            'count' => $reports->count(),
-            'total' => $reports->total(),
-            'perPage' => $reports->perPage(),
-            'currentPage' => $reports->currentPage(),
-            'items_count' => count($reports->items()),
-            'request_per_page' => $perPage,
-            'url' => $request->fullUrl()
-        ]);
-
-        // Debug langsung di browser (temporary)
-        if ($request->has('debug')) {
-            dd([
-                'pagination_info' => [
-                    'count' => $reports->count(),
-                    'total' => $reports->total(),
-                    'perPage' => $reports->perPage(),
-                    'currentPage' => $reports->currentPage(),
-                    'lastPage' => $reports->lastPage(),
-                ],
-                'first_few_items' => $reports->take(3)->pluck('id', 'judul'),
-                'request_params' => $request->all()
-            ]);
-        }
-
         $stats = $this->reportService->getStats();
         $units = $this->reportService->getUnitsForFilter();
 
-        return view('admin.reports.index', [
-            'reports' => $reports,
-            'stats' => $stats,
-            'units' => $units,
-            'filters' => $request->only(['search', 'status', 'tipe', 'prioritas', 'unit', 'date_from', 'date_to'])
-        ]);
+        return view('admin.reports.index', compact('reports', 'stats', 'units'));
     }
 
     public function show(Report $report)
@@ -116,8 +84,9 @@ class ReportController extends Controller
         return back()->with('success', 'Status laporan berhasil diperbarui.');
     }
 
-    public function destroy(Report $report)
+    public function destroy($id)
     {
+        $report = Report::findOrFail($id);
         $this->reportService->deleteReport($report);
 
         return redirect()->route('admin.reports.index')
@@ -126,20 +95,34 @@ class ReportController extends Controller
 
     public function export(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'tipe', 'prioritas', 'unit', 'date_from', 'date_to']);
-        $format = $request->input('format', 'excel');
+        $filters = $request->all();
+        $filters['per_page'] = 'all';
 
-        $reports = Report::with(['unit', 'admin'])
-            ->search($filters['search'] ?? null)
-            ->filterByStatus($filters['status'] ?? null)
-            ->filterByTipe($filters['tipe'] ?? null)
-            ->filterByPrioritas($filters['prioritas'] ?? null)
-            ->filterByUnit($filters['unit'] ?? null)
-            ->filterByDate($filters['date_from'] ?? null, $filters['date_to'] ?? null)
-            ->latest()
-            ->get();
+        $reports = $this->reportService->getReports($filters);
 
-        return $this->exportReports($reports, $format);
+        $columns = [
+            'id' => 'ID',
+            'judul' => 'Judul',
+            'deskripsi' => 'Deskripsi',
+            'tipe_label' => 'Tipe',
+            'prioritas_label' => 'Prioritas',
+            'status_label' => 'Status',
+            'unit.nama_unit' => 'Unit',
+            'created_at' => 'Tanggal Dibuat'
+        ];
+
+        $options = [
+            'title' => 'Laporan',
+            'filename' => 'laporan-' . date('Ymd'),
+            'orientation' => 'landscape',
+            'summary' => [
+                'Total Data' => $reports->count(),
+                'Tanggal Export' => now()->format('d/m/Y H:i')
+            ]
+        ];
+
+        $format = $request->get('format', 'excel');
+        return app(ExportService::class)->export($reports, $columns, $options, $format);
     }
 
     private function exportReports($reports, $format)

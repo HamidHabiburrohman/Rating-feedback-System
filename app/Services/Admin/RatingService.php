@@ -4,16 +4,17 @@ namespace App\Services\Admin;
 
 use App\Models\Rating;
 use App\Models\Unit;
+use App\Models\Message;
 use Illuminate\Support\Facades\DB;
 
 class RatingService
 {
     public function getAllRatings($filters = [])
     {
-        $query = Rating::with('unit');
+        $query = Rating::with(['unit', 'visitorSession']);
         
-        if (!empty($filters['unit_id'])) {
-            $query->where('unit_id', $filters['unit_id']);
+        if (!empty($filters['unit'])) {
+            $query->where('unit_id', $filters['unit']);
         }
         
         if (!empty($filters['status'])) {
@@ -39,166 +40,119 @@ class RatingService
             });
         }
         
-        $sort = $filters['sort'] ?? 'created_at';
-        $order = $filters['order'] ?? 'desc';
-        
-        return $query->orderBy($sort, $order);
+        return $query->orderBy($filters['sort'] ?? 'created_at', $filters['order'] ?? 'desc');
     }
 
     public function getRatingStats($unitId = null)
     {
         $query = Rating::query();
-        
-        if ($unitId) {
-            $query->where('unit_id', $unitId);
-        }
+        if ($unitId) $query->where('unit_id', $unitId);
         
         $total = $query->count();
-        $pending = $query->clone()->where('status', 'pending')->count();
-        $responded = $query->clone()->where('status', 'dibalas')->count();
-        $completed = $query->clone()->where('status', 'selesai')->count();
-        
-        // Average rating
-        $avgRating = $this->getAverageRating($unitId);
-        
+        $stats = $query->selectRaw("
+            COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+            COUNT(CASE WHEN status = 'dibalas' THEN 1 END) as dibalas,
+            COUNT(CASE WHEN status = 'selesai' THEN 1 END) as selesai
+        ")->first();
+
         return [
             'total' => $total,
-            'pending' => $pending,
-            'responded' => $responded,
-            'completed' => $completed,
-            'average_rating' => $avgRating
+            'pending' => $stats->pending ?? 0,
+            'dibalas' => $stats->dibalas ?? 0,
+            'selesai' => $stats->selesai ?? 0,
+            'average_rating' => $this->getAverageRating($unitId),
+            'response_rate' => $total > 0 ? round((($stats->dibalas + $stats->selesai) / $total) * 100, 1) : 0
         ];
     }
 
     public function getAverageRating($unitId = null)
     {
         $query = Rating::query();
-        
-        if ($unitId) {
-            $query->where('unit_id', $unitId);
-        }
+        if ($unitId) $query->where('unit_id', $unitId);
         
         $ratings = $query->get();
-        $total = 0;
-        $count = 0;
-        
-        foreach ($ratings as $rating) {
-            $avg = $rating->getAverageRating();
-            if ($avg > 0) {
-                $total += $avg;
-                $count++;
-            }
-        }
-        
-        return $count > 0 ? round($total / $count, 1) : 0;
+        if ($ratings->isEmpty()) return 0;
+
+        $totalAvg = $ratings->avg(function ($rating) {
+            $scores = is_array($rating->metadata) ? $rating->metadata : json_decode($rating->metadata, true);
+            return $scores ? array_sum($scores) / count($scores) : 0;
+        });
+
+        return round($totalAvg, 1);
     }
 
     public function getUnitRanking($limit = 10)
     {
-        return Unit::withCount(['ratings' => function($query) {
-                $query->where('status', 'selesai');
-            }])
-            ->with(['ratings'])
-            ->having('ratings_count', '>', 0)
-            ->orderByDesc('ratings_count')
-            ->limit($limit)
+        return Unit::with(['ratings'])
+            ->withCount('ratings')
             ->get()
             ->map(function($unit) {
                 $unit->average_rating = $this->getAverageRating($unit->id);
+                $unit->pending_count = $unit->ratings->where('status', 'pending')->count();
+                $unit->dibalas_count = $unit->ratings->where('status', 'dibalas')->count();
+                $unit->selesai_count = $unit->ratings->where('status', 'selesai')->count();
                 return $unit;
-            });
-    }
-
-    public function createRating(array $data)
-    {
-        return DB::transaction(function() use ($data) {
-            $rating = Rating::create($data);
-            
-            // Auto-create message for low ratings
-            $avgRating = $rating->getAverageRating();
-            if ($avgRating < 3) {
-                $this->createLowRatingNotification($rating);
-            }
-            
-            return $rating;
-        });
+            })
+            ->filter(fn($unit) => $unit->ratings_count > 0)
+            ->sortByDesc('average_rating')
+            ->take($limit);
     }
 
     public function updateRating($id, array $data)
     {
         $rating = Rating::findOrFail($id);
+        
+        if (isset($data['status'])) {
+            if ($data['status'] === 'dibalas' && $rating->status !== 'dibalas') {
+                $data['dibalas_pada'] = now();
+            }
+        }
+        
         $rating->update($data);
-        
         return $rating;
-    }
-
-    public function deleteRating($id)
-    {
-        $rating = Rating::findOrFail($id);
-        $rating->delete();
-        
-        return true;
     }
 
     public function respondToRating($id, array $responseData)
     {
         $rating = Rating::findOrFail($id);
+        $metadata = is_array($rating->metadata) ? $rating->metadata : json_decode($rating->metadata, true);
         
-        $updateData = [
+        $metadata['admin_response'] = $responseData;
+        
+        $rating->update([
             'status' => 'dibalas',
             'dibalas_pada' => now(),
-            'metadata' => array_merge(
-                (array) $rating->metadata,
-                ['admin_response' => $responseData]
-            )
-        ];
-        
-        $rating->update($updateData);
+            'metadata' => $metadata
+        ]);
         
         return $rating;
     }
 
-    private function createLowRatingNotification(Rating $rating)
+    public function getMonthlyStats()
     {
-        // Create automatic message for admin
-        \App\Models\Message::create([
-            'pengirim_tipe' => 'system',
-            'pengirim_id' => 0,
-            'penerima_tipe' => 'admin',
-            'penerima_id' => 1, // Default admin
-            'unit_id' => $rating->unit_id,
-            'judul' => 'Low Rating Alert: ' . $rating->unit->nama_unit,
-            'pesan' => 'Rating rendah diterima: ' . $rating->getAverageRating() . '/5. Komentar: ' . ($rating->komentar ?? 'Tidak ada komentar'),
-            'kategori' => 'rating_feedback',
-            'prioritas' => 'penting',
-            'status' => 'terkirim',
-            'perlu_tindakan' => true,
-            'data_tindakan' => [
-                'rating_id' => $rating->id,
-                'unit_id' => $rating->unit_id,
-                'rating_value' => $rating->getAverageRating(),
-                'action_required' => 'review_and_improve'
-            ]
-        ]);
+        $months = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $monthRatings = Rating::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->get();
+
+            $totalScore = $monthRatings->sum(function($r) {
+                $scores = is_array($r->metadata) ? $r->metadata : json_decode($r->metadata, true);
+                return $scores ? array_sum($scores) / count($scores) : 0;
+            });
+
+            $months[$date->format('Y-m')] = [
+                'month' => $date->format('M Y'),
+                'total' => $monthRatings->count(),
+                'average_rating' => $monthRatings->count() > 0 ? round($totalScore / $monthRatings->count(), 1) : 0
+            ];
+        }
+        return $months;
     }
 
-    public function getMonthlyStats($year = null)
+    public function deleteRating($id)
     {
-        $year = $year ?? date('Y');
-        
-        return Rating::select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending'),
-                DB::raw('SUM(CASE WHEN status = "dibalas" THEN 1 ELSE 0 END) as responded'),
-                DB::raw('SUM(CASE WHEN status = "selesai" THEN 1 ELSE 0 END) as completed')
-            )
-            ->whereYear('created_at', $year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->mapWithKeys(function($item) {
-                return [$item->month => $item];
-            });
+        return Rating::findOrFail($id)->delete();
     }
 }

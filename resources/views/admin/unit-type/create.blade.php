@@ -1,6 +1,6 @@
-@extends('layouts.admin')
+@extends('layouts.admin.app')
 
-@section('content')
+@section('admin-content')
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -102,7 +102,7 @@
                             <span class="fw-medium">Cancel</span>
                         </a>
                         <button type="submit" class="btn btn-primary rounded-pill px-7 d-flex align-items-center gap-2"
-                            style="height: 48px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none;">
+                            style="height: 48px; background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none;">
                             <span class="fw-medium">Create Type</span>
                         </button>
                     </div>
@@ -111,72 +111,7 @@
         </div>
     </div>
 
-    <style>
-        .form-control,
-        .form-select {
-            transition: all 0.2s ease;
-            border: 1px solid #e5e7eb !important;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-            outline: none;
-        }
-
-        .form-label {
-            color: #374151;
-            font-size: 0.875rem;
-        }
-
-        .form-check-input:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        .form-check-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #f9fafb;
-            border-color: #9ca3af;
-        }
-
-        .btn-primary {
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
-        }
-
-        h5 {
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 0.75rem;
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .is-invalid {
-            border-color: #dc2626 !important;
-        }
-
-        .is-invalid:focus {
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
-        }
-
-        .invalid-feedback {
-            color: #dc2626;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-    </style>
+    
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

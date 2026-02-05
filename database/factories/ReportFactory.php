@@ -4,8 +4,10 @@ namespace Database\Factories;
 
 use App\Models\Report;
 use App\Models\Unit;
+use App\Models\VisitorSession;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class ReportFactory extends Factory
 {
@@ -14,28 +16,17 @@ class ReportFactory extends Factory
     public function definition()
     {
         return [
-            'unit_id' => $this->faker->optional(0.8)->randomElement(Unit::all()),
-            'session_id' => $this->faker->uuid(),
-            'visitor_ip' => $this->faker->ipv4(),
-            'judul' => $this->faker->sentence(),
-            'deskripsi' => $this->faker->paragraphs(2, true),
-            'tipe' => $this->faker->randomElement(['masalah', 'saran', 'keluhan', 'pujian', 'lainnya']),
+            'tracking_code' => 'TRK-' . strtoupper(Str::random(10)),
+            'unit_id' => Unit::inRandomOrder()->first()->id ?? Unit::factory(),
+            'visitor_session_id' => VisitorSession::inRandomOrder()->first()->id ?? VisitorSession::factory(),
+            'judul' => $this->faker->sentence(4),
+            'deskripsi' => $this->faker->paragraph(),
+            'tipe' => $this->faker->randomElement(['masalah', 'saran', 'keluhan', 'lainnya']),
             'prioritas' => $this->faker->randomElement(['rendah', 'sedang', 'tinggi', 'kritis']),
             'status' => $this->faker->randomElement(['baru', 'diproses', 'selesai', 'ditolak']),
-            'admin_id' => $this->faker->optional(0.4)->randomElement(User::where('role', 'admin')->get()),
-            'tanggapan_admin' => $this->faker->optional(0.5)->paragraph(),
-            'ditanggapi_pada' => $this->faker->optional(0.4)->dateTimeBetween('-1 month', 'now'),
-            'lampiran' => $this->faker->optional(0.3)->randomElements(['foto1.jpg', 'foto2.jpg', 'dokumen.pdf'], 2),
+            'admin_id' => User::inRandomOrder()->first()->id ?? null,
+            'tanggapan_admin' => $this->faker->boolean(50) ? $this->faker->sentence() : null,
+            'ditanggapi_pada' => $this->faker->boolean(50) ? now() : null,
         ];
-    }
-
-    public function baru()
-    {
-        return $this->state([
-            'status' => 'baru',
-            'admin_id' => null,
-            'tanggapan_admin' => null,
-            'ditanggapi_pada' => null,
-        ]);
     }
 }

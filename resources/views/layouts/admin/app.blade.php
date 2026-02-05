@@ -1,8 +1,9 @@
 @extends('layouts.base')
 
-@section('title', 'Admin Panel' . (isset($title) ? ' - ' . $title : ''))
+@section('title', 'Itenas Unit - Admin Panel' . (isset($title) ? ' - ' . $title : ''))
 
 @section('body-class', 'admin-layout')
+
 
 @push('styles')
     <style>
@@ -86,6 +87,8 @@
                     </header>
 
                     <div id="spa-content">
+                        <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}">
+
                         @yield('admin-content')
                     </div>
                     

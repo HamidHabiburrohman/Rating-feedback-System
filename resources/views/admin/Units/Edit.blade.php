@@ -31,7 +31,8 @@
 
         <div class="card border rounded-4" style="border-color: #e5e7eb;">
             <div class="card-body p-4">
-                <form action="{{ route('admin.units.update', $unit->id) }}" method="POST" id="unitForm">
+                <form action="{{ route('admin.units.update', $unit->id) }}" method="POST" id="unitForm"
+                    enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -77,8 +78,11 @@
                                         required>
                                         <option value="" disabled>Select Type</option>
                                         @foreach($unitTypes as $type)
-                                            <option value="{{ $type->id }}" {{ old('type_id', $unit->type_id) == $type->id ? 'selected' : '' }}>
+                                            <option value="{{ $type->id }}" {{ old('type_id', isset($unit) && $unit ? $unit->type_id : '') == $type->id ? 'selected' : '' }}>
                                                 {{ $type->name }}
+                                                @if(!$type->is_active)
+                                                    (Inactive)
+                                                @endif
                                             </option>
                                         @endforeach
                                     </select>
@@ -303,128 +307,4 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-check-input:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        .is-invalid {
-            border-color: #dc2626;
-        }
-
-        .form-select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('unitForm');
-            const jamBuka = document.getElementById('jam_buka');
-            const jamTutup = document.getElementById('jam_tutup');
-
-            // HAPUS INI ↓↓↓ (ada duplikasi)
-            // const removeCheckbox = document.getElementById('remove_foto');
-            // const fileInput = document.getElementById('foto_unit');
-            // const currentPhoto = document.querySelector('.current-photo'); const removeCheckbox = document.getElementById('remove_foto');
-            // const fileInput = document.getElementById('foto_unit');
-            // const currentPhoto = document.querySelector('.current-photo');
-
-            // Tambahkan fungsi previewImage yang hilang
-            function previewImage(event) {
-                const input = event.target;
-                const preview = document.getElementById('preview');
-                const previewContainer = document.getElementById('imagePreview');
-
-                if (input.files && input.files[0]) {
-                    const reader = new FileReader();
-
-                    reader.onload = function (e) {
-                        preview.src = e.target.result;
-                        previewContainer.style.display = 'block';
-                    }
-
-                    reader.readAsDataURL(input.files[0]);
-                } else {
-                    previewContainer.style.display = 'none';
-                }
-            }
-
-            // Pindahkan ini ke dalam event listener DOMContentLoaded
-            const removeCheckbox = document.getElementById('remove_foto');
-            const fileInput = document.getElementById('foto_unit');
-            const currentPhoto = document.querySelector('.current-photo');
-
-            if (removeCheckbox && fileInput && currentPhoto) {
-                removeCheckbox.addEventListener('change', function () {
-                    if (this.checked) {
-                        fileInput.value = '';
-                        currentPhoto.style.display = 'none';
-                    } else {
-                        currentPhoto.style.display = 'block';
-                    }
-                });
-            }
-
-            form.addEventListener('submit', function (e) {
-                let isValid = true;
-
-                const requiredFields = form.querySelectorAll('[required]');
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                });
-
-                if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                    jamTutup.classList.add('is-invalid');
-                    isValid = false;
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                    const firstError = form.querySelector('.is-invalid');
-                    if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstError.focus();
-                    }
-                }
-            });
-
-            document.querySelectorAll('[required]').forEach(field => {
-                field.addEventListener('input', function () {
-                    if (this.value.trim()) {
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            });
-
-            if (jamBuka && jamTutup) {
-                jamBuka.addEventListener('change', function () {
-                    if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                        jamTutup.classList.add('is-invalid');
-                    } else {
-                        jamTutup.classList.remove('is-invalid');
-                    }
-                });
-
-                jamTutup.addEventListener('change', function () {
-                    if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                        this.classList.add('is-invalid');
-                    } else {
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            }
-        });
-    </script>
 @endsection

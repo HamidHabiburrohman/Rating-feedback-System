@@ -28,7 +28,7 @@ class StoreUnitRequest extends FormRequest
             'kapasitas' => 'nullable|integer|min:0',
             'status_aktif' => 'boolean',
             'status' => 'nullable|in:open,full,maintenance,closed',
-            'foto_unit' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
+            'foto_unit' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10048'
         ];
     }
 }

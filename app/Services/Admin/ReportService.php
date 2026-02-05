@@ -5,100 +5,65 @@ namespace App\Services\Admin;
 use App\Models\Report;
 use App\Models\Unit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReportService
 {
-    public function getReports($filters, $perPage = 10)
+    public function getReports(array $filters = [], int $perPage = 10)
     {
         $query = Report::with(['unit', 'admin']);
 
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('judul', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('deskripsi', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('visitor_ip', 'like', '%' . $filters['search'] . '%');
-            });
+        if (isset($filters['search'])) {
+            $this->applySearchFilter($query, $filters['search']);
         }
 
-        if (!empty($filters['status'])) {
-            $statuses = explode(',', $filters['status']);
-            $query->whereIn('status', $statuses);
+        if (isset($filters['status'])) {
+            $this->applyStatusFilter($query, $filters['status']);
         }
 
-        if (!empty($filters['tipe'])) {
-            $types = explode(',', $filters['tipe']);
-            $query->whereIn('tipe', $types);
+        if (isset($filters['tipe'])) {
+            $this->applyTypeFilter($query, $filters['tipe']);
         }
 
-        if (!empty($filters['prioritas'])) {
-            $priorities = explode(',', $filters['prioritas']);
-            $query->whereIn('prioritas', $priorities);
+        if (isset($filters['unit'])) {
+            $this->applyUnitFilter($query, $filters['unit']);
         }
 
-        if (!empty($filters['unit'])) {
-            $unitIds = explode(',', $filters['unit']);
-            $query->whereIn('unit_id', $unitIds);
+        if (isset($filters['prioritas'])) {
+            $this->applyPriorityFilter($query, $filters['prioritas']);
         }
 
-        if (!empty($filters['date_from'])) {
-            $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (isset($filters['date_from']) || isset($filters['date_to'])) {
+            $this->applyDateFilter($query, $filters['date_from'] ?? null, $filters['date_to'] ?? null);
         }
 
-        if (!empty($filters['date_to'])) {
-            $query->whereDate('created_at', '<=', $filters['date_to']);
+        if (isset($filters['per_page']) && $filters['per_page'] === 'all') {
+            return $query->latest()->get();
         }
 
-        return $query->latest()->paginate($perPage);
+        return $query->latest()->paginate($perPage)->withQueryString();
     }
 
-    public function getStats()
-    {
-        return [
-            'total' => Report::count(),
-            'baru' => Report::where('status', 'baru')->count(),
-            'diproses' => Report::where('status', 'diproses')->count(),
-            'selesai' => Report::where('status', 'selesai')->count(),
-            'by_tipe' => Report::select('tipe', DB::raw('count(*) as total'))
-                ->groupBy('tipe')
-                ->get()
-                ->pluck('total', 'tipe'),
-            'by_prioritas' => Report::select('prioritas', DB::raw('count(*) as total'))
-                ->groupBy('prioritas')
-                ->get()
-                ->pluck('total', 'prioritas')
-        ];
-    }
-
-    public function createReport($data)
+    public function createReport(array $data)
     {
         return Report::create([
+            'tracking_code' => 'REP-' . strtoupper(Str::random(8)),
             'unit_id' => $data['unit_id'] ?? null,
-            'session_id' => session()->getId(),
-            'visitor_ip' => request()->ip(),
+            'visitor_session_id' => session()->getId(),
             'judul' => $data['judul'],
             'deskripsi' => $data['deskripsi'],
             'tipe' => $data['tipe'],
             'prioritas' => $data['prioritas'] ?? 'sedang',
             'status' => 'baru',
-            'lampiran' => $data['lampiran'] ?? null
         ]);
     }
 
-    public function updateReport(Report $report, $data)
+    public function updateReport(Report $report, array $data)
     {
-        $updateData = [
-            'judul' => $data['judul'] ?? $report->judul,
-            'deskripsi' => $data['deskripsi'] ?? $report->deskripsi,
-            'tipe' => $data['tipe'] ?? $report->tipe,
-            'prioritas' => $data['prioritas'] ?? $report->prioritas,
-            'status' => $data['status'] ?? $report->status,
-            'unit_id' => $data['unit_id'] ?? $report->unit_id
-        ];
-
-        if (isset($data['lampiran'])) {
-            $updateData['lampiran'] = $data['lampiran'];
-        }
-
+        $allowedFields = ['judul', 'deskripsi', 'tipe', 'prioritas', 'status', 'unit_id', 'lampiran'];
+        $updateData = array_intersect_key($data, array_flip($allowedFields));
+        
         return $report->update($updateData);
     }
 
@@ -118,15 +83,69 @@ class ReportService
         return $report->update($updateData);
     }
 
+    public function getStats()
+    {
+        return [
+            'total' => Report::count(),
+            'baru' => Report::where('status', 'baru')->count(),
+            'diproses' => Report::where('status', 'diproses')->count(),
+            'selesai' => Report::where('status', 'selesai')->count(),
+            'by_tipe' => Report::groupBy('tipe')->select('tipe', DB::raw('count(*) as total'))->pluck('total', 'tipe'),
+            'by_prioritas' => Report::groupBy('prioritas')->select('prioritas', DB::raw('count(*) as total'))->pluck('total', 'prioritas')
+        ];
+    }
+
+    public function getUnitsForFilter()
+    {
+        return Unit::where('status_aktif', true)->orderBy('nama_unit')->get();
+    }
+
     public function deleteReport(Report $report)
     {
         return $report->delete();
     }
 
-    public function getUnitsForFilter()
+    private function applySearchFilter($query, string $search): void
     {
-        return Unit::where('status_aktif', true)
-            ->orderBy('nama_unit')
-            ->get();
+        $query->where(function ($q) use ($search) {
+            $q->where('judul', 'LIKE', "%{$search}%")
+              ->orWhere('deskripsi', 'LIKE', "%{$search}%")
+              ->orWhere('tracking_code', 'LIKE', "%{$search}%");
+        });
+    }
+
+    private function applyStatusFilter($query, string $status): void
+    {
+        $statusFilters = explode(',', $status);
+        $query->whereIn('status', $statusFilters);
+    }
+
+    private function applyTypeFilter($query, string $type): void
+    {
+        $typeFilters = explode(',', $type);
+        $query->whereIn('tipe', $typeFilters);
+    }
+
+    private function applyUnitFilter($query, string $unit): void
+    {
+        $unitFilters = explode(',', $unit);
+        $query->whereIn('unit_id', $unitFilters);
+    }
+
+    private function applyPriorityFilter($query, string $priority): void
+    {
+        $priorityFilters = explode(',', $priority);
+        $query->whereIn('prioritas', $priorityFilters);
+    }
+
+    private function applyDateFilter($query, ?string $dateFrom, ?string $dateTo): void
+    {
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
     }
 }

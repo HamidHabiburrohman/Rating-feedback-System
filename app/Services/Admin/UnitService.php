@@ -36,9 +36,20 @@ class UnitService
             ->withQueryString();
     }
 
-    public function getAllUnitTypes()
+    public function getUnitTypeNamesForFilter()
     {
-        return UnitType::active()->ordered()->pluck('name');
+        return UnitType::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name');
+    }
+
+    public function getAllUnitTypesForForm()
+    {
+        return UnitType::select('id', 'name', 'is_active')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
     }
 
     public function createUnit(array $data, $fotoFile = null): Unit
@@ -48,19 +59,6 @@ class UnitService
         }
 
         return Unit::create($data);
-    }
-
-    public function getUnitDetail(string $id): array
-    {
-        $unit = Unit::with('unitType')->findOrFail($id);
-        
-        return [
-            'unit' => $unit,
-            'stats' => $this->getUnitStats($unit),
-            'rating_by_category' => $this->getCategoryStats($id),
-            'recent_visits' => $unit->visits()->latest('waktu_masuk')->limit(10)->get(),
-            'recent_ratings' => $unit->ratings()->with('scores.category')->latest()->limit(10)->get()
-        ];
     }
 
     public function findUnit(string $id): Unit
@@ -91,11 +89,11 @@ class UnitService
     public function deleteUnit(string $id): void
     {
         $unit = Unit::findOrFail($id);
-        
+
         if ($unit->foto_unit) {
             $this->deleteFotoUnit($unit->foto_unit);
         }
-        
+
         $unit->delete();
     }
 
@@ -103,13 +101,6 @@ class UnitService
     {
         $unit = Unit::findOrFail($id);
         $unit->update(['status' => $status]);
-        return $unit;
-    }
-
-    public function toggleUnitStatus(string $id): Unit
-    {
-        $unit = Unit::findOrFail($id);
-        $unit->update(['status_aktif' => !$unit->status_aktif]);
         return $unit;
     }
 
@@ -124,8 +115,8 @@ class UnitService
     {
         $query->where(function ($q) use ($search) {
             $q->where('nama_unit', 'LIKE', "%{$search}%")
-              ->orWhere('kode_unit', 'LIKE', "%{$search}%")
-              ->orWhere('lokasi', 'LIKE', "%{$search}%");
+                ->orWhere('kode_unit', 'LIKE', "%{$search}%")
+                ->orWhere('lokasi', 'LIKE', "%{$search}%");
         });
     }
 
@@ -141,7 +132,7 @@ class UnitService
         $typeIds = UnitType::whereIn('name', $typeFilters)
             ->pluck('id')
             ->toArray();
-        
+
         if (!empty($typeIds)) {
             $query->whereIn('type_id', $typeIds);
         }
@@ -155,33 +146,5 @@ class UnitService
     private function deleteFotoUnit(string $fotoPath): void
     {
         Storage::disk('public')->delete($fotoPath);
-    }
-
-    private function getUnitStats(Unit $unit): array
-    {
-        return [
-            'average_rating' => round($unit->ratings()->avg('rata_rata') ?? 0, 1),
-            'total_ratings' => $unit->ratings()->count(),
-            'total_visits' => $unit->visits()->count(),
-            'total_employees' => $unit->employees()->count(),
-            'total_reports' => $unit->reports()->count()
-        ];
-    }
-
-    private function getCategoryStats(string $unitId)
-    {
-        return DB::table('rating_categories')
-            ->leftJoin('rating_scores', 'rating_categories.id', '=', 'rating_scores.rating_category_id')
-            ->where('rating_categories.unit_id', $unitId)
-            ->select(
-                'rating_categories.nama_kategori as kategori',
-                DB::raw('COALESCE(AVG(rating_scores.skor), 0) as rata_rata')
-            )
-            ->groupBy('rating_categories.id', 'rating_categories.nama_kategori')
-            ->get()
-            ->map(fn($item) => [
-                'kategori' => $item->kategori,
-                'rata_rata' => round($item->rata_rata, 1)
-            ]);
     }
 }

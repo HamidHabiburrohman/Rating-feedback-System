@@ -15,11 +15,14 @@ class DeleteModal extends Component
     public $deleteRoute;
     public $deleteMethod;
 
-    /**
-     * Create a new component instance.
-     */
-    public function __construct($id, $title = 'Delete Confirmation', $itemName = '', $itemType = 'item', $deleteRoute = '', $deleteMethod = 'DELETE')
-    {
+    public function __construct(
+        $id, 
+        $title = 'Delete Confirmation', 
+        $itemName = '', 
+        $itemType = 'item', 
+        $deleteRoute = '', 
+        $deleteMethod = 'DELETE'
+    ) {
         $this->id = $id;
         $this->title = $title;
         $this->itemName = $itemName;
@@ -28,9 +31,6 @@ class DeleteModal extends Component
         $this->deleteMethod = $deleteMethod;
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
     public function render(): View|Closure|string
     {
         return view('layouts.components.delete-modal');

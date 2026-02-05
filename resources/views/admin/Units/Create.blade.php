@@ -163,12 +163,48 @@
 
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="status" class="form-label fw-medium mb-2">Foto</label>
-                                    <input type="image" name="foto_unit" id="foto_unit" class="form=select rounded-3 @error('foto_unit') is-invalid @enderror"
-                                        placeholder="Add Unit Foto" value="{{ old('foto_unit') }}"  style="height: 48px; border: 1px solid #e5e7eb;">
-                                    @error('status')
+                                    <label for="foto_unit" class="form-label fw-medium mb-2">Foto Unit</label>
+
+                                    <!-- Input file untuk upload foto -->
+                                    <input type="file" name="foto_unit" id="foto_unit"
+                                        class="form-control rounded-3 @error('foto_unit') is-invalid @enderror"
+                                        accept="image/*" style="height: 48px; padding: 0.5rem; border: 1px solid #e5e7eb;"
+                                        onchange="previewImage(event)">
+
+                                    @error('foto_unit')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+
+                                    <!-- Preview gambar saat memilih file -->
+                                    <div id="imagePreview" class="mt-3" style="display: none;">
+                                        <img id="preview" src="#" alt="Preview" class="rounded-2 img-fluid"
+                                            style="max-height: 200px; border: 1px solid #e5e7eb;">
+                                    </div>
+
+                                    <!-- Tampilkan foto yang sudah ada jika edit -->
+                                    @if(isset($unit) && $unit->foto_unit)
+                                        <div class="mt-3">
+                                            <p class="mb-2 text-muted" style="font-size: 0.875rem;">Foto saat ini:</p>
+                                            <div class="current-photo rounded-2 overflow-hidden"
+                                                style="width: 200px; height: 150px; border: 1px solid #e5e7eb;">
+                                                <img src="{{ asset('storage/' . $unit->foto_unit) }}" alt="Current Photo"
+                                                    class="img-fluid h-100 w-100" style="object-fit: cover;">
+                                            </div>
+                                            <div class="form-check mt-2">
+                                                <input type="checkbox" name="remove_foto" id="remove_foto"
+                                                    class="form-check-input" value="1">
+                                                <label for="remove_foto" class="form-check-label text-muted"
+                                                    style="font-size: 0.875rem;">
+                                                    Hapus foto
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Info validasi -->
+                                    <div class="form-text mt-2 text-muted" style="font-size: 0.75rem;">
+                                        Format: JPG, PNG, GIF, WebP. Maks: 2MB.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -254,7 +290,8 @@
                             style="height: 48px;">
                             Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary rounded-pill px-5" style="height: 48px;">
+                        <button type="submit" class="btn rounded-pill px-5"
+                            style="height: 48px; background: linear-gradient(135deg, #f1c3ae, #f8773c); color: #e5e7eb;">
                             Create Unit
                         </button>
                     </div>
@@ -262,85 +299,4 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-check-input:checked {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
-        }
-
-        .is-invalid {
-            border-color: #dc2626;
-        }
-
-        .form-select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-        }
-    </style>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('unitForm');
-            const jamBuka = document.getElementById('jam_buka');
-            const jamTutup = document.getElementById('jam_tutup');
-
-            form.addEventListener('submit', function (e) {
-                let isValid = true;
-
-                const requiredFields = form.querySelectorAll('[required]');
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                });
-
-                if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                    jamTutup.classList.add('is-invalid');
-                    isValid = false;
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                    const firstError = form.querySelector('.is-invalid');
-                    if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstError.focus();
-                    }
-                }
-            });
-
-            document.querySelectorAll('[required]').forEach(field => {
-                field.addEventListener('input', function () {
-                    if (this.value.trim()) {
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            });
-
-            if (jamBuka && jamTutup) {
-                jamBuka.addEventListener('change', function () {
-                    if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                        jamTutup.classList.add('is-invalid');
-                    } else {
-                        jamTutup.classList.remove('is-invalid');
-                    }
-                });
-
-                jamTutup.addEventListener('change', function () {
-                    if (jamBuka.value && jamTutup.value && jamBuka.value >= jamTutup.value) {
-                        this.classList.add('is-invalid');
-                    } else {
-                        this.classList.remove('is-invalid');
-                    }
-                });
-            }
-        });
-    </script>
 @endsection

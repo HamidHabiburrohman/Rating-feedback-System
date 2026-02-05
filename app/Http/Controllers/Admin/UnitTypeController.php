@@ -36,10 +36,8 @@ class UnitTypeController extends Controller
         }
 
         $perPage = $request->input('per_page', 10);
-
         $totalUnits = UnitType::count();
         $hidePerPage = $totalUnits <= 10;
-
         $unitTypes = $query->paginate($perPage)->withQueryString();
 
         return view('admin.unit-type.index', compact('unitTypes', 'hidePerPage'));
@@ -63,7 +61,7 @@ class UnitTypeController extends Controller
     public function show($id)
     {
         $unitType = UnitType::withCount('units')->findOrFail($id);
-        return view('admin.unit-types.show', compact('unitType'));
+        return view('admin.unit-type.show', compact('unitType'));
     }
 
     public function edit($id)
@@ -89,23 +87,17 @@ class UnitTypeController extends Controller
             $unitType = UnitType::findOrFail($id);
 
             if ($unitType->units()->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak dapat menghapus tipe unit karena masih memiliki unit terkait'
-                ], 422);
+                return redirect()->route('admin.unit-types.index')
+                    ->with('error', 'Tidak dapat menghapus tipe unit karena masih memiliki unit terkait');
             }
 
             $unitType->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Tipe unit berhasil dihapus'
-            ]);
+            return redirect()->route('admin.unit-types.index')
+                ->with('success', 'Tipe unit berhasil dihapus');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus tipe unit: ' . $e->getMessage()
-            ], 500);
+            return redirect()->route('admin.unit-types.index')
+                ->with('error', 'Gagal menghapus tipe unit: ' . $e->getMessage());
         }
     }
 
@@ -113,14 +105,21 @@ class UnitTypeController extends Controller
     {
         try {
             $unitType = UnitType::findOrFail($id);
-            $unitType->update(['is_active' => !$unitType->is_active]);
+            $newStatus = !$unitType->is_active;
+            $unitType->update(['is_active' => $newStatus]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Status tipe unit berhasil diubah',
-                'data' => $unitType
+                'data' => [
+                    'id' => $unitType->id,
+                    'is_active' => $newStatus,
+                    'status_text' => $newStatus ? 'Aktif' : 'Nonaktif',
+                    'status_class' => $newStatus ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'
+                ]
             ]);
         } catch (\Exception $e) {
+            \Log::error('Toggle status error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah status: ' . $e->getMessage()

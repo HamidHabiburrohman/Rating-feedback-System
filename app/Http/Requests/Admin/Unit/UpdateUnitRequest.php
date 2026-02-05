@@ -32,7 +32,7 @@ class UpdateUnitRequest extends FormRequest
         ];
 
         if ($this->hasFile('foto_unit')) {
-            $rules['foto_unit'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:2048';
+            $rules['foto_unit'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:10048';
         }
 
         return $rules;

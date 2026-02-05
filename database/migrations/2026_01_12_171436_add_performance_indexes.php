@@ -24,10 +24,6 @@ return new class extends Migration
             $table->fulltext(['nama_unit', 'deskripsi', 'lokasi']);
         });
 
-        Schema::table('employees', function (Blueprint $table) {
-            $table->index(['unit_id', 'status']);
-            $table->fulltext(['nama', 'jabatan', 'bidang']);
-        });
 
         Schema::table('reports', function (Blueprint $table) {
             $table->index(['tipe', 'status', 'created_at']);
@@ -60,11 +56,6 @@ return new class extends Migration
             $table->dropIndex(['type_id', 'status_aktif']);
             $table->dropIndex(['gedung', 'lantai']);
             $table->dropFulltext(['nama_unit', 'deskripsi', 'lokasi']);
-        });
-
-        Schema::table('employees', function (Blueprint $table) {
-            $table->dropIndex(['unit_id', 'status']);
-            $table->dropFulltext(['nama', 'jabatan', 'bidang']);
         });
 
         Schema::table('reports', function (Blueprint $table) {

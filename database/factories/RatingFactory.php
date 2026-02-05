@@ -4,7 +4,9 @@ namespace Database\Factories;
 
 use App\Models\Rating;
 use App\Models\Unit;
+use App\Models\VisitorSession;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class RatingFactory extends Factory
 {
@@ -13,14 +15,28 @@ class RatingFactory extends Factory
     public function definition()
     {
         return [
-            'unit_id' => Unit::factory(),
-            'session_id' => $this->faker->uuid(),
-            'visitor_ip' => $this->faker->ipv4(),
-            'user_agent' => $this->faker->userAgent(),
-            'komentar' => $this->faker->optional(0.7)->paragraph(),
+            // Tambahkan tracking_code karena di migration bersifat UNIQUE dan NOT NULL
+            'tracking_code' => 'RTG-' . strtoupper(Str::random(10)),
+            
+            // Relasi ke Unit
+            'unit_id' => Unit::inRandomOrder()->first()->id ?? Unit::factory(),
+            
+            // Sesuai migration: gunakan visitor_session_id, bukan session_id/visitor_ip
+            'visitor_session_id' => VisitorSession::inRandomOrder()->first()->id ?? VisitorSession::factory(),
+            
+            'komentar' => $this->faker->optional(0.7)->sentence(),
             'status' => $this->faker->randomElement(['pending', 'dibalas', 'selesai']),
-            'metadata' => ['device' => $this->faker->randomElement(['mobile', 'desktop', 'tablet'])],
-            'dibalas_pada' => $this->faker->optional(0.3)->dateTimeBetween('-1 month', 'now'),
+            
+            // Metadata disesuaikan dengan kebutuhan (contoh: rating bintang/kategori)
+            'metadata' => [
+                'kebersihan' => rand(1, 5),
+                'pelayanan' => rand(1, 5),
+                'fasilitas' => rand(1, 5),
+                'device' => $this->faker->randomElement(['mobile', 'desktop', 'tablet'])
+            ],
+            
+            'dibalas_pada' => null,
+            'created_at' => $this->faker->dateTimeBetween('-3 months', 'now'),
         ];
     }
 
@@ -28,6 +44,7 @@ class RatingFactory extends Factory
     {
         return $this->state([
             'status' => 'pending',
+            'dibalas_pada' => null,
         ]);
     }
 
@@ -35,7 +52,15 @@ class RatingFactory extends Factory
     {
         return $this->state([
             'status' => 'dibalas',
-            'dibalas_pada' => $this->faker->dateTimeBetween('-1 month', 'now'),
+            'dibalas_pada' => now(),
+        ]);
+    }
+
+    public function selesai()
+    {
+        return $this->state([
+            'status' => 'selesai',
+            'dibalas_pada' => now(),
         ]);
     }
 }

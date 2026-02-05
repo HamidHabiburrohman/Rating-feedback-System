@@ -31,16 +31,12 @@ class LoginController extends Controller
             ]);
         }
 
-        // **SANCTUM LOGIN: Buat token dan login**
         $token = $user->createToken('admin-web-session', ['admin:access'])->plainTextToken;
         
-        // **PENTING: Simpan token di session dan cookie**
         $request->session()->put('sanctum_token', $token);
         
-        // Login user dengan sanctum (bukan Auth::login)
         Auth::guard('web')->login($user, $request->has('remember'));
         
-        // **Set Sanctum token di cookie untuk middleware auth:sanctum**
         $cookie = cookie('sanctum_token', $token, 60 * 24 * 30); // 30 days
         
         $request->session()->regenerate();

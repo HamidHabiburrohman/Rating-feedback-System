@@ -4,23 +4,21 @@ namespace Database\Seeders;
 
 use App\Models\Rating;
 use App\Models\Unit;
+use App\Models\VisitorSession;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class RatingSeeder extends Seeder
 {
     public function run(): void
     {
         $units = Unit::all();
+        $sessions = VisitorSession::all();
         
-        if ($units->isEmpty()) {
-            $this->command->warn('Data unit tidak lengkap untuk RatingSeeder!');
+        if ($units->isEmpty() || $sessions->isEmpty()) {
             return;
         }
 
-        $ratings = [];
-        $now = now();
-        
-        // Komentar samples
         $positiveComments = [
             'Pelayanan sangat ramah dan cepat, staff sangat membantu.',
             'Kebersihan unit terjaga dengan baik, lingkungan nyaman.',
@@ -45,11 +43,13 @@ class RatingSeeder extends Seeder
             'Staff kurang pengetahuan, sering salah informasi.'
         ];
         
-        // Generate 100 ratings
+        $ratings = [];
+        $now = now();
+        
         for ($i = 1; $i <= 100; $i++) {
             $unit = $units->random();
+            $session = $sessions->random();
             
-            // Random rating values (1-5)
             $ratingValues = [
                 'kebersihan' => rand(1, 5),
                 'pelayanan' => rand(1, 5),
@@ -60,7 +60,6 @@ class RatingSeeder extends Seeder
             
             $average = array_sum($ratingValues) / count($ratingValues);
             
-            // Determine comment based on average rating
             if ($average >= 4) {
                 $komentar = $positiveComments[array_rand($positiveComments)];
                 $status = rand(0, 1) ? 'selesai' : 'dibalas';
@@ -72,38 +71,23 @@ class RatingSeeder extends Seeder
                 $status = rand(0, 1) ? 'pending' : 'dibalas';
             }
             
-            // Set response date if status is dibalas/selesai
-            $dibalasPada = null;
-            if (in_array($status, ['dibalas', 'selesai'])) {
-                $dibalasPada = $now->copy()->subDays(rand(1, 30))->subHours(rand(1, 12));
-            }
-            
-            $createdAt = $now->copy()->subDays(rand(0, 90))->subHours(rand(0, 23));
+            $createdAt = $now->copy()->subDays(rand(0, 90));
             
             $ratings[] = [
+                'tracking_code' => 'RTG-' . strtoupper(Str::random(10)) . $i,
                 'unit_id' => $unit->id,
-                'session_id' => 'session_' . $i . '_' . uniqid(),
-                'visitor_ip' => '192.168.' . rand(1, 255) . '.' . rand(1, 255),
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'visitor_session_id' => $session->id,
                 'komentar' => $komentar,
                 'status' => $status,
-                // PERBAIKAN: Convert array ke JSON string
                 'metadata' => json_encode($ratingValues),
-                'dibalas_pada' => $dibalasPada,
+                'dibalas_pada' => ($status === 'dibalas' || $status === 'selesai') ? $createdAt->addHours(2) : null,
                 'created_at' => $createdAt,
-                'updated_at' => $dibalasPada ?? $createdAt
+                'updated_at' => $createdAt
             ];
         }
         
-        // Insert in batches
         foreach (array_chunk($ratings, 25) as $chunk) {
             Rating::insert($chunk);
         }
-        
-        $this->command->info('100 ratings berhasil di-seed!');
-        $this->command->info('Statistik:');
-        $this->command->info('   - Pending: ' . count(array_filter($ratings, fn($r) => $r['status'] === 'pending')));
-        $this->command->info('   - Dibalas: ' . count(array_filter($ratings, fn($r) => $r['status'] === 'dibalas')));
-        $this->command->info('   - Selesai: ' . count(array_filter($ratings, fn($r) => $r['status'] === 'selesai')));
     }
 }
