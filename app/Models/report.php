@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Report extends Model
 {
@@ -13,117 +11,192 @@ class Report extends Model
 
     protected $fillable = [
         'tracking_code',
+        'rating_id',
         'unit_id',
-        'visitor_session_id',
-        'judul',
-        'deskripsi',
-        'tipe',
-        'prioritas',
+        'student_id',
+        'title',
+        'description',
+        'priority',
         'status',
         'admin_id',
-        'tanggapan_admin',
-        'ditanggapi_pada'
+        'admin_response',
+        'replied_at'
     ];
 
     protected $casts = [
-        'ditanggapi_pada' => 'datetime',
-        'created_at' => 'datetime'
+        'priority' => 'string',
+        'status' => 'string',
+        'replied_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
-    protected $appends = ['prioritas_warna', 'tipe_label', 'status_label'];
-
-    public function unit(): BelongsTo
+    // Relasi
+    public function rating()
     {
-        return $this->belongsTo(Unit::class, 'unit_id');
+        return $this->belongsTo(Rating::class);
     }
 
-    public function admin(): BelongsTo
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+
+    public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
 
-    protected function prioritasWarna(): Attribute
+    // Accessors
+    public function getPriorityLabelAttribute()
     {
-        return Attribute::make(
-            get: fn () => match($this->prioritas) {
-                'kritis' => 'danger',
-                'tinggi' => 'warning',
-                'sedang' => 'primary',
-                'rendah' => 'secondary',
-                default => 'secondary'
-            }
-        );
+        return match ($this->priority) {
+            'low' => 'Rendah',
+            'medium' => 'Sedang',
+            'high' => 'Tinggi',
+            'critical' => 'Kritis',
+            default => $this->priority
+        };
     }
 
-    protected function tipeLabel(): Attribute
+    public function getStatusLabelAttribute()
     {
-        return Attribute::make(
-            get: fn () => match($this->tipe) {
-                'masalah' => 'Masalah',
-                'saran' => 'Saran',
-                'keluhan' => 'Keluhan',
-                'lainnya' => 'Lainnya',
-                default => ucfirst($this->tipe)
-            }
-        );
+        return match ($this->status) {
+            'new' => 'Baru',
+            'in_progress' => 'Diproses',
+            'replied' => 'Ditanggapi',
+            'resolved' => 'Selesai',
+            'rejected' => 'Ditolak',
+            'pending_preview' => 'Menunggu Pratinjau',
+            default => $this->status
+        };
     }
 
-    protected function statusLabel(): Attribute
+    public function getPriorityColorAttribute()
     {
-        return Attribute::make(
-            get: fn () => match($this->status) {
-                'baru' => 'Baru',
-                'diproses' => 'Diproses',
-                'selesai' => 'Selesai',
-                'ditolak' => 'Ditolak',
-                default => ucfirst($this->status)
-            }
-        );
+        return match ($this->priority) {
+            'low' => 'blue',
+            'medium' => 'yellow',
+            'high' => 'orange',
+            'critical' => 'red',
+            default => 'gray'
+        };
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return match ($this->status) {
+            'new' => 'blue',
+            'in_progress' => 'yellow',
+            'replied' => 'purple',
+            'resolved' => 'green',
+            'rejected' => 'red',
+            'pending_preview' => 'orange',
+            default => 'gray'
+        };
+    }
+
+    // Scope
+    public function scopeNew($query)
+    {
+        return $query->where('status', 'new');
+    }
+
+    public function scopeInProgress($query)
+    {
+        return $query->where('status', 'in_progress');
+    }
+
+    public function scopeResolved($query)
+    {
+        return $query->where('status', 'resolved');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeByPriority($query, $priority)
+    {
+        return $query->where('priority', $priority);
+    }
+
+    public function scopeByUnit($query, $unitId)
+    {
+        return $query->where('unit_id', $unitId);
+    }
+
+    public function scopeByStudent($query, $studentId)
+    {
+        return $query->where('student_id', $studentId);
     }
 
     public function scopeSearch($query, $search)
     {
-        return $query->when($search, function ($q) use ($search) {
-            $q->where('judul', 'like', "%{$search}%")
-              ->orWhere('deskripsi', 'like', "%{$search}%")
-              ->orWhere('tracking_code', 'like', "%{$search}%");
+        return $query->where(function ($q) use ($search) {
+            $q->where('tracking_code', 'like', "%{$search}%")
+                ->orWhere('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhereHas('student', function ($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                        ->orWhere('student_identifier', 'like', "%{$search}%");
+                });
         });
     }
 
-    public function scopeFilterByStatus($query, $status)
+    // Helper methods
+    public function assignToAdmin($adminId)
     {
-        return $query->when($status, function ($q) use ($status) {
-            $q->whereIn('status', explode(',', $status));
+        $this->update([
+            'admin_id' => $adminId,
+            'status' => 'in_progress'
+        ]);
+    }
+
+    public function respond($response, $adminId)
+    {
+        $this->update([
+            'admin_id' => $adminId,
+            'admin_response' => $response,
+            'status' => 'replied',
+            'replied_at' => now()
+        ]);
+    }
+
+    public function resolve()
+    {
+        $this->update(['status' => 'resolved']);
+    }
+
+    public function reject()
+    {
+        $this->update(['status' => 'rejected']);
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($report) {
+            $report->tracking_code = self::generateTrackingCode();
         });
     }
 
-    public function scopeFilterByTipe($query, $tipe)
+    protected static function generateTrackingCode()
     {
-        return $query->when($tipe, function ($q) use ($tipe) {
-            $q->whereIn('tipe', explode(',', $tipe));
-        });
-    }
+        do {
+            $code = 'RPT-' . strtoupper(uniqid());
+        } while (static::where('tracking_code', $code)->exists());
 
-    public function scopeFilterByPrioritas($query, $prioritas)
-    {
-        return $query->when($prioritas, function ($q) use ($prioritas) {
-            $q->whereIn('prioritas', explode(',', $prioritas));
-        });
-    }
-
-    public function scopeFilterByUnit($query, $unit)
-    {
-        return $query->when($unit, function ($q) use ($unit) {
-            $q->whereIn('unit_id', explode(',', $unit));
-        });
-    }
-
-    public function scopeFilterByDate($query, $dateFrom, $dateTo)
-    {
-        return $query->when($dateFrom, function ($q) use ($dateFrom) {
-            $q->whereDate('created_at', '>=', $dateFrom);
-        })->when($dateTo, function ($q) use ($dateTo) {
-            $q->whereDate('created_at', '<=', $dateTo);
-        });
+        return $code;
     }
 }

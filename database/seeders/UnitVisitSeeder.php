@@ -3,56 +3,49 @@
 namespace Database\Seeders;
 
 use App\Models\Unit;
+use App\Models\StudentSession;
 use App\Models\UnitVisit;
-use App\Models\VisitorSession;
 use Illuminate\Database\Seeder;
-use Carbon\Carbon;
 
 class UnitVisitSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $visits = [];
-        $sessions = VisitorSession::pluck('session_id')->toArray();
-        $units = Unit::pluck('id')->toArray();
-        
-        if (empty($sessions) || empty($units)) {
-            $this->command->warn('Seeder UnitVisit: No sessions or units found. Run other seeders first.');
+        $units = Unit::all();
+        $sessions = StudentSession::all();
+
+        if ($units->isEmpty() || $sessions->isEmpty()) {
             return;
         }
-        
-        foreach ($sessions as $sessionId) {
-            $numVisits = rand(1, 5); // 1-5 kunjungan per session
+
+        foreach ($units as $unit) {
+            $visitCount = rand(5, 20);
             
-            for ($i = 0; $i < $numVisits; $i++) {
-                $unitId = $units[array_rand($units)];
-                $visitDate = Carbon::now()->subDays(rand(0, 180));
-                $waktuMasuk = $visitDate->copy()->addHours(rand(8, 18))->addMinutes(rand(0, 59));
-                $waktuKeluar = $waktuMasuk->copy()->addMinutes(rand(5, 120));
+            for ($i = 0; $i < $visitCount; $i++) {
+                $tanggal = fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d');
+                $waktuMasuk = fake()->dateTimeBetween($tanggal . ' 07:00:00', $tanggal . ' 21:00:00');
+                $durasiMenit = fake()->numberBetween(5, 180);
+                $waktuKeluar = (clone $waktuMasuk)->modify("+{$durasiMenit} minutes");
                 
-                $visits[] = [
-                    'unit_id' => $unitId,
-                    'session_id' => $sessionId,
-                    'tanggal' => $visitDate->toDateString(),
+                $shouldHaveExit = fake()->boolean(90);
+                
+                $session = $sessions->random();
+                
+                UnitVisit::create([
+                    'unit_id' => $unit->id,
+                    'session_id' => $session->session_token,
+                    'tanggal' => $tanggal,
                     'waktu_masuk' => $waktuMasuk,
-                    'waktu_keluar' => $waktuKeluar,
-                    'durasi_detik' => $waktuKeluar->diffInSeconds($waktuMasuk),
-                    'metadata' => json_encode(['type' => 'visit']),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-                
-                if (count($visits) >= 200) {
-                    UnitVisit::insert($visits);
-                    $visits = [];
-                }
+                    'waktu_keluar' => $shouldHaveExit ? $waktuKeluar : null,
+                    'durasi_detik' => $shouldHaveExit ? $durasiMenit * 60 : null,
+                    'metadata' => json_encode([
+                        'source' => fake()->randomElement(['qr_scan', 'manual', 'nfc']),
+                        'device' => fake()->randomElement(['mobile', 'tablet', 'desktop']),
+                    ]),
+                    'created_at' => $waktuMasuk,
+                    'updated_at' => $waktuKeluar ?? $waktuMasuk,
+                ]);
             }
         }
-        
-        if (!empty($visits)) {
-            UnitVisit::insert($visits);
-        }
-        
-        $this->command->info('Seeder UnitVisit: ' . UnitVisit::count() . ' data created.');
     }
 }

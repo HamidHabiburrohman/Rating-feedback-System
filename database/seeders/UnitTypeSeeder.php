@@ -4,68 +4,73 @@ namespace Database\Seeders;
 
 use App\Models\UnitType;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class UnitTypeSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $unitTypes = [
+        $types = [
             [
-                'name' => 'Kesehatan',
-                'description' => 'Unit layanan kesehatan untuk mahasiswa dan staf',
-                'sort_order' => 1
+                'name' => 'Laboratorium',
+                'slug' => 'laboratorium',
+                'icon_key' => 'flask',
+                'description' => 'Fasilitas laboratorium untuk praktikum dan penelitian',
+                'is_active' => true,
             ],
             [
-                'name' => 'Akademik',
-                'description' => 'Fakultas, jurusan, dan unit pembelajaran',
-                'sort_order' => 2
+                'name' => 'Perpustakaan',
+                'slug' => 'perpustakaan',
+                'icon_key' => 'book-open',
+                'description' => 'Pusat sumber belajar dan literatur',
+                'is_active' => true,
             ],
             [
-                'name' => 'Administrasi',
-                'description' => 'Unit administrasi dan keuangan kampus',
-                'sort_order' => 3
+                'name' => 'Klinik',
+                'slug' => 'klinik',
+                'icon_key' => 'heart-pulse',
+                'description' => 'Layanan kesehatan untuk mahasiswa dan staff',
+                'is_active' => true,
             ],
             [
-                'name' => 'Fasilitas',
-                'description' => 'Sarana dan prasarana pendukung akademik',
-                'sort_order' => 4
+                'name' => 'Ruang Kelas',
+                'slug' => 'ruang-kelas',
+                'icon_key' => 'presentation',
+                'description' => 'Fasilitas pembelajaran perkuliahan',
+                'is_active' => true,
             ],
             [
-                'name' => 'Teknologi',
-                'description' => 'Unit teknologi informasi dan komputer',
-                'sort_order' => 5
+                'name' => 'Auditorium',
+                'slug' => 'auditorium',
+                'icon_key' => 'theater',
+                'description' => 'Ruang serbaguna untuk acara besar',
+                'is_active' => true,
             ],
             [
-                'name' => 'Olahraga',
+                'name' => 'Cafetaria',
+                'slug' => 'cafetaria',
+                'icon_key' => 'coffee',
+                'description' => 'Tempat makan dan berkumpul',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sports Center',
+                'slug' => 'sports-center',
+                'icon_key' => 'dumbbell',
                 'description' => 'Fasilitas olahraga dan kebugaran',
-                'sort_order' => 6
+                'is_active' => true,
             ],
             [
-                'name' => 'Kesenian',
-                'description' => 'Unit seni dan budaya kampus',
-                'sort_order' => 7
+                'name' => 'Student Lounge',
+                'slug' => 'student-lounge',
+                'icon_key' => 'sofa',
+                'description' => 'Ruang santai mahasiswa',
+                'is_active' => false,
             ],
-            [
-                'name' => 'Kemahasiswaan',
-                'description' => 'Unit kegiatan mahasiswa dan organisasi',
-                'sort_order' => 8
-            ],
-            [
-                'name' => 'Penelitian',
-                'description' => 'Pusat penelitian dan pengembangan',
-                'sort_order' => 9
-            ],
-            [
-                'name' => 'Layanan Umum',
-                'description' => 'Unit layanan umum kampus',
-                'sort_order' => 10
-            ]
         ];
 
-        foreach ($unitTypes as $type) {
+        foreach ($types as $type) {
             UnitType::create($type);
         }
-
-        $this->command->info('✅ 10 unit types berhasil di-seed!');
     }
 }

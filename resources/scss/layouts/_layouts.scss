@@ -19,18 +19,14 @@
     margin: 0 auto;
     padding: $grid-gutter-width;
     transition: 0.2s ease-in;
-    padding-top: 90px;
-
-    @include media-breakpoint-down(lg){
-      padding-top: 160px;
-    }
+    padding-top: 0; // UBAH: dari 90px jadi 0
   }
 }
 
 @include media-breakpoint-down(md) {
   .body-wrapper {
     >.container-fluid {
-      padding: 30px 20px;
+      padding: 20px; // UBAH: konsisten padding
     }
   }
 }
@@ -45,20 +41,29 @@
   &[data-sidebar-position="fixed"] {
     .left-sidebar {
       position: fixed;
-      top: 65px;
+      top: 0; // UBAH: dari 65px jadi 0
 
       @include media-breakpoint-down(lg){
-        top: 131px;
+        top: 0; // UBAH: dari 131px jadi 0
       }
     }
   }
 
   // Header position
   &[data-header-position="fixed"] {
+    .app-header {
+      position: fixed;
+      top: 0;
+      width: calc(100% - #{$sidebar-width-full}); // TAMBAH: biar header sejajar sidebar
+      left: $sidebar-width-full;
+      z-index: 9;
+    }
 
     .body-wrapper {
+      margin-left: $sidebar-width-full;
+      
       >.container-fluid {
-        padding-top: calc(#{$header-height} + 30px);
+        padding-top: $slim-header-height; // UBAH: pakai variable slim header
       }
     }
   }
@@ -70,14 +75,8 @@
     // Fixed Header + Minisidebar
     &[data-header-position="fixed"][data-sidebartype="mini-sidebar"] {
       .app-header {
-        width: calc(100%);
-      }
-    }
-
-    // Header position
-    &[data-header-position="fixed"] {
-      .app-header {
-        width: 100%;
+        width: calc(100% - #{$sidebar-width-mini});
+        left: $sidebar-width-mini;
       }
     }
 
@@ -87,13 +86,10 @@
         margin-left: $sidebar-width-full;
       }
     }
-
   }
 }
 
-//
 // Responsive view (below desktop view)
-//
 @media (max-width: 1199px) {
   #main-wrapper[data-layout="vertical"] {
 
@@ -113,7 +109,23 @@
       }
     }
 
+    // Fixed header di mobile
+    &[data-header-position="fixed"] {
+      .app-header {
+        width: 100%;
+        left: 0;
+      }
+      
+      .body-wrapper {
+        margin-left: 0;
+        
+        >.container-fluid {
+          padding-top: $slim-header-height;
+        }
+      }
+    }
   }
+  
   .left-sidebar {
     .scroll-sidebar {
       padding: $sidebar-spacing-x;

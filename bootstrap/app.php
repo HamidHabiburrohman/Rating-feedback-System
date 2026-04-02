@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\GuestStudentMiddleware;
+use App\Http\Middleware\StudentAuthMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,15 +16,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->statefulApi();
-
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'auth' => \App\Http\Middleware\Authenticate::class,
-            'guest.rate_limit' => \App\Http\Middleware\GuestRateLimit::class,
-            'visitor.cooldown' => \App\Http\Middleware\VisitorCooldown::class,
-            'unit.access' => \App\Http\Middleware\UnitAccessMiddleware::class,
+            // Admin Middleware
+            'admin' => AdminMiddleware::class,
+            'role' => CheckRole::class,
+            
+            // Student Middleware
+            'student.auth' => StudentAuthMiddleware::class,
+            'guest.student' => GuestStudentMiddleware::class,
         ]);
+
+        $middleware->web(append: []);
+
+        $middleware->api(append: []);
 
         $middleware->group('admin.api', [
             'auth:sanctum',
@@ -29,105 +37,29 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->group('visitor.api', [
-            'guest.rate_limit',
             'throttle:100,1',
         ]);
 
         $middleware->group('rating.submission', [
-            'visitor.cooldown',
+            'throttle:60,1',
         ]);
 
-        $middleware->appendToGroup('web', [
-            \App\Http\Middleware\EncryptCookies::class,
+        $middleware->priority([
+            \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            // HAPUS BARIS INI: \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
-        $middleware->appendToGroup('api', [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            'throttle:api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            \Illuminate\Auth\Middleware\Authorize::class,
+            StudentAuthMiddleware::class,
+            GuestStudentMiddleware::class,
+            AdminMiddleware::class,
+            CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->report(function (\Illuminate\Auth\AuthenticationException $e) {
-            \Log::warning('Authentication failed', [
-                'message' => $e->getMessage(),
-                'ip' => request()->ip(),
-                'url' => request()->fullUrl(),
-            ]);
-        });
-
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated. Please login.',
-                    'error' => 'UNAUTHENTICATED'
-                ], 401);
-            }
-        });
-
-        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $e->errors(),
-                ], 422);
-            }
-        });
-
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Resource not found',
-                    'error' => 'NOT_FOUND'
-                ], 404);
-            }
-        });
-
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e, $request) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Method not allowed',
-                    'error' => 'METHOD_NOT_ALLOWED'
-                ], 405);
-            }
-        });
-
-        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
-            if ($request->expectsJson()) {
-                $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Too many requests. Please try again later.',
-                    'retry_after' => $retryAfter,
-                    'error' => 'RATE_LIMIT_EXCEEDED'
-                ], 429);
-            }
-        });
-
-        if (app()->environment('local', 'development')) {
-            $exceptions->render(function (\Throwable $e, $request) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Internal server error',
-                        'error' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine(),
-                        'trace' => $e->getTrace(),
-                    ], 500);
-                }
-            });
-        }
-    })
-    ->create();
+        //
+    })->create();

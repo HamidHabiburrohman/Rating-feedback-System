@@ -3,46 +3,56 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
+    public function showLoginForm()
+    {
+        return view('auth.admin.login');
+    }
+
     public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $credentials = $request->only('email', 'password');
+        $remember = $request->boolean('remember');
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return back()->withErrors([
-                'email' => 'Invalid email or password.',
-            ])->onlyInput('email');
+        if (Auth::attempt($credentials, $remember)) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+            
+            if (!in_array($user->role, ['admin', 'super_admin', 'unit'])) {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'email' => ['You do not have permission to access admin area.'],
+                ]);
+            }
+
+            return redirect()->intended(route('admin.dashboard.index'))
+                ->with('success', 'Welcome back, ' . $user->nama . '!');
         }
 
-        if (!in_array($user->role, ['admin', 'super_admin'])) {
-            return back()->withErrors([
-                'email' => 'Access denied. Admin only.',
-            ]);
-        }
-
-        $token = $user->createToken('admin-web-session', ['admin:access'])->plainTextToken;
-        
-        $request->session()->put('sanctum_token', $token);
-        
-        Auth::guard('web')->login($user, $request->has('remember'));
-        
-        $cookie = cookie('sanctum_token', $token, 60 * 24 * 30); // 30 days
-        
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('admin.dashboard'))
-            ->with('success', 'Welcome back, ' . $user->nama . '!')
-            ->withCookie($cookie); // Attach cookie to response
+        throw ValidationException::withMessages([
+            'email' => [trans('auth.failed')],
+        ]);
     }
+
+    // public function logout(Request $request)
+    // {
+    //     Auth::logout();
+
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+
+    //     return redirect()->route('admin.login')
+    //         ->with('success', 'You have been logged out successfully.');
+    // }
 }

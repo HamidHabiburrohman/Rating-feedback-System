@@ -6,18 +6,31 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $this->call([
-            AdminUserSeeder::class,         // 1. User/Admin dulu (dibutuhkan Report & Rating)
-            UnitTypeSeeder::class,          // 2. Tipe Unit (dibutuhkan Unit)
-            UnitSeeder::class,              // 3. Unit (dibutuhkan Report & Visit)
-            VisitorSessionSeeder::class,    // 4. Session (dibutuhkan Report & Visit)
-            ReportSeeder::class,            // 5. Report (butuh Admin, Unit, Session)
-            UnitVisitSeeder::class,         // 6. Visit (butuh Unit & Session)
-            RatingCategorySeeder::class,    // 7. Kategori Rating
-            RatingSeeder::class,            // 8. Rating (biasanya butuh Unit/Report & Session)
-            PersonalAccessTokenSeeder::class,
+            // Urutan PENTING: parent tables dulu
+            UserSeeder::class,              // users
+            UnitTypeSeeder::class,           // unit_types
+            UnitDepartmentSeeder::class,     // unit_departments
+            RatingCategorySeeder::class,     // rating_categories
+            FacilitySeeder::class,            // facilities
+            SettingSeeder::class,             // settings
+
+            // Child tables (punya foreign key)
+            UnitSeeder::class,                // units
+            StudentSessionSeeder::class,      // student_sessions
+            UnitPhotoSeeder::class,            // unit_photos
+            UnitFacilitySeeder::class,         // unit_facilities
+            UnitVisitSeeder::class,            // unit_visits
+            RatingSeeder::class,               // ratings
+            RatingScoreSeeder::class,          // rating_scores
+            AdminReplySeeder::class,            // admin_replies
+            ReportSeeder::class,                // reports
+            ModerationLogSeeder::class,         // moderation_logs
+            StudentSeeder::class,            // students
+            AdminReplySeeder::class,
+
         ]);
     }
 }

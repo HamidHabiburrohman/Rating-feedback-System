@@ -6,27 +6,26 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUnitTypeRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
-            'name' => 'required|string|max:100|unique:unit_types,name',
-            'description' => 'nullable|string|max:500',
-            'is_active' => 'boolean',
-            'sort_order' => 'integer|min:0'
+            'name' => 'required|string|max:255|unique:unit_types,name',
+            'slug' => 'nullable|string|max:255|unique:unit_types,slug',
+            'icon_key' => 'required|string|max:100',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
         ];
     }
 
-    public function attributes()
+    protected function prepareForValidation()
     {
-        return [
-            'name' => 'nama tipe unit',
-            'description' => 'deskripsi',
-            'is_active' => 'status aktif'
-        ];
+        $this->merge([
+            'is_active' => $this->boolean('is_active', true),
+        ]);
     }
 }

@@ -3,19 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'nama',
         'email',
         'password',
-        'role'
+        'role',
+        'email_verified_at'
     ];
 
     protected $hidden = [
@@ -24,16 +25,46 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'password' => 'hashed',
+        'email_verified_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
+    // Relasi
+    public function unitPhotos()
+    {
+        return $this->hasMany(UnitPhoto::class, 'uploaded_by_admin_id');
+    }
+
+    public function adminReplies()
+    {
+        return $this->hasMany(AdminReply::class, 'admin_id');
+    }
+
+    public function handledReports()
+    {
+        return $this->hasMany(Report::class, 'admin_id');
+    }
+
+    public function moderationLogs()
+    {
+        return $this->hasMany(ModerationLog::class, 'admin_id');
+    }
+
+    // Helper methods
     public function isAdmin()
     {
         return in_array($this->role, ['admin', 'super_admin']);
     }
 
-    public function scopeAdmins($query)
+    public function isSuperAdmin()
     {
-        return $query->whereIn('role', ['admin', 'super_admin']);
+        return $this->role === 'super_admin';
+    }
+
+    public function isUnitAdmin()
+    {
+        return $this->role === 'unit';
     }
 }

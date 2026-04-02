@@ -4,137 +4,80 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Admin\DashboardService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __construct(
-        protected DashboardService $dashboardService
-    ) {
+    protected DashboardService $service;
+
+    public function __construct(DashboardService $service)
+    {
+        $this->service = $service;
     }
 
     public function index()
     {
-        return view('admin.dashboard');
+        return view('admin.dashboard', [
+            'title' => 'Dashboard',
+            'routes' => [
+                'overview' => route('admin.dashboard.overview'),
+                'stats' => route('admin.dashboard.stats'),
+                'charts' => route('admin.dashboard.charts'),
+                'auditLogs' => route('admin.dashboard.audit-logs'),
+                'recentRated' => route('admin.dashboard.recent-rated'),
+                'topUnits' => route('admin.dashboard.top-units', ['type' => 'all'])
+            ]
+        ]);
     }
 
-    public function stats(): JsonResponse
+    public function stats()
     {
-        try {
-            $stats = $this->dashboardService->getDashboardStats();
-
-            return response()->json([
-                'success' => true,
-                'data' => $stats,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Dashboard stats error: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
-
-            // Return default stats jika error
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'pengunjung' => [
-                        'hari_ini' => 0,
-                        'minggu_ini' => 0,
-                        'bulan_ini' => 0,
-                        'total' => 0
-                    ],
-                    'rating' => [
-                        'hari_ini' => 0,
-                        'minggu_ini' => 0,
-                        'bulan_ini' => 0,
-                        'total' => 0,
-                        'rata_rata' => 0
-                    ],
-                    'laporan' => [
-                        'baru' => 0,
-                        'diproses' => 0,
-                        'selesai' => 0,
-                        'total' => 0
-                    ],
-                    'unit' => [
-                        'total' => 0,
-                        'aktif' => 0,
-                        'non_aktif' => 0,
-                        'per_jenis' => []
-                    ],
-                    'admin' => [
-                        'total' => 0,
-                        'super_admin' => 0,
-                        'admin' => 0
-                    ]
-                ],
-            ]);
-        }
+        return response()->json($this->service->getStats());
     }
 
-    public function charts(): JsonResponse
+    public function charts()
     {
-        try {
-            $charts = $this->dashboardService->getChartData();
-
-            return response()->json([
-                'success' => true,
-                'data' => $charts,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Dashboard charts error: ' . $e->getMessage());
-
-            // Return empty data jika error
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'visitation_trend' => [],
-                    'rating_distribution' => [
-                        'labels' => ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
-                        'data' => [0, 0, 0, 0, 0]
-                    ]
-                ]
-            ]);
-        }
+        return response()->json($this->service->getCharts());
     }
 
-    public function overview(): JsonResponse
+    public function overview()
     {
-        try {
-            $overview = $this->dashboardService->getOverviewData();
+        $stats = $this->service->getStats();
+        $charts = $this->service->getCharts();
+        $topUnits = $this->service->getTopUnits('all');
 
-            return response()->json([
-                'success' => true,
-                'data' => $overview,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Dashboard overview error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load overview data',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'stats' => $stats['data'] ?? [],
+                'charts' => $charts['data'] ?? [],
+                'top_rated_units' => $topUnits['data'] ?? []
+            ]
+        ]);
     }
 
-    public function topUnitsByType($type): JsonResponse
+    public function auditLogs()
     {
-        try {
-            $topUnits = $this->dashboardService->getTopUnitRate($type);
+        return response()->json($this->service->getAuditLogs());
+    }
 
-            return response()->json([
-                'success' => true,
-                'data' => $topUnits,
-                'type' => $type
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Top units by type error: ' . $e->getMessage());
+    public function recentRated()
+    {
+        return response()->json($this->service->getRecentRated());
+    }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load top units',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    public function topUnits(Request $request, string $type = 'all')
+    {
+        return response()->json($this->service->getTopUnits($type));
+    }
+
+    public function attentionUnits()
+    {
+        return response()->json($this->service->getAttentionUnits());
+    }
+
+    public function getUnitsByFilter(Request $request, string $filter = 'all')
+    {
+        return response()->json($this->service->getTopUnits($filter));
     }
 }

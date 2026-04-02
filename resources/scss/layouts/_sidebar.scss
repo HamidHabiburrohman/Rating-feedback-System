@@ -60,7 +60,6 @@
         align-items: center;
         line-height: 25px;
         position: relative;
-        margin: 5px 0;
         padding: 12px 9px;
         font-size: 15px;
         gap: 12px;
@@ -285,3 +284,5 @@
     background-color: rgba($primary, 0.2) !important;
   }
 }
+
+@import 'components/_navbar-admin';

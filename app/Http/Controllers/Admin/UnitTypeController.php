@@ -4,143 +4,79 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UnitType\StoreUnitTypeRequest;
-use App\Http\Requests\Admin\UnitType\UpdateUnitTypeRequest;
-use App\Models\UnitType;
+use App\Http\Requests\Admin\UnitType\UpdateUnitTypesRequest;
+use App\Http\Requests\Admin\UnitType\ReorderRequest;
+use App\Services\Admin\UnitTypeService;
+use App\Services\Admin\IconService;
 use Illuminate\Http\Request;
 
 class UnitTypeController extends Controller
 {
+    protected UnitTypeService $service;
+    protected IconService $iconService;
+
+    public function __construct(UnitTypeService $service, IconService $iconService)
+    {
+        $this->service = $service;
+        $this->iconService = $iconService;
+    }
+
     public function index(Request $request)
     {
-        $query = UnitType::withCount('units');
+        $filters = $request->only(['search', 'status', 'sort', 'order', 'per_page']);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
-
-        $sort = $request->input('sort', 'sort_order');
-        $order = $request->input('order', 'asc');
-
-        if (in_array($sort, ['name', 'created_at', 'sort_order'])) {
-            $query->orderBy($sort, $order);
-        } else {
-            $query->orderBy('sort_order')->orderBy('name');
-        }
-
-        $perPage = $request->input('per_page', 10);
-        $totalUnits = UnitType::count();
-        $hidePerPage = $totalUnits <= 10;
-        $unitTypes = $query->paginate($perPage)->withQueryString();
-
-        return view('admin.unit-type.index', compact('unitTypes', 'hidePerPage'));
+        return view('admin.unit-types.index', [
+            'unitTypes' => $this->service->getPaginated($filters),
+            'filterData' => $this->service->getFilterData(),
+            'stats' => $this->service->getStats()
+        ]);
     }
 
     public function create()
     {
-        return view('admin.unit-type.create');
+        return view('admin.unit-types.create', [
+            'icons' => $this->iconService->getIconOptions(),
+            'iconPreviews' => $this->iconService->getIconPreviews()
+        ]);
     }
 
     public function store(StoreUnitTypeRequest $request)
     {
-        try {
-            UnitType::create($request->validated());
-            return redirect()->route('admin.unit-types.index')->with('success', 'Tipe unit berhasil dibuat');
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal membuat tipe unit: ' . $e->getMessage());
-        }
+        $this->service->create($request->validated());
+
+        return redirect()->route('admin.unit-types.index')
+            ->with('success', 'Tipe unit berhasil dibuat');
     }
 
     public function show($id)
     {
-        $unitType = UnitType::withCount('units')->findOrFail($id);
-        return view('admin.unit-type.show', compact('unitType'));
+        return view('admin.unit-types.show', [
+            'unitType' => $this->service->findOrFail($id)
+        ]);
     }
 
     public function edit($id)
     {
-        $unitType = UnitType::findOrFail($id);
-        return view('admin.unit-type.edit', compact('unitType'));
+        return view('admin.unit-types.edit', [
+            'unitType' => $this->service->findOrFail($id),
+            'icons' => $this->iconService->getIconOptions(),
+            'iconPreviews' => $this->iconService->getIconPreviews()
+        ]);
     }
 
-    public function update(UpdateUnitTypeRequest $request, $id)
+    public function update(UpdateUnitTypesRequest $request, $id)
     {
-        try {
-            $unitType = UnitType::findOrFail($id);
-            $unitType->update($request->validated());
-            return redirect()->route('admin.unit-types.index')->with('success', 'Tipe unit berhasil diperbarui');
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui tipe unit: ' . $e->getMessage());
-        }
+        $this->service->update($id, $request->validated());
+
+        return redirect()->route('admin.unit-types.index')
+            ->with('success', 'Tipe unit berhasil diperbarui');
     }
 
     public function destroy($id)
     {
-        try {
-            $unitType = UnitType::findOrFail($id);
+        $this->service->delete($id);
 
-            if ($unitType->units()->exists()) {
-                return redirect()->route('admin.unit-types.index')
-                    ->with('error', 'Tidak dapat menghapus tipe unit karena masih memiliki unit terkait');
-            }
-
-            $unitType->delete();
-
-            return redirect()->route('admin.unit-types.index')
-                ->with('success', 'Tipe unit berhasil dihapus');
-        } catch (\Exception $e) {
-            return redirect()->route('admin.unit-types.index')
-                ->with('error', 'Gagal menghapus tipe unit: ' . $e->getMessage());
-        }
-    }
-
-    public function toggleStatus($id)
-    {
-        try {
-            $unitType = UnitType::findOrFail($id);
-            $newStatus = !$unitType->is_active;
-            $unitType->update(['is_active' => $newStatus]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Status tipe unit berhasil diubah',
-                'data' => [
-                    'id' => $unitType->id,
-                    'is_active' => $newStatus,
-                    'status_text' => $newStatus ? 'Aktif' : 'Nonaktif',
-                    'status_class' => $newStatus ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'
-                ]
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Toggle status error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengubah status: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function reorder(Request $request)
-    {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:unit_types,id'
-        ]);
-
-        foreach ($request->ids as $index => $id) {
-            UnitType::where('id', $id)->update(['sort_order' => $index]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Urutan berhasil diperbarui'
-        ]);
+        return redirect()->route('admin.unit-types.index')
+            ->with('success', 'Tipe unit berhasil dihapus');
     }
 }

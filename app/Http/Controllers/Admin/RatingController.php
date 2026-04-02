@@ -3,75 +3,157 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\Admin\RatingService;
+use App\Http\Requests\Admin\Rating\RatingFilterRequest;
+use App\Http\Requests\Admin\Rating\UpdateRatingStatusRequest;
+use App\Http\Requests\Admin\Rating\ModerateRatingRequest;
+use App\Http\Requests\Admin\Rating\BulkRatingActionRequest;
+use App\Services\Admin\RatingManagementService;
 use App\Models\Rating;
-use App\Models\Unit;
 use Illuminate\Http\Request;
 
 class RatingController extends Controller
 {
-    protected $ratingService;
+    protected RatingManagementService $service;
 
-    public function __construct(RatingService $ratingService)
+    public function __construct(RatingManagementService $service)
     {
-        $this->ratingService = $ratingService;
+        $this->service = $service;
     }
 
-    public function index(Request $request)
+    public function index(RatingFilterRequest $request)
     {
-        $filters = $request->only(['status', 'date_from', 'date_to', 'search', 'unit']);
-        $ratings = $this->ratingService->getAllRatings($filters)
-            ->paginate($request->per_page ?? 10)
-            ->withQueryString();
-        
-        $units = Unit::where('status', 'aktif')->get(['id', 'nama_unit', 'kode_unit']);
-        $stats = $this->ratingService->getRatingStats();
-        $unitRanking = $this->ratingService->getUnitRanking(10);
+        $filters = $request->validated();
+        $ratings = $this->service->getPaginatedRatings($filters);
+        $filterData = $this->service->getFilterData();
+        $stats = $this->service->getRatingStats();
 
-        return view('admin.ratings.index', compact('ratings', 'units', 'stats', 'unitRanking'));
+        return view('admin.ratings.index', compact('ratings', 'filterData', 'stats'));
     }
 
     public function show($id)
     {
-        $rating = Rating::with(['unit', 'visitorSession'])->findOrFail($id);
-        $similarRatings = Rating::where('unit_id', $rating->unit_id)
-            ->where('id', '!=', $id)
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        return view('admin.ratings.show', compact('rating', 'similarRatings'));
+        try {
+            $rating = $this->service->getRatingDetail($id);
+            return view('admin.ratings.show', compact('rating'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.index')
+                ->with('error', 'Rating tidak ditemukan');
+        }
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(UpdateRatingStatusRequest $request, Rating $rating)
     {
-        $request->validate(['status' => 'required|in:pending,dibalas,selesai']);
-        $this->ratingService->updateRating($id, ['status' => $request->status]);
-        return back()->with('success', 'Status updated successfully');
+        try {
+            $this->service->updateRating($rating->id, ['status' => $request->status]);
+
+            return redirect()->route('admin.ratings.show', $rating->id)
+                ->with('success', 'Status rating berhasil diperbarui');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.show', $rating->id)
+                ->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
+        }
     }
 
-    public function reply(Request $request, $id)
+    public function moderate(ModerateRatingRequest $request, Rating $rating)
     {
-        $request->validate(['reply_message' => 'required|string|max:1000']);
-        $this->ratingService->respondToRating($id, [
-            'message' => $request->reply_message,
-            'replied_by' => auth()->id(),
-            'replied_at' => now()->toDateTimeString()
+        try {
+            $this->service->moderate($rating->id, $request->action, $request->reason);
+
+            return redirect()->route('admin.ratings.show', $rating->id)
+                ->with('success', 'Moderasi berhasil dilakukan');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.show', $rating->id)
+                ->with('error', 'Gagal melakukan moderasi: ' . $e->getMessage());
+        }
+    }
+
+    public function bulkAction(BulkRatingActionRequest $request)
+    {
+        try {
+            $count = $this->service->bulkAction($request->rating_ids, $request->action);
+
+            return response()->json([
+                'success' => true,
+                'message' => $count . ' rating berhasil diproses'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses rating: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function stats(Request $request)
+    {
+        try {
+            $data = [
+                'overall' => $this->service->getRatingStats($request->get('unit_id')),
+                'monthly' => $this->service->getMonthlyStats(),
+                'ranking' => $this->service->getUnitRanking(10)
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'data' => $data]);
+            }
+
+            return view('admin.ratings.stats', $data);
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal mengambil statistik'], 500);
+            }
+            return redirect()->route('admin.ratings.index')
+                ->with('error', 'Gagal mengambil statistik: ' . $e->getMessage());
+        }
+    }
+
+    public function unitStats($unitId)
+    {
+        try {
+            $stats = $this->service->getRatingStats($unitId);
+            $ratings = $this->service->getAllRatings(['unit_id' => $unitId])->paginate(15);
+
+            return view('admin.ratings.unit-stats', compact('stats', 'ratings', 'unitId'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.index')
+                ->with('error', 'Gagal mengambil statistik unit: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy(Rating $rating)
+    {
+        try {
+            $this->service->deleteRating($rating->id);
+
+            return redirect()->route('admin.ratings.index')
+                ->with('success', 'Rating berhasil dihapus');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.show', $rating->id)
+                ->with('error', 'Gagal menghapus rating: ' . $e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+        try {
+            return $this->service->export($request->only([
+                'unit_id',
+                'status',
+                'date_from',
+                'date_to',
+                'min_score',
+                'max_score'
+            ]));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.ratings.index')
+                ->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
+        }
+    }
+
+    public function getAdminName(Rating $rating)
+    {
+        return response()->json([
+            'admin_name' => $rating->adminName
         ]);
-        return back()->with('success', 'Reply sent successfully');
-    }
-
-    public function destroy($id)
-    {
-        $this->ratingService->deleteRating($id);
-        return redirect()->route('admin.ratings.index')->with('success', 'Rating deleted');
-    }
-
-    public function analytics()
-    {
-        $stats = $this->ratingService->getRatingStats();
-        $unitRanking = $this->ratingService->getUnitRanking(10);
-        $monthlyStats = $this->ratingService->getMonthlyStats();
-        return view('admin.ratings.analytics', compact('stats', 'unitRanking', 'monthlyStats'));
     }
 }

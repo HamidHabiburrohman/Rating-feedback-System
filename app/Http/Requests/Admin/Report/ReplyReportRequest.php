@@ -14,16 +14,15 @@ class ReplyReportRequest extends FormRequest
     public function rules()
     {
         return [
-            'tanggapan' => 'required|string|min:10|max:2000',
+            'tanggapan_admin' => 'required|string|max:250'
         ];
     }
 
     public function messages()
     {
         return [
-            'tanggapan.required' => 'Tanggapan wajib diisi',
-            'tanggapan.min' => 'Tanggapan minimal 10 karakter',
-            'tanggapan.max' => 'Tanggapan maksimal 2000 karakter',
+            'tanggapan_admin.required' => 'Tanggapan harus diisi',
+            'tanggapan_admin.max' => 'Tanggapan maksimal 250 karakter'
         ];
     }
 }

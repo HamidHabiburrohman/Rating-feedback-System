@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin;
+namespace App\Http\Requests\Admin\Report;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -14,24 +14,25 @@ class UpdateReportRequest extends FormRequest
     public function rules()
     {
         return [
-            'judul' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
-            'tipe' => 'required|in:masalah,saran,keluhan,pujian,lainnya',
-            'prioritas' => 'required|in:rendah,sedang,tinggi,kritis',
-            'status' => 'required|in:baru,diproses,selesai,ditolak',
-            'unit_id' => 'nullable|exists:units,id',
-            'lampiran' => 'nullable|array'
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'priority' => 'required|in:low,medium,high,critical',
+            'status' => 'required|in:new,in_progress,replied,resolved,rejected',
+            'admin_response' => 'nullable|string|max:5000'
         ];
     }
 
     public function messages()
     {
         return [
-            'judul.required' => 'Judul laporan harus diisi.',
-            'deskripsi.required' => 'Deskripsi laporan harus diisi.',
-            'tipe.required' => 'Tipe laporan harus dipilih.',
-            'prioritas.required' => 'Prioritas laporan harus dipilih.',
-            'status.required' => 'Status laporan harus dipilih.'
+            'title.required' => 'Judul laporan harus diisi',
+            'title.max' => 'Judul laporan maksimal 255 karakter',
+            'description.required' => 'Deskripsi laporan harus diisi',
+            'priority.required' => 'Prioritas harus dipilih',
+            'priority.in' => 'Prioritas tidak valid',
+            'status.required' => 'Status harus dipilih',
+            'status.in' => 'Status tidak valid',
+            'admin_response.max' => 'Tanggapan maksimal 5000 karakter'
         ];
     }
 }

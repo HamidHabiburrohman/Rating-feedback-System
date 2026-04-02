@@ -3,48 +3,50 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 
 class RatingCategory extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    protected $table = 'rating_categories';
+    use HasFactory;
 
     protected $fillable = [
-        'unit_id',
-        'nama_kategori',
+        'name',
         'slug',
-        'deskripsi',
-        'urutan',
-        'wajib_diisi',
-        'status_aktif',
+        'is_active',
+        'sort_order'
     ];
 
     protected $casts = [
-        'wajib_diisi' => 'boolean',
-        'status_aktif' => 'boolean',
-        'deleted_at' => 'datetime',
+        'is_active' => 'boolean',
+        'sort_order' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
-
-    public function scores()
+    // Relasi
+    public function ratingScores()
     {
         return $this->hasMany(RatingScore::class);
     }
 
-    public function scopeAktif($query)
+    // Scope
+    public function scopeActive($query)
     {
-        return $query->where('status_aktif', true);
+        return $query->where('is_active', true);
     }
 
-    public function scopeUnit($query, $unitId)
+    public function scopeOrdered($query)
     {
-        return $query->where('unit_id', $unitId);
+        return $query->orderBy('sort_order');
+    }
+
+    // Helper methods
+    public static function getDefaultCategories()
+    {
+        return [
+            ['name' => 'Facility', 'slug' => 'facility', 'sort_order' => 1],
+            ['name' => 'Service', 'slug' => 'service', 'sort_order' => 2],
+            ['name' => 'Quality', 'slug' => 'quality', 'sort_order' => 3],
+        ];
     }
 }

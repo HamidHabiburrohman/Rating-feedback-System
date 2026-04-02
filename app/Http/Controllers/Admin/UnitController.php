@@ -3,114 +3,255 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Unit\StoreUnitRequest;
-use App\Http\Requests\Admin\Unit\UpdateUnitRequest;
+use App\Http\Requests\Admin\Unit\UnitRequest;
 use App\Services\Admin\UnitService;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    protected $unitService;
+    protected UnitService $service;
 
-    public function __construct(UnitService $unitService)
+    public function __construct(UnitService $service)
     {
-        $this->unitService = $unitService;
+        $this->service = $service;
     }
 
     public function index(Request $request)
     {
-        $units = $this->unitService->getUnits($request->all());
-        $typeNames = $this->unitService->getUnitTypeNamesForFilter();
+        $filters = $request->only(['search', 'status', 'type', 'sort', 'order', 'per_page', 'with_trashed', 'only_trashed']);
+        $units = $this->service->getPaginated($filters);
+        $typeNames = $this->service->getTypeNames();
 
-        $unitTypes = $this->unitService->getAllUnitTypesForForm();
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('admin.units.partials.rows', compact('units'))->render(),
+                'pagination' => view('admin.units.partials.pagination', compact('units'))->render()
+            ]);
+        }
 
-        return view('admin.units.index', compact('units', 'typeNames', 'unitTypes'));
+        return view('admin.units.index', compact('units', 'typeNames'));
+    }
+
+    public function trashed(Request $request)
+    {
+        $filters = $request->only(['search', 'sort', 'order', 'per_page']);
+        $units = $this->service->getTrashed($filters);
+
+        return view('admin.units.trashed', compact('units'));
     }
 
     public function create()
     {
-        $unitTypes = $this->unitService->getAllUnitTypesForForm();
-        return view('admin.units.create', compact('unitTypes'));
+        return view('admin.units.create', $this->service->getCreateData());
     }
 
-    public function store(StoreUnitRequest $request)
+    public function store(UnitRequest $request)
     {
         try {
-            $this->unitService->createUnit($request->validated(), $request->file('foto_unit'));
-            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dibuat');
+            $this->service->create($request->validated());
+            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil ditambahkan');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal membuat unit: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menambahkan unit: ' . $e->getMessage())->withInput();
         }
     }
 
-    public function show($id)
+    public function show(string|int $id)
     {
-        $unit = $this->unitService->findUnit($id);
+        $unit = $this->service->findWithTrashed($id);
+
+        if (!$unit) {
+            return redirect()->route('admin.units.index')->with('error', 'Unit tidak ditemukan');
+        }
+
         return view('admin.units.show', compact('unit'));
     }
 
-    public function edit($id)
-    {
-        $unit = $this->unitService->findUnit($id);
-        $unitTypes = $this->unitService->getAllUnitTypesForForm();
-
-        return view('admin.units.edit', compact('unit', 'unitTypes'));
-    }
-
-    public function update(UpdateUnitRequest $request, $id)
+    public function edit(string|int $id)
     {
         try {
-            $this->unitService->updateUnit(
-                $id,
-                $request->validated(),
-                $request->file('foto_unit'),
-                $request->has('remove_foto') && $request->remove_foto == '1'
-            );
+            return view('admin.units.edit', $this->service->getEditData($id));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.units.index')->with('error', 'Unit tidak ditemukan');
+        }
+    }
 
+    public function update(UnitRequest $request, string|int $id)
+    {
+        try {
+            $this->service->update($id, $request->validated());
             return redirect()->route('admin.units.index')->with('success', 'Unit berhasil diperbarui');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui unit: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui unit: ' . $e->getMessage())->withInput();
         }
     }
 
-    public function destroy($id)
+    public function destroy(Unit $unit)
     {
         try {
-            $this->unitService->deleteUnit($id);
-            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dihapus');
+            $this->service->delete($unit->id);
+            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dipindahkan ke trash');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus unit: ' . $e->getMessage());
+            return redirect()->route('admin.units.index')->with('error', $e->getMessage());
         }
     }
 
-    public function updateStatus(Request $request, $id)
+    public function restore(string|int $id)
     {
         try {
-            $request->validate([
-                'status' => 'required|in:open,full,maintenance,closed'
-            ]);
+            $this->service->restore($id);
+            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil dipulihkan');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memulihkan unit: ' . $e->getMessage());
+        }
+    }
 
-            $this->unitService->updateUnitStatus($id, $request->status);
+    public function forceDelete(string|int $id)
+    {
+        try {
+            $this->service->forceDelete($id);
+            return redirect()->route('admin.units.trash')->with('success', 'Unit berhasil dihapus permanen');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus unit permanen: ' . $e->getMessage());
+        }
+    }
+
+    public function toggleStatus(Request $request, string|int $id)
+    {
+        try {
+            $unit = $this->service->find($id);
+            $unit->is_active = !$unit->is_active;
+            $unit->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Status unit berhasil diperbarui'
+                'message' => 'Status unit berhasil diubah',
+                'status' => $unit->is_active
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memperbarui status: ' . $e->getMessage()
+                'message' => 'Gagal mengubah status: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    public function categories($id)
+    public function syncFacilities(Request $request, string|int $id)
     {
-        $categories = $this->unitService->getUnitCategories($id);
+        try {
+            $unit = $this->service->find($id);
+            $unit->facilities()->sync($request->facilities ?? []);
 
-        return response()->json([
-            'success' => true,
-            'data' => $categories
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Fasilitas berhasil disinkronkan'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal sinkronisasi fasilitas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            $count = 0;
+
+            foreach ($ids as $id) {
+                try {
+                    $this->service->delete($id);
+                    $count++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} unit berhasil dipindahkan ke trash"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus unit: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkRestore(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            $count = 0;
+
+            foreach ($ids as $id) {
+                try {
+                    $this->service->restore($id);
+                    $count++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} unit berhasil dipulihkan"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memulihkan unit: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkForceDelete(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            $count = 0;
+
+            foreach ($ids as $id) {
+                try {
+                    $this->service->forceDelete($id);
+                    $count++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} unit berhasil dihapus permanen"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus unit permanen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkActivate(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            $status = $request->input('status', true);
+
+            $count = Unit::whereIn('id', $ids)->update(['is_active' => $status]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} unit berhasil " . ($status ? 'diaktifkan' : 'dinonaktifkan')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status unit: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

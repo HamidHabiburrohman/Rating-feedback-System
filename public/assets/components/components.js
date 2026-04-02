@@ -2,265 +2,124 @@
 // COMPONENTS.JS - GLOBAL COMPONENT FUNCTIONS
 // ============================================
 
-// ============================================
-// MODAL SYSTEM
-// ============================================
-
-/**
- * Open custom modal by ID
- * @param {string} modalId - ID of the modal element
- */
-window.openModal = function(modalId) {
-    console.log('[Components] Opening modal:', modalId);
+window.openModal = function (modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
-        
-        // Show modal
-        modal.classList.add('show');
-        
-        // Initialize modal-specific logic
-        initModalState(modal, modalId);
-    } else {
+    if (!modal) {
         console.error('[Components] Modal not found:', modalId);
+        return;
     }
-};
 
-/**
- * Close custom modal by ID
- * @param {string} modalId - ID of the modal element
- */
-window.closeModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
-        
-        // Reset form state for delete modals
-        resetModalForm(modal);
-    }
-};
+    document.body.style.overflow = 'hidden';
+    modal.classList.remove('show');
+    void modal.offsetHeight;
+    modal.classList.add('show');
+    modal.style.cssText = 'visibility:visible;opacity:1;display:flex;';
 
-/**
- * Initialize modal state when opened
- */
-function initModalState(modal, modalId) {
-    // For delete modals: reset checkbox and button
-    if (modalId.includes('deleteModal')) {
-        const checkbox = modal.querySelector('.confirm-checkbox');
-        const deleteBtn = modal.querySelector('.btn-delete');
-        
-        if (checkbox) checkbox.checked = false;
-        if (deleteBtn) deleteBtn.disabled = true;
-    }
-    
-    // For reply modals: focus on textarea
-    if (modalId.includes('replyModal') || modalId.includes('ReplyModal')) {
-        const textarea = modal.querySelector('textarea');
-        if (textarea) {
-            setTimeout(() => textarea.focus(), 300);
-        }
-    }
-}
+    // Init state setiap kali modal dibuka — bukan hanya sekali
+    const checkbox  = modal.querySelector('.confirm-checkbox');
+    const deleteBtn = modal.querySelector('.btn-delete');
 
-/**
- * Reset modal form state
- */
-function resetModalForm(modal) {
-    const submitButton = modal.querySelector('.btn-delete, .btn-submit');
-    if (submitButton) {
-        const buttonText = submitButton.querySelector('.btn-text');
-        const spinner = submitButton.querySelector('.loading-spinner');
-        
-        if (buttonText) buttonText.style.display = 'inline';
-        if (spinner) spinner.style.display = 'none';
-        submitButton.disabled = false;
-    }
-}
+    if (checkbox && deleteBtn) {
+        checkbox.checked  = false;
+        deleteBtn.disabled = true;
 
-// ============================================
-// DELETE MODAL INITIALIZATION
-// ============================================
-
-/**
- * Initialize all delete modals on the page
- */
-window.initDeleteModals = function() {
-    console.log('[Components] Initializing delete modals...');
-    
-    document.querySelectorAll('.custom-modal').forEach(modal => {
-        const checkbox = modal.querySelector('.confirm-checkbox');
-        const deleteBtn = modal.querySelector('.btn-delete');
-        
-        if (checkbox && deleteBtn) {
-            // Set initial state
-            deleteBtn.disabled = true;
-            
-            // Checkbox change handler
-            checkbox.addEventListener('change', function() {
-                deleteBtn.disabled = !this.checked;
+        // Pasang listener hanya jika belum ada
+        if (!checkbox.dataset.listenerAttached) {
+            checkbox.dataset.listenerAttached = 'true';
+            checkbox.addEventListener('change', function () {
+                const btn = this.closest('.custom-modal').querySelector('.btn-delete');
+                if (btn) btn.disabled = !this.checked;
             });
         }
-    });
+    }
 
-    // Delete form submission handler
+    const textarea = modal.querySelector('textarea');
+    if (textarea && modalId.toLowerCase().includes('reply')) {
+        setTimeout(() => textarea.focus(), 300);
+    }
+};
+
+window.closeModal = function (modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.classList.remove('show');
+    modal.style.cssText = '';
+    document.body.style.overflow = '';
+
+    const btnText = modal.querySelector('.btn-text');
+    const spinner = modal.querySelector('.loading-spinner');
+    if (btnText) btnText.style.display = '';
+    if (spinner) spinner.style.display = 'none';
+};
+
+window.initDeleteModals = function () {
+    // Pasang listener submit pada form delete
     document.querySelectorAll('.delete-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const submitButton = this.querySelector('.btn-delete');
-            
-            // NULL CHECK
-            if (!submitButton) {
-                console.error('[Components] Delete button not found in form');
-                return true;
-            }
-            
-            // Prevent submission if button is disabled
-            if (submitButton.disabled) {
+        if (form.dataset.listenerAttached) return;
+        form.dataset.listenerAttached = 'true';
+
+        form.addEventListener('submit', function (e) {
+            const submitBtn = this.querySelector('.btn-delete');
+            if (!submitBtn) return true;
+
+            if (submitBtn.disabled) {
                 e.preventDefault();
                 return false;
             }
-            
-            // Show loading state
-            const buttonText = submitButton.querySelector('.btn-text');
-            const spinner = submitButton.querySelector('.loading-spinner');
-            
-            if (buttonText) buttonText.style.display = 'none';
+
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+            if (btnText) btnText.style.display = 'none';
             if (spinner) spinner.style.display = 'block';
-            submitButton.disabled = true;
-            
+            submitBtn.disabled = true;
+
             return true;
         });
     });
 };
 
-// ============================================
-// REPLY FORM INITIALIZATION
-// ============================================
-
-/**
- * Initialize all reply forms on the page
- */
-window.initReplyForms = function() {
-    console.log('[Components] Initializing reply forms...');
-    
+window.initReplyForms = function () {
     document.querySelectorAll('.reply-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const submitButton = this.querySelector('.btn-submit');
-            const textarea = this.querySelector('textarea');
+        if (form.dataset.listenerAttached) return;
+        form.dataset.listenerAttached = 'true';
 
-            // Validate textarea
+        form.addEventListener('submit', function (e) {
+            const submitBtn = this.querySelector('.btn-submit');
+            const textarea  = this.querySelector('textarea');
+
             if (textarea && !textarea.value.trim()) {
-                alert('Please enter a reply before submitting.');
-                textarea.focus();
                 e.preventDefault();
+                textarea.focus();
                 return false;
             }
 
-            if (submitButton && !submitButton.disabled) {
-                // Show loading state
-                const buttonText = submitButton.querySelector('.btn-text');
-                const spinner = submitButton.querySelector('.loading-spinner');
-                
-                if (buttonText) buttonText.style.display = 'none';
+            if (submitBtn && !submitBtn.disabled) {
+                const btnText = submitBtn.querySelector('.btn-text');
+                const spinner = submitBtn.querySelector('.loading-spinner');
+                if (btnText) btnText.style.display = 'none';
                 if (spinner) spinner.style.display = 'block';
-                submitButton.disabled = true;
+                submitBtn.disabled = true;
             }
         });
     });
 };
 
-// ============================================
-// GLOBAL EVENT HANDLERS
-// ============================================
-
-/**
- * Initialize global event handlers
- */
 function initGlobalHandlers() {
-    // ESC key to close modal
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             const openModalEl = document.querySelector('.custom-modal.show');
-            if (openModalEl) {
-                closeModal(openModalEl.id);
-            }
-        }
-    });
-    
-    // Click backdrop to close modal
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('custom-modal-backdrop')) {
-            const modal = e.target.closest('.custom-modal');
-            if (modal) {
-                closeModal(modal.id);
-            }
+            if (openModalEl) window.closeModal(openModalEl.id);
         }
     });
 }
 
-// ============================================
-// DEBUG & UTILITY FUNCTIONS
-// ============================================
-
-/**
- * Debug function to check all modals
- */
-window.debugModals = function() {
-    console.log('=== MODAL DEBUG ===');
-    
-    const modals = document.querySelectorAll('.custom-modal');
-    console.log('Total modals:', modals.length);
-    
-    modals.forEach(modal => {
-        const forms = modal.querySelectorAll('form');
-        console.log(`Modal: ${modal.id}`, {
-            forms: forms.length,
-            isVisible: modal.classList.contains('show'),
-            hasDeleteForm: !!modal.querySelector('.delete-form'),
-            hasReplyForm: !!modal.querySelector('.reply-form')
-        });
-    });
-    
-    console.log('openModal function:', typeof openModal);
-    console.log('closeModal function:', typeof closeModal);
-    
-    return 'Debug complete - check console';
-};
-
-// ============================================
-// AUTO-INITIALIZATION
-// ============================================
-
-/**
- * Initialize all components when DOM is ready
- */
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Components] Initializing...');
-    
-    // Initialize global handlers
+document.addEventListener('DOMContentLoaded', function () {
     initGlobalHandlers();
-    
-    // Initialize delete modals if any exist
-    if (document.querySelector('.delete-form')) {
-        initDeleteModals();
-    }
-    
-    // Initialize reply forms if any exist
-    if (document.querySelector('.reply-form')) {
-        initReplyForms();
-    }
-    
-    console.log('[Components] Initialization complete');
+    if (document.querySelector('.delete-form'))  window.initDeleteModals();
+    if (document.querySelector('.reply-form'))   window.initReplyForms();
 });
 
-// Export for module systems (optional)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        openModal,
-        closeModal,
-        initDeleteModals,
-        initReplyForms,
-        debugModals
-    };
+    module.exports = { openModal, closeModal, initDeleteModals, initReplyForms };
 }

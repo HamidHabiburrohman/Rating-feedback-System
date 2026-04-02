@@ -32,7 +32,7 @@
         "symfony/yaml": "^7.4"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.23",
+        "fakerphp/faker": "^1.24",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.27",
         "laravel/sail": "^1.41",
@@ -45,7 +45,12 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/helpers.php",
+            "app/Helpers/settings.php",
+            "app/Helpers/UnitTypeIconHelper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

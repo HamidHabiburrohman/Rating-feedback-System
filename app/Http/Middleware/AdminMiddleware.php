@@ -14,9 +14,12 @@ class AdminMiddleware
             return redirect()->route('admin.login');
         }
 
-        if (!in_array(Auth::user()->role, ['admin', 'super_admin'])) {
+        $user = Auth::user();
+        
+        if (!in_array($user->role, ['admin', 'super_admin', 'unit'])) {
             Auth::logout();
-            return redirect()->route('admin.login')->with('error', 'Access denied. Admin only.');
+            return redirect()->route('admin.login')
+                ->with('error', 'You do not have permission to access admin area.');
         }
 
         return $next($request);
