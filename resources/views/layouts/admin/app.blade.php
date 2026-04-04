@@ -8,8 +8,6 @@
 
     <title>@yield('title', 'Itenas Unit - Admin Panel')</title>
 
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}" />
-
     @include('layouts.admin.partials.head')
 
     @stack('styles')

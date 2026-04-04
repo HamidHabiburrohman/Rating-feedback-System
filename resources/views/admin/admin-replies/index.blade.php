@@ -36,44 +36,14 @@
                     </ul>
                 </div>
 
-                <div class="dropdown" id="sortDropdown">
-                    @php
-                        $currentSort = request('sort', 'created_at');
-                        $currentOrder = request('order', 'desc');
-
-                        $sortTexts = [
-                            'created_at_desc' => 'Newest First',
-                            'created_at_asc' => 'Oldest First',
-                        ];
-
-                        $currentSortKey = $currentSort . '_' . $currentOrder;
-                        $buttonText = $sortTexts[$currentSortKey] ?? 'Sort';
-                    @endphp
-
-                    <button class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
-                        type="button" data-bs-toggle="dropdown"
-                        style="height: 44px; background-color: white; border-color: #d1d5db;">
-                        <span class="fw-medium">{{ $buttonText }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
-                    </button>
-                    <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
-                        <li>
-                            <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'desc', 'page' => 1]) }}">
-                                Newest First
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'asc', 'page' => 1]) }}">
-                                Oldest First
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                <x-admin.sort-button 
+                    :sortOptions="[
+                        'created_at_desc' => 'Newest First',
+                        'created_at_asc' => 'Oldest First',
+                    ]"
+                    defaultSort="created_at"
+                    defaultOrder="desc"
+                />
             </div>
         </div>
     </div>

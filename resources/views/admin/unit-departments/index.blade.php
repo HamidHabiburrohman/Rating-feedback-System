@@ -31,126 +31,23 @@
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
-                        <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 overflow-hidden mt-2"
-                            style="min-width: 300px; background-color: #ffffff;">
-                            <div class="p-3">
-                                <div class="mb-1">
-                                    <label class="small fw-bold text-uppercase mb-2 mt-2 d-block"
-                                        style="color: #6b7280; letter-spacing: 0.05em;">Status</label>
-                                    <div class="d-flex flex-wrap gap-2" id="statusFilter">
-                                        @php
-                                            $activeStyle = 'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;';
-                                            $inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
-                                            $currentStatus = request('status') ? explode(',', request('status')) : [];
-                                        @endphp
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
-                                            data-value=""
-                                            style="{{ empty($currentStatus) ? $activeStyle : $inactiveStyle }}">
-                                            All
-                                        </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
-                                            data-value="active"
-                                            style="{{ in_array('active', $currentStatus) ? $activeStyle : $inactiveStyle }}">
-                                            Active
-                                        </button>
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status"
-                                            data-value="inactive"
-                                            style="{{ in_array('inactive', $currentStatus) ? $activeStyle : $inactiveStyle }}">
-                                            Inactive
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-3 border-top d-flex gap-2 bg-white">
-                                @php
-                                    $resetStyle = 'background: white; border: 1px solid #d1d5db; color: #4b5563;';
-                                    $applyStyle = 'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;';
-                                @endphp
-                                <button type="button" id="resetFilter"
-                                    class="btn btn-sm rounded-pill w-100 fw-semibold d-flex align-items-center justify-content-center"
-                                    style="height: 40px; {{ $resetStyle }} transition: all 0.2s;">
-                                    Reset
-                                </button>
-                                <button type="button" id="applyFilter" class="btn btn-sm rounded-pill w-100 fw-semibold"
-                                    style="height: 40px; {{ $applyStyle }} transition: all 0.2s;">
-                                    Apply Filter
-                                </button>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="dropdown" id="sortDropdown">
                         @php
-                            $currentSort = request('sort', 'name');
-                            $currentOrder = request('order', 'asc');
-
-                            $sortTexts = [
-                                'name_asc' => 'Name A-Z',
-                                'name_desc' => 'Name Z-A',
-                                'created_at_desc' => 'Newest First',
-                                'created_at_asc' => 'Oldest First',
-                            ];
-
-                            $currentSortKey = $currentSort . '_' . $currentOrder;
-                            $buttonText = $sortTexts[$currentSortKey] ?? 'Sort';
+                            $currentStatus = request('status') ? explode(',', request('status')) : [];
                         @endphp
-
-                        <button
-                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
-                            type="button" data-bs-toggle="dropdown"
-                            style="height: 44px; background-color: white; border-color: #d1d5db;">
-
-                            <span class="fw-medium">{{ $buttonText }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </button>
-                        <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'asc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 16 4 4 4-4M7 20V4M14 8h7M14 12h7M14 16h7" />
-                                    </svg>
-                                    Name A-Z
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'desc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 8 4-4 4 4M7 4v16M14 8h7M14 12h7M14 16h7" />
-                                    </svg>
-                                    Name Z-A
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'desc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 16 4 4 4-4M7 20V4M21 16H10M21 10H10M21 4H10" />
-                                    </svg>
-                                    Newest First
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'asc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 8 4-4 4 4M7 4v16M21 4H10M21 10H10M21 16H10" />
-                                    </svg>
-                                    Oldest First
-                                </a>
-                            </li>
-                        </ul>
+                        <x-admin.status-filter-dropdown :currentStatus="$currentStatus" :options="['active' => 'Active', 'inactive' => 'Inactive']" />
                     </div>
 
-                    <x-admin.button-create url="{{ route('admin.unit-departments.create') }}" tooltip="Add New Department" size="md">
+                    <x-admin.sort-button :sortOptions="[
+            'name_asc' => 'Name A-Z',
+            'name_desc' => 'Name Z-A',
+            'created_at_desc' => 'Newest First',
+            'created_at_asc' => 'Oldest First',
+        ]" defaultSort="name"
+                        defaultOrder="asc" />
+
+                    <x-admin.button-create url="{{ route('admin.unit-departments.create') }}" tooltip="Add New Department"
+                        size="md">
                         Add Department
                     </x-admin.button-create>
                 </div>

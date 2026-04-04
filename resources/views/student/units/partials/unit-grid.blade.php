@@ -1,6 +1,6 @@
 <div class="group bg-surface-container-lowest rounded-lg p-4 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_40px_80px_rgba(173,43,0,0.08)]">
     <div class="relative h-64 w-full mb-6 overflow-hidden rounded-xl">
-        <img src="{{ $unit->thumbnail_url ?? 'https://placehold.co/600x400/e0e3e5/5d4038?text=No+Image' }}" alt="{{ $unit->name }}"
+        <img src="{{ $unit->primaryPhoto->thumbnail_url ?? 'https://placehold.co/600x400/e0e3e5/5d4038?text=No+Image' }}" alt="{{ $unit->name }}"
             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
         <span class="absolute top-4 left-4 bg-tertiary-fixed text-on-tertiary-fixed-variant px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">{{ $unit->type->name ?? 'Unit' }}</span>
     </div>

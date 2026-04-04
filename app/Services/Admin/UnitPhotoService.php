@@ -75,7 +75,6 @@ class UnitPhotoService
                 'message' => count($uploaded) . ' foto berhasil diupload',
                 'data' => $uploaded
             ];
-
         } catch (\Exception $e) {
             Log::error('Upload photo error: ' . $e->getMessage());
             return [
@@ -108,7 +107,6 @@ class UnitPhotoService
                 'success' => true,
                 'message' => 'Foto berhasil dijadikan sebagai foto utama'
             ];
-
         } catch (\Exception $e) {
             Log::error('Set primary photo error: ' . $e->getMessage());
             return [
@@ -133,7 +131,6 @@ class UnitPhotoService
                 'success' => true,
                 'message' => 'Urutan foto berhasil diubah'
             ];
-
         } catch (\Exception $e) {
             Log::error('Reorder photos error: ' . $e->getMessage());
             return [
@@ -173,13 +170,16 @@ class UnitPhotoService
                 }
             }
 
-            $this->logAdminAction('delete_photo', (object)['photo_id' => $photo->id, 'unit_id' => $unitId]);
+            // Perbaikan: Kirimkan $photo (model) bukan stdClass
+            $this->logAdminAction('delete_photo', $photo, null, [
+                'unit_id' => $unitId,
+                'was_primary' => $wasPrimary
+            ]);
 
             return [
                 'success' => true,
                 'message' => 'Foto berhasil dihapus'
             ];
-
         } catch (\Exception $e) {
             Log::error('Delete photo error: ' . $e->getMessage());
             return [

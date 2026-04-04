@@ -146,12 +146,12 @@
             </div>
 
             <div class="form-actions">
-                <a href="{{ route('admin.unit-types.index') }}" class="btn-ghost">Batal</a>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span class="btn-text">Simpan Tipe</span>
-                    <span class="btn-loader" hidden>
+                <a href="{{ route('admin.unit-types.index') }}" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-light" style="color:#ffff; background-color: #FF5625;" id="submitBtn">
+                    <span class="btn-text">Tambah Tipe</span>
+                    <span class="btn-loader" style="display: none;">
                         <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none"
                                 stroke-dasharray="60" stroke-dashoffset="20" />
                         </svg>
                         Menyimpan...
@@ -373,38 +373,6 @@
             min-height: 100px;
         }
 
-        .code-wrapper {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .code-input {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.875rem;
-            letter-spacing: 0.05em;
-            background: var(--color-gray-50);
-            color: var(--color-gray-600);
-        }
-
-        .btn-icon {
-            padding: 0.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
-            background: white;
-            color: var(--color-gray-500);
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-icon:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            background: var(--color-primary-50);
-        }
-
         .badge.auto {
             font-size: 0.625rem;
             padding: 0.125rem 0.375rem;
@@ -414,230 +382,6 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.025em;
-        }
-
-        .time-range-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .time-range {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--color-gray-50);
-            padding: 0.5rem;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--color-gray-200);
-        }
-
-        .time-input {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .time-input input {
-            width: 100%;
-            text-align: center;
-            padding: 0.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--color-gray-700);
-            background: white;
-            transition: var(--transition);
-        }
-
-        .time-input input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px var(--color-primary-50);
-        }
-
-        .time-label {
-            font-size: 0.625rem;
-            color: var(--color-gray-400);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 500;
-        }
-
-        .time-separator {
-            color: var(--color-gray-400);
-            font-size: 1.25rem;
-            font-weight: 300;
-        }
-
-        .time-validation {
-            font-size: 0.75rem;
-            text-align: center;
-        }
-
-        .status-options {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .status-option {
-            cursor: pointer;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .status-option input {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.375rem;
-            padding: 0.625rem 1.25rem;
-            border-radius: var(--radius-full);
-            font-size: 0.8125rem;
-            font-weight: 500;
-            border: 1px solid transparent;
-            transition: var(--transition);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        .status-badge.open {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.maintenance {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
-        }
-
-        .status-badge.closed {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-badge.low {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.medium {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
-        }
-
-        .status-badge.high {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-badge.critical {
-            background: rgba(124, 29, 8, 0.1);
-            color: #7c1d08;
-            border-color: rgba(124, 29, 8, 0.2);
-        }
-
-        .status-badge.new {
-            background: var(--color-primary-50);
-            color: var(--color-primary);
-            border-color: rgba(248, 119, 60, 0.2);
-        }
-
-        .status-badge.in_progress {
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
-            border-color: rgba(37, 99, 235, 0.2);
-        }
-
-        .status-badge.replied {
-            background: rgba(147, 51, 234, 0.1);
-            color: #9333ea;
-            border-color: rgba(147, 51, 234, 0.2);
-        }
-
-        .status-badge.resolved {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.rejected {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-option:hover .status-badge {
-            filter: brightness(0.95);
-        }
-
-        .status-option input:checked+.status-badge.open,
-        .status-option input:checked+.status-badge.resolved,
-        .status-option input:checked+.status-badge.low {
-            background: #10b981;
-            color: white;
-            border-color: #10b981;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.maintenance,
-        .status-option input:checked+.status-badge.medium {
-            background: #f59e0b;
-            color: white;
-            border-color: #f59e0b;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.closed,
-        .status-option input:checked+.status-badge.rejected,
-        .status-option input:checked+.status-badge.high {
-            background: #ef4444;
-            color: white;
-            border-color: #ef4444;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.critical {
-            background: #7c1d08;
-            color: white;
-            border-color: #7c1d08;
-            box-shadow: 0 2px 8px rgba(124, 29, 8, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.new {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-            box-shadow: 0 2px 8px rgba(248, 119, 60, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.in_progress {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.replied {
-            background: #9333ea;
-            color: white;
-            border-color: #9333ea;
-            box-shadow: 0 2px 8px rgba(147, 51, 234, 0.25);
         }
 
         .settings-section {
@@ -735,6 +479,39 @@
             color: var(--color-gray-900);
         }
 
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.8;
+            cursor: wait;
+            transform: none;
+            background: var(--color-primary);
+        }
+
         .form-actions {
             display: flex;
             justify-content: flex-end;
@@ -747,15 +524,8 @@
                 flex-direction: column-reverse;
             }
 
-            .form-actions .btn {
-                width: 100%;
-            }
-
-            .status-options {
-                flex-direction: column;
-            }
-
-            .status-option {
+            .form-actions .btn-primary,
+            .form-actions .btn-ghost {
                 width: 100%;
             }
         }
@@ -816,124 +586,15 @@
             padding-left: 1.25rem;
             font-size: 0.875rem;
         }
-
-        .ts-control {
-            border-color: var(--color-gray-200) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.5rem 0.75rem !important;
-            min-height: 46px;
-        }
-
-        .ts-control:focus {
-            border-color: var(--color-primary) !important;
-            box-shadow: 0 0 0 3px var(--color-primary-50) !important;
-        }
-
-        .ts-dropdown {
-            border-radius: var(--radius-md) !important;
-            border-color: var(--color-gray-200) !important;
-            box-shadow: var(--shadow-lg) !important;
-        }
-
-        .ts-dropdown .active {
-            background: var(--color-primary-50) !important;
-            color: var(--color-primary) !important;
-        }
-
-        .no-results {
-            padding: 0.5rem;
-            color: var(--color-gray-500);
-            font-size: 0.875rem;
-        }
-
-        .facilities-wrapper {
-            margin-top: 0.5rem;
-        }
-
-        .select-simple {
-            padding-left: 0.875rem;
-        }
     </style>
 @endpush
 
 @push('admin-scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('Create page loaded');
-            
-            initializeTomSelect();
-            initializeCodeGeneration();
             initializeSlugGeneration();
-            initializeTimeValidation();
             initializeFormValidation();
-            initializeAlerts();
         });
-
-        function initializeTomSelect() {
-            const facilitiesSelect = document.getElementById('facilities');
-            if (!facilitiesSelect) return;
-
-            if (typeof TomSelect !== 'undefined') {
-                new TomSelect(facilitiesSelect, {
-                    plugins: ['remove_button'],
-                    maxItems: null,
-                    hideSelected: true,
-                    create: false,
-                    render: {
-                        no_results: function () {
-                            return '<div class="no-results">Tidak ada fasilitas yang cocok</div>';
-                        }
-                    }
-                });
-            }
-        }
-
-        function initializeCodeGeneration() {
-            const nameInput = document.getElementById('name');
-            const typeSelect = document.getElementById('unit_type_id');
-            const codeInput = document.getElementById('code');
-            const regenerateBtn = document.getElementById('regenerateCode');
-
-            if (!nameInput || !codeInput) return;
-
-            const generateCode = () => {
-                const name = nameInput.value.trim();
-                const typeOption = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
-
-                if (!name || (typeSelect && !typeSelect.value)) {
-                    codeInput.value = '';
-                    return;
-                }
-
-                const typePrefix = typeOption && typeOption.dataset.code
-                    ? typeOption.dataset.code
-                    : (typeOption ? typeOption.text.substring(0, 3).toUpperCase() : 'UNT');
-
-                const words = name.split(/\s+/);
-                let nameCode = '';
-
-                if (words.length === 1) {
-                    nameCode = words[0].substring(0, 3).toUpperCase();
-                } else {
-                    nameCode = words.map(w => w.charAt(0).toUpperCase()).join('').substring(0, 3);
-                }
-
-                const randomNum = Math.floor(Math.random() * 90 + 10);
-                codeInput.value = `${typePrefix}-${nameCode}-${randomNum}`;
-            };
-
-            nameInput.addEventListener('blur', generateCode);
-
-            if (typeSelect) {
-                typeSelect.addEventListener('change', () => {
-                    if (nameInput.value.trim()) generateCode();
-                });
-            }
-
-            if (regenerateBtn) {
-                regenerateBtn.addEventListener('click', generateCode);
-            }
-        }
 
         function initializeSlugGeneration() {
             const nameInput = document.getElementById('name');
@@ -957,47 +618,6 @@
             });
         }
 
-        function initializeTimeValidation() {
-            const openTime = document.getElementById('open_time');
-            const closeTime = document.getElementById('close_time');
-            const timeValidation = document.getElementById('timeValidation');
-
-            if (!openTime || !closeTime) return;
-
-            const validateTime = () => {
-                const open = openTime.value;
-                const close = closeTime.value;
-
-                if (!open || !close) {
-                    if (timeValidation) timeValidation.textContent = '';
-                    return true;
-                }
-
-                if (open >= close) {
-                    if (timeValidation) {
-                        timeValidation.textContent = 'Jam tutup harus setelah jam buka';
-                        timeValidation.style.color = 'var(--color-error)';
-                    }
-                    closeTime.classList.add('is-invalid');
-                    return false;
-                }
-
-                const openDate = new Date(`2000-01-01T${open}`);
-                const closeDate = new Date(`2000-01-01T${close}`);
-                const duration = (closeDate - openDate) / (1000 * 60 * 60);
-
-                if (timeValidation) {
-                    timeValidation.textContent = `Durasi: ${duration} jam`;
-                    timeValidation.style.color = 'var(--color-success)';
-                }
-                closeTime.classList.remove('is-invalid');
-                return true;
-            };
-
-            openTime.addEventListener('change', validateTime);
-            closeTime.addEventListener('change', validateTime);
-        }
-
         function initializeFormValidation() {
             const form = document.getElementById('unitTypeForm');
             const submitBtn = document.getElementById('submitBtn');
@@ -1007,11 +627,7 @@
                 return;
             }
 
-            console.log('Form ditemukan, menginisialisasi validasi');
-
             form.addEventListener('submit', function (e) {
-                console.log('Form submit triggered');
-
                 const requiredFields = form.querySelectorAll('[required]');
                 let isValid = true;
                 let firstError = null;
@@ -1021,7 +637,6 @@
                         field.classList.add('is-invalid');
                         isValid = false;
                         if (!firstError) firstError = field;
-                        console.log('Field invalid:', field.id || field.name);
                     } else {
                         field.classList.remove('is-invalid');
                     }
@@ -1029,7 +644,6 @@
 
                 if (!isValid) {
                     e.preventDefault();
-                    console.log('Validasi gagal, submit dicegah');
                     if (firstError) {
                         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         firstError.focus();
@@ -1037,14 +651,12 @@
                     return;
                 }
 
-                console.log('Validasi berhasil, submit form');
-
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     const btnText = submitBtn.querySelector('.btn-text');
                     const btnLoader = submitBtn.querySelector('.btn-loader');
-                    if (btnText) btnText.hidden = true;
-                    if (btnLoader) btnLoader.hidden = false;
+                    if (btnText) btnText.style.display = 'none';
+                    if (btnLoader) btnLoader.style.display = 'inline-flex';
                 }
             });
 
@@ -1053,18 +665,6 @@
                 input.addEventListener('input', function () {
                     this.classList.remove('is-invalid');
                 });
-            });
-        }
-
-        function initializeAlerts() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    if (alert.classList.contains('show')) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        if (bsAlert) bsAlert.close();
-                    }
-                }, 5000);
             });
         }
     </script>

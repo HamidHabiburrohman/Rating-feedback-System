@@ -24,7 +24,7 @@
             <div class="lg:col-span-8">
                 <div class="relative overflow-hidden rounded-lg aspect-16/9 shadow-lg group">
                     <img src="{{ $imageUrl }}" alt="{{ $unit->name }}"
-                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                        class="w-full h-full object-cover">
 
                     @if($unit->type)
                         <div class="absolute top-6 left-6">

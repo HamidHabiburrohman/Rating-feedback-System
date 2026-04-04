@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (value === '') {
                 btn.style.cssText = selectedStatus.length ? 
                     'background: white; border: 1px solid #d1d5db; color: #6b7280;' : 
-                    'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;';
+                    'background: #f8773c; border: none; color: white;';
             } else {
                 btn.style.cssText = selectedStatus.includes(value) ? 
-                    'background: linear-gradient(135deg, #f1c3ae, #f8773c); border: none; color: white;' : 
+                    'background: #f8773c; border: none; color: white;' : 
                     'background: white; border: 1px solid #d1d5db; color: #6b7280;';
             }
         });

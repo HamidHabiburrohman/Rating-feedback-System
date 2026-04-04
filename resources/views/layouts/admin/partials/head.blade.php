@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- Tailwind + Konfigurasi Desain -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+{{-- <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
     tailwind.config = {
         darkMode: "class",
@@ -75,7 +75,7 @@
             },
         },
     }
-</script>
+</script> --}}
 
 <link
     href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"

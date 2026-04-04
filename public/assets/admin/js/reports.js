@@ -38,9 +38,9 @@ function initializeFilters() {
     document.querySelectorAll('.filter-status').forEach(btn => {
         const value = btn.dataset.value;
         if (selectedFilters.status.split(',').includes(value)) {
-            btn.style = 'background:linear-gradient(135deg,#f1c3ae,#f8773c);border:none;color:white;';
+            btn.style = 'background: #f8773c; border: none; color: white;';
         } else if (value === '' && !selectedFilters.status) {
-            btn.style = 'background:linear-gradient(135deg,#f1c3ae,#f8773c);border:none;color:white;';
+            btn.style = 'background: #f8773c; border: none; color: white;';
         } else {
             btn.style = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
         }
@@ -55,9 +55,9 @@ function initializeFilters() {
     document.querySelectorAll('.filter-priority').forEach(btn => {
         const value = btn.dataset.value;
         if (selectedFilters.priority.split(',').includes(value)) {
-            btn.style = 'background:linear-gradient(135deg,#f1c3ae,#f8773c);border:none;color:white;';
+            btn.style = 'background: #f8773c; border: none; color: white;';
         } else if (value === '' && !selectedFilters.priority) {
-            btn.style = 'background:linear-gradient(135deg,#f1c3ae,#f8773c);border:none;color:white;';
+            btn.style = 'background: #f8773c; border: none; color: white;';
         } else {
             btn.style = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
         }
@@ -90,7 +90,7 @@ function initializeFilters() {
 
 function toggleFilter(btn, type) {
     const value = btn.dataset.value;
-    const on = 'background:linear-gradient(135deg,#f1c3ae,#f8773c);border:none;color:white;';
+    const on = 'background: #f8773c; border: none; color: white;';
     const off = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
 
     if (value === '') {

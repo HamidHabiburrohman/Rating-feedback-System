@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let selectedFilters = {
-    unit_id: '',
-    status: '',
+    status: [],
     min_score: '',
     max_score: '',
     has_reports: false,
@@ -20,26 +19,29 @@ let selectedFilters = {
 function initializeFilters() {
     const params = new URLSearchParams(window.location.search);
     
-    selectedFilters.unit_id = params.get('unit_id') || '';
-    selectedFilters.status = params.get('status') || '';
+    const statusParam = params.get('status');
+    if (statusParam) {
+        selectedFilters.status = statusParam.split(',');
+    } else {
+        selectedFilters.status = [];
+    }
     selectedFilters.min_score = params.get('min_score') || '';
     selectedFilters.max_score = params.get('max_score') || '';
     selectedFilters.has_reports = params.get('has_reports') === '1';
     selectedFilters.is_comment_censored = params.get('is_comment_censored') === '1';
     
-    const unitFilter = document.getElementById('unitFilter');
-    const statusFilter = document.getElementById('statusFilter');
     const minScoreFilter = document.getElementById('minScoreFilter');
     const maxScoreFilter = document.getElementById('maxScoreFilter');
     const hasReportsFilter = document.getElementById('hasReportsFilter');
     const censoredFilter = document.getElementById('censoredFilter');
+    const statusButtons = document.querySelectorAll('.filter-status-btn');
     
-    if (unitFilter) unitFilter.value = selectedFilters.unit_id;
-    if (statusFilter) statusFilter.value = selectedFilters.status;
     if (minScoreFilter) minScoreFilter.value = selectedFilters.min_score;
     if (maxScoreFilter) maxScoreFilter.value = selectedFilters.max_score;
     if (hasReportsFilter) hasReportsFilter.checked = selectedFilters.has_reports;
     if (censoredFilter) censoredFilter.checked = selectedFilters.is_comment_censored;
+    
+    updateStatusButtons();
     
     const dropdownMenu = document.querySelector('.dropdown-menu');
     if (dropdownMenu) {
@@ -48,17 +50,27 @@ function initializeFilters() {
         });
     }
     
-    if (unitFilter) {
-        unitFilter.addEventListener('change', function() {
-            selectedFilters.unit_id = this.value;
+    statusButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const value = this.dataset.value;
+            
+            if (value === '') {
+                selectedFilters.status = [];
+            } else {
+                const index = selectedFilters.status.indexOf(value);
+                if (index === -1) {
+                    selectedFilters.status.push(value);
+                } else {
+                    selectedFilters.status.splice(index, 1);
+                }
+            }
+            
+            updateStatusButtons();
         });
-    }
-    
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            selectedFilters.status = this.value;
-        });
-    }
+    });
     
     if (minScoreFilter) {
         minScoreFilter.addEventListener('input', function() {
@@ -101,19 +113,30 @@ function initializeFilters() {
             resetFilters();
         });
     }
+    
+    updateFilterBadge();
+}
+
+function updateStatusButtons() {
+    const statusButtons = document.querySelectorAll('.filter-status-btn');
+    const activeStyle = 'background: #f8773c; border: none; color: white;';
+    const inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
+    
+    statusButtons.forEach(btn => {
+        const value = btn.dataset.value;
+        if (value === '') {
+            btn.style.cssText = selectedFilters.status.length === 0 ? activeStyle : inactiveStyle;
+        } else {
+            btn.style.cssText = selectedFilters.status.includes(value) ? activeStyle : inactiveStyle;
+        }
+    });
 }
 
 function applyFilters() {
     const url = new URL(window.location.href);
     
-    if (selectedFilters.unit_id) {
-        url.searchParams.set('unit_id', selectedFilters.unit_id);
-    } else {
-        url.searchParams.delete('unit_id');
-    }
-    
-    if (selectedFilters.status) {
-        url.searchParams.set('status', selectedFilters.status);
+    if (selectedFilters.status.length > 0) {
+        url.searchParams.set('status', selectedFilters.status.join(','));
     } else {
         url.searchParams.delete('status');
     }
@@ -130,8 +153,17 @@ function applyFilters() {
         url.searchParams.delete('max_score');
     }
     
-    url.searchParams.set('has_reports', selectedFilters.has_reports ? '1' : '0');
-    url.searchParams.set('is_comment_censored', selectedFilters.is_comment_censored ? '1' : '0');
+    if (selectedFilters.has_reports) {
+        url.searchParams.set('has_reports', '1');
+    } else {
+        url.searchParams.delete('has_reports');
+    }
+    
+    if (selectedFilters.is_comment_censored) {
+        url.searchParams.set('is_comment_censored', '1');
+    } else {
+        url.searchParams.delete('is_comment_censored');
+    }
     
     url.searchParams.set('page', 1);
     window.location.href = url.toString();
@@ -139,6 +171,38 @@ function applyFilters() {
 
 function resetFilters() {
     window.location.href = window.location.pathname;
+}
+
+function updateFilterBadge() {
+    const filterText = document.getElementById('filterText');
+    const filterBtn = document.getElementById('filterDropdown');
+    
+    if (!filterText || !filterBtn) return;
+    
+    const hasActiveFilters = selectedFilters.status.length > 0 || 
+                            selectedFilters.min_score || 
+                            selectedFilters.max_score || 
+                            selectedFilters.has_reports || 
+                            selectedFilters.is_comment_censored;
+    
+    filterBtn.querySelector('.filter-badge')?.remove();
+    
+    if (hasActiveFilters) {
+        const filters = [];
+        if (selectedFilters.status.length > 0) filters.push('Status');
+        if (selectedFilters.min_score || selectedFilters.max_score) filters.push('Score');
+        if (selectedFilters.has_reports) filters.push('Reports');
+        if (selectedFilters.is_comment_censored) filters.push('Censored');
+        
+        filterText.textContent = `Filter: ${filters.join(', ')}`;
+        
+        const badge = document.createElement('span');
+        badge.className = 'filter-badge';
+        badge.style.cssText = 'width:8px;height:8px;background:#f8773c;border-radius:50%;margin-left:6px;display:inline-block;';
+        filterBtn.appendChild(badge);
+    } else {
+        filterText.textContent = 'Filter';
+    }
 }
 
 function initializeSortDropdown() {
@@ -321,7 +385,6 @@ function initializeBulkActions() {
             })
             .then(data => {
                 if (data.success) {
-                    // Tutup modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('bulkActionModal'));
                     if (modal) modal.hide();
                     
@@ -391,11 +454,9 @@ function showAlert(type, message) {
     if (container) {
         container.insertAdjacentHTML('beforebegin', alertHtml);
     } else {
-        // Fallback ke body
         document.body.insertAdjacentHTML('afterbegin', alertHtml);
     }
     
-
     setTimeout(() => {
         const alert = document.querySelector('.alert:last-child');
         if (alert && alert.classList.contains('show')) {

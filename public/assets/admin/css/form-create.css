@@ -23,10 +23,12 @@
     --radius-lg: 14px;
     --radius-xl: 18px;
     --radius-full: 9999px;
-    --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-    --shadow-primary: 0 4px 14px rgba(248,119,60,0.25);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-primary: 0 4px 14px rgba(248, 119, 60, 0.25);
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -197,7 +199,7 @@
 }
 
 .form-input.is-invalid:focus {
-    box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .form-textarea {
@@ -212,7 +214,7 @@
 }
 
 .code-input {
-    font-family: 'SF Mono', monospace;
+    font-family: "SF Mono", monospace;
     font-size: 0.875rem;
     letter-spacing: 0.05em;
     background: var(--color-gray-50);
@@ -346,52 +348,52 @@
 .status-badge.open {
     background: var(--color-success-50);
     color: #059669;
-    border-color: rgba(16,185,129,0.2);
+    border-color: rgba(16, 185, 129, 0.2);
 }
 
 .status-badge.maintenance {
     background: var(--color-warning-50);
     color: #d97706;
-    border-color: rgba(245,158,11,0.2);
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
 .status-badge.closed {
     background: var(--color-error-50);
     color: #dc2626;
-    border-color: rgba(239,68,68,0.2);
+    border-color: rgba(239, 68, 68, 0.2);
 }
 
 .status-option:hover .status-badge.open {
-    background: rgba(16,185,129,0.15);
+    background: rgba(16, 185, 129, 0.15);
 }
 
 .status-option:hover .status-badge.maintenance {
-    background: rgba(245,158,11,0.15);
+    background: rgba(245, 158, 11, 0.15);
 }
 
 .status-option:hover .status-badge.closed {
-    background: rgba(239,68,68,0.15);
+    background: rgba(239, 68, 68, 0.15);
 }
 
 .status-option input:checked + .status-badge.open {
     background: #10b981;
     color: white;
     border-color: #10b981;
-    box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
 }
 
 .status-option input:checked + .status-badge.maintenance {
     background: #f59e0b;
     color: white;
     border-color: #f59e0b;
-    box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
 }
 
 .status-option input:checked + .status-badge.closed {
     background: #ef4444;
     color: white;
     border-color: #ef4444;
-    box-shadow: 0 2px 8px rgba(239,68,68,0.25);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
 }
 
 .settings-section {
@@ -447,7 +449,7 @@
 }
 
 .toggle-slider:before {
-    content: '';
+    content: "";
     position: absolute;
     height: 22px;
     width: 22px;
@@ -456,7 +458,7 @@
     background: white;
     border-radius: 50%;
     transition: var(--transition);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-switch input:checked + .toggle-slider {
@@ -500,15 +502,15 @@
     .form-actions {
         flex-direction: column-reverse;
     }
-    
+
     .form-actions .btn {
         width: 100%;
     }
-    
+
     .status-options {
         flex-direction: column;
     }
-    
+
     .status-option {
         width: 100%;
     }
@@ -517,6 +519,8 @@
 .btn-loader {
     display: inline-flex;
     align-items: center;
+    background-color: var(--color-primary);
+    color: var(--color-primary-50);
     gap: 0.5rem;
 }
 
@@ -525,7 +529,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .alert {
@@ -539,7 +545,7 @@
 
 .alert-error {
     background: var(--color-error-50);
-    border: 1px solid rgba(239,68,68,0.2);
+    border: 1px solid rgba(239, 68, 68, 0.2);
     color: var(--color-error);
 }
 

@@ -35,13 +35,8 @@
                                     <span class="material-symbols-outlined">apartment</span>
                                 @endif
                             </div>
-                            <div>
-                                <h4 class="font-bold text-slate-800 mb-1">{{ $facility->name }}</h4>
-                                @if($facility->description)
-                                    <p class="text-on-surface-variant text-sm">
-                                        {{ Str::limit($facility->description, 90) }}
-                                    </p>
-                                @endif
+                            <div class="text-center justify-center m-auto">
+                                <h4 class="font-bold text-slate-800">{{ $facility->name }}</h4>
                             </div>
                         </div>
                     @endforeach

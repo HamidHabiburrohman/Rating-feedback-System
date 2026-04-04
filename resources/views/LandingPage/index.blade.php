@@ -1257,7 +1257,7 @@
                     <li><a href="#about" class="nav-link">About</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
                 </ul>
-                <a href="{{ route('student.register') }}" class="btn-cta">JOIN NOW</a>
+                <a href="{{ route('student.login') }}" class="btn-cta">JOIN NOW</a>
             </div>
         </nav>
 

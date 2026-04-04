@@ -22,8 +22,8 @@
             <div class="d-flex align-items-center gap-3 mt-3 mt-md-0">
                 <span class="px-3 py-1 rounded-pill small fw-medium"
                     style="background-color: {{ $rating->status === 'active' ? '#e8f5e9' : ($rating->status === 'edited' ? '#fff8e1' : '#eceff1') }}; 
-                               color: {{ $rating->status === 'active' ? '#2e7d32' : ($rating->status === 'edited' ? '#b85c00' : '#546e7a') }};
-                               border: 1px solid {{ $rating->status === 'active' ? '#c8e6c9' : ($rating->status === 'edited' ? '#ffe0b2' : '#d0d7dd') }};">
+                        border: 1px solid {{ $rating->status === 'active' ? '#c8e6c9' : ($rating->status === 'edited' ? '#ffe0b2' : '#d0d7dd') }};">
+                        color: {{ $rating->status === 'active' ? '#2e7d32' : ($rating->status === 'edited' ? '#b85c00' : '#546e7a') }};
                     {{ ucfirst($rating->status) }}
                 </span>
             </div>

@@ -16,87 +16,17 @@
                 <div class="d-flex align-items-center gap-2">
                     <x-admin.rows-per-page-component :paginator="$facilities" />
 
-                    <div class="dropdown" id="sortDropdown">
-                        @php
-                            $currentSort = request('sort', 'name');
-                            $currentOrder = request('order', 'asc');
-
-                            $sortTexts = [
-                                'name_asc' => 'Name A-Z',
-                                'name_desc' => 'Name Z-A',
-                                'created_at_desc' => 'Newest First',
-                                'created_at_asc' => 'Oldest First',
-                                'units_count_desc' => 'Most Used',
-                            ];
-
-                            $currentSortKey = $currentSort . '_' . $currentOrder;
-                            $buttonText = $sortTexts[$currentSortKey] ?? 'Sort';
-                        @endphp
-
-                        <button
-                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
-                            type="button" data-bs-toggle="dropdown"
-                            style="height: 44px; background-color: white; border-color: #d1d5db;">
-
-                            <span class="fw-medium">{{ $buttonText }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </button>
-                        <ul class="dropdown-menu border-0 shadow-lg rounded-3 py-2 mt-2">
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'asc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 16 4 4 4-4M7 20V4M14 8h7M14 12h7M14 16h7" />
-                                    </svg>
-                                    Name A-Z
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'name' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'order' => 'desc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 8 4-4 4 4M7 4v16M14 8h7M14 12h7M14 16h7" />
-                                    </svg>
-                                    Name Z-A
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'desc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 16 4 4 4-4M7 20V4M21 16H10M21 10H10M21 4H10" />
-                                    </svg>
-                                    Newest First
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'asc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="m3 8 4-4 4 4M7 4v16M21 4H10M21 10H10M21 16H10" />
-                                    </svg>
-                                    Oldest First
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 {{ $currentSort == 'units_count' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'units_count', 'order' => 'desc', 'page' => 1]) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M2 12h20M12 2v20" />
-                                    </svg>
-                                    Most Used
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                    <x-admin.sort-button 
+                        :sortOptions="[
+                            'name_asc' => 'Name A-Z',
+                            'name_desc' => 'Name Z-A',
+                            'created_at_desc' => 'Newest First',
+                            'created_at_asc' => 'Oldest First',
+                            'units_count_desc' => 'Most Used',
+                        ]"
+                        defaultSort="name"
+                        defaultOrder="asc"
+                    />
 
                     <x-admin.button-create url="{{ route('admin.facilities.create') }}" tooltip="Add New Facility" size="md">
                         Add Facility

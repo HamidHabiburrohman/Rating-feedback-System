@@ -24,7 +24,7 @@ body {
    ========================================================================== */
 :root {
     /* Primary Colors - 60-30-10 Theory */
-    --color-primary: #f8773c;
+    --color-primary: ##FF5625;
     --color-primary-light: #f1c3ae;
     --color-primary-dark: #e55a2b;
     --color-primary-50: #fff5f0;
@@ -162,11 +162,7 @@ h6 {
 
 /* Button Variants */
 .btn-primary {
-    background: linear-gradient(
-        135deg,
-        var(--color-primary-light),
-        var(--color-primary)
-    );
+    background-color: var(--color-primary);
     border: none;
     color: white;
     box-shadow: var(--shadow-primary);

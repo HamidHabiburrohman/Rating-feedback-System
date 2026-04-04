@@ -41,121 +41,109 @@
                     </div>
 
                     <!-- Filter Dropdown -->
-                    <div class="dropdown">
-                        <button class="dropdown-toggle-btn" type="button" data-bs-toggle="dropdown" id="filterDropdown">
+                    <div class="dropdown" id="filterContainer">
+                        <button
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown" id="filterDropdown"
+                            style="height:44px;background:white;border-color:#d1d5db;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                             </svg>
                             <span class="fw-medium" id="filterText">Filter</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon">
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
-                        <div class="dropdown-menu p-3" style="min-width: 320px;">
+
+                        <div class="dropdown-menu p-3 border-0 shadow-lg rounded-4" style="min-width: 300px;">
                             <div class="mb-3">
-                                <label class="small fw-bold text-uppercase mb-2 d-block text-muted">Unit</label>
-                                <select class="form-select" id="unitFilter">
-                                    <option value="">All Units</option>
-                                    @foreach($filterData['units'] ?? [] as $id => $name)
-                                        <option value="{{ $id }}" {{ request('unit_id') == $id ? 'selected' : '' }}>
-                                            {{ $name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label class="small fw-bold text-uppercase mb-2 d-block"
+                                    style="color: #6b7280; letter-spacing: 0.05em;">Status</label>
+                                <div class="d-flex flex-wrap gap-2" id="statusFilter">
+                                    @php
+                                        $activeStyle = 'background: #f8773c; border: none; color: white;';
+                                        $inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
+                                        $currentStatus = request('status') ? [request('status')] : [];
+                                    @endphp
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="" style="{{ empty($currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        All
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="pending"
+                                        style="{{ in_array('pending', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        Pending
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="approved"
+                                        style="{{ in_array('approved', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        Approved
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="rejected"
+                                        style="{{ in_array('rejected', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        Rejected
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="flagged"
+                                        style="{{ in_array('flagged', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        Flagged
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-medium filter-status-btn"
+                                        data-value="archived"
+                                        style="{{ in_array('archived', $currentStatus) ? $activeStyle : $inactiveStyle }}">
+                                        Archived
+                                    </button>
+                                </div>
                             </div>
+
                             <div class="mb-3">
-                                <label class="small fw-bold text-uppercase mb-2 d-block text-muted">Status</label>
-                                <select class="form-select" id="statusFilter">
-                                    @foreach($filterData['statuses'] ?? [] as $value => $label)
-                                        <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="small fw-bold text-uppercase mb-2 d-block text-muted">Score Range</label>
+                                <label class="small fw-bold text-uppercase mb-2 d-block"
+                                    style="color: #6b7280; letter-spacing: 0.05em;">Score Range</label>
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <input type="number" class="form-control" id="minScoreFilter" placeholder="Min"
-                                            value="{{ request('min_score') }}" min="1" max="5" step="0.1">
+                                        <input type="number" class="form-control rounded-3" id="minScoreFilter"
+                                            placeholder="Min" value="{{ request('min_score') }}" min="1" max="5" step="0.1"
+                                            style="border-color: #d1d5db;">
                                     </div>
                                     <div class="col-6">
-                                        <input type="number" class="form-control" id="maxScoreFilter" placeholder="Max"
-                                            value="{{ request('max_score') }}" min="1" max="5" step="0.1">
+                                        <input type="number" class="form-control rounded-3" id="maxScoreFilter"
+                                            placeholder="Max" value="{{ request('max_score') }}" min="1" max="5" step="0.1"
+                                            style="border-color: #d1d5db;">
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-1">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="hasReportsFilter" {{ request('has_reports') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="hasReportsFilter">
-                                        Has Active Reports
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="censoredFilter" {{ request('is_comment_censored') ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="censoredFilter">
-                                        Censored Comments
-                                    </label>
-                                </div>
-                            </div>
-                            <hr class="my-3">
+
+                            <hr class="my-3" style="border-color: #e5e7eb;">
+
                             <div class="d-flex gap-2">
-                                <button type="button" id="resetFilter" class="btn btn-secondary w-100">Reset</button>
-                                <button type="button" id="applyFilter" class="btn btn-primary w-100">Apply Filter</button>
+                                <button type="button" id="resetFilter" class="btn rounded-pill w-100 fw-semibold"
+                                    style="height: 40px; background: white; border: 1px solid #d1d5db; color: #4b5563;">
+                                    Reset
+                                </button>
+                                <button type="button" id="applyFilter" class="btn rounded-pill w-100 fw-semibold"
+                                    style="height: 40px; background: #f8773c; border: none; color: white;">
+                                    Apply Filter
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sort Dropdown -->
-                    <div class="dropdown">
-                        @php
-                            $currentSort = request('sort', 'created_at');
-                            $currentOrder = request('order', 'desc');
-                            $sortTexts = [
-                                'created_at_desc' => 'Newest First',
-                                'created_at_asc' => 'Oldest First',
-                                'overall_score_desc' => 'Highest Score',
-                                'overall_score_asc' => 'Lowest Score',
-                            ];
-                            $currentSortKey = $currentSort . '_' . $currentOrder;
-                        @endphp
-                        <button class="dropdown-toggle-btn" type="button" data-bs-toggle="dropdown">
-                            <span class="fw-medium">{{ $sortTexts[$currentSortKey] ?? 'Sort' }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item {{ $currentSort == 'created_at' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'desc', 'page' => 1]) }}">Newest
-                                    First</a></li>
-                            <li><a class="dropdown-item {{ $currentSort == 'created_at' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'order' => 'asc', 'page' => 1]) }}">Oldest
-                                    First</a></li>
-                            <li><a class="dropdown-item {{ $currentSort == 'overall_score' && $currentOrder == 'desc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'overall_score', 'order' => 'desc', 'page' => 1]) }}">Highest
-                                    Score</a></li>
-                            <li><a class="dropdown-item {{ $currentSort == 'overall_score' && $currentOrder == 'asc' ? 'active' : '' }}"
-                                    href="{{ request()->fullUrlWithQuery(['sort' => 'overall_score', 'order' => 'asc', 'page' => 1]) }}">Lowest
-                                    Score</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Export Button -->
-                    <a href="{{ route('admin.ratings.export') }}" class="btn btn-outline-secondary btn-icon-left">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Export
-                    </a>
+                    <x-admin.sort-button :sortOptions="[
+            'created_at_desc' => 'Newest First',
+            'created_at_asc' => 'Oldest First',
+            'overall_score_desc' => 'Highest Score',
+            'overall_score_asc' => 'Lowest Score',
+        ]"
+                        defaultSort="created_at" defaultOrder="desc" />
 
                     <!-- Bulk Actions Button -->
                     <button type="button" id="bulkActionsBtn" class="btn btn-primary btn-icon-left d-none">

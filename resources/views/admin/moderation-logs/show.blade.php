@@ -180,17 +180,17 @@
                                         {{ $actionLabel }}
                                     </h2>
                                     <div class="d-flex flex-wrap gap-3 text-muted small">
-                                        <span class="d-flex align-items-center gap-1">
+                                        {{-- <span class="d-flex align-items-center gap-1">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
                                                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                             </svg>
                                             {{ $log->created_at->format('d M Y • H:i') }}
-                                        </span>
+                                        </span> --}}
                                         <span class="d-flex align-items-center gap-1">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
                                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                                             </svg>
-                                            {{ $log->admin->name ?? 'Admin' }}
+                                            {{ Str::limit($log->admin->nama,5) ?? 'admin' }}
                                         </span>
                                         @if($log->target_type)
                                             <span class="d-flex align-items-center gap-1">
