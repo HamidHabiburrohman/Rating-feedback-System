@@ -7,7 +7,9 @@ use App\Http\Requests\Student\Rating\StoreRatingRequest;
 use App\Http\Requests\Student\Rating\UpdateRatingRequest;
 use App\Http\Requests\Student\Rating\RatingFilterRequest;
 use App\Services\Student\RatingService;
+use App\Services\Student\ReportService;
 use App\Models\Unit;
+use Illuminate\Support\Facades\Log;
 
 class RatingController extends Controller
 {
@@ -20,7 +22,9 @@ class RatingController extends Controller
 
     public function create(Unit $unit)
     {
-        if ($this->service->hasUserRated($unit->id, auth('student')->id())) {
+        $studentIdentifier = auth('student')->user()->student_identifier;
+
+        if ($this->service->hasUserRated($unit->id, $studentIdentifier)) {
             return redirect()->route('student.units.show', $unit->slug)
                 ->with('error', 'Anda sudah memberikan rating untuk unit ini');
         }
@@ -34,12 +38,14 @@ class RatingController extends Controller
     public function store(StoreRatingRequest $request)
     {
         try {
+            $studentIdentifier = auth('student')->user()->student_identifier;
+
             $rating = $this->service->submitRating(
                 $request->validated(),
-                auth('student')->id()
+                $studentIdentifier
             );
 
-            return redirect()->route('student.ratings.show', $rating->tracking_code)
+            return redirect()->route('student.units.show', $rating->unit->slug)
                 ->with('success', 'Rating berhasil dikirim');
         } catch (\Exception $e) {
             return back()->withInput()
@@ -51,14 +57,21 @@ class RatingController extends Controller
     {
         try {
             $rating = $this->service->findByTrackingCode($trackingCode);
+            $studentIdentifier = auth('student')->user()->student_identifier;
 
-            if ($rating->student_id !== auth('student')->id()) {
+            if ($rating->student_identifier !== $studentIdentifier) {
                 abort(403);
             }
 
+            $canEdit = $this->service->canEdit($rating);
+            $reportService = app(ReportService::class);
+            $canReport = $reportService->canReport($rating);
+
             return view('student.ratings.show', [
                 'rating' => $rating,
-                'stats' => $this->service->getRatingStats($rating->unit_id)
+                'stats' => $this->service->getRatingStats($rating->unit_id),
+                'canEdit' => $canEdit,
+                'canReport' => $canReport
             ]);
         } catch (\Exception $e) {
             return redirect()->route('student.ratings.history')
@@ -70,8 +83,9 @@ class RatingController extends Controller
     {
         try {
             $rating = $this->service->findByTrackingCode($trackingCode);
+            $studentIdentifier = auth('student')->user()->student_identifier;
 
-            if ($rating->student_id !== auth('student')->id()) {
+            if ($rating->student_identifier !== $studentIdentifier) {
                 abort(403);
             }
 
@@ -80,9 +94,14 @@ class RatingController extends Controller
                     ->with('error', 'Belum bisa mengedit rating');
             }
 
+            $categories = $this->service->getActiveCategoriesWithScores($rating);
+
+            // Debug: lihat data categories
+            Log::info('Categories for edit:', $categories);
+
             return view('student.ratings.edit', [
                 'rating' => $rating,
-                'categories' => $this->service->getActiveCategoriesWithScores($rating)
+                'categories' => $categories
             ]);
         } catch (\Exception $e) {
             return redirect()->route('student.ratings.history')
@@ -94,14 +113,15 @@ class RatingController extends Controller
     {
         try {
             $rating = $this->service->findByTrackingCode($trackingCode);
+            $studentIdentifier = auth('student')->user()->student_identifier;
 
-            if ($rating->student_id !== auth('student')->id()) {
+            if ($rating->student_identifier !== $studentIdentifier) {
                 abort(403);
             }
 
             $this->service->updateRating($rating, $request->validated());
 
-            return redirect()->route('student.ratings.show', $trackingCode)
+            return redirect()->route('student.units.show', $rating->unit->slug)
                 ->with('success', 'Rating berhasil diperbarui');
         } catch (\Exception $e) {
             return back()->withInput()
@@ -111,9 +131,11 @@ class RatingController extends Controller
 
     public function history(RatingFilterRequest $request)
     {
+        $studentIdentifier = auth('student')->user()->student_identifier;
+
         return view('student.ratings.history', [
             'ratings' => $this->service->getUserRatings(
-                auth('student')->id(),
+                $studentIdentifier,
                 $request->validated()
             )
         ]);
@@ -121,11 +143,13 @@ class RatingController extends Controller
 
     public function unitRatings(RatingFilterRequest $request, Unit $unit)
     {
+        $studentIdentifier = auth('student')->user()->student_identifier;
+
         return view('student.ratings.unit', [
             'unit' => $unit,
             'ratings' => $this->service->getUnitRatings($unit->id, $request->validated()),
             'stats' => $this->service->getRatingStats($unit->id),
-            'canRate' => !$this->service->hasUserRated($unit->id, auth('student')->id())
+            'canRate' => !$this->service->hasUserRated($unit->id, $studentIdentifier)
         ]);
     }
 }

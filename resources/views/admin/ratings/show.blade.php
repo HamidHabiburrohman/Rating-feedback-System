@@ -22,8 +22,9 @@
             <div class="d-flex align-items-center gap-3 mt-3 mt-md-0">
                 <span class="px-3 py-1 rounded-pill small fw-medium"
                     style="background-color: {{ $rating->status === 'active' ? '#e8f5e9' : ($rating->status === 'edited' ? '#fff8e1' : '#eceff1') }}; 
-                        border: 1px solid {{ $rating->status === 'active' ? '#c8e6c9' : ($rating->status === 'edited' ? '#ffe0b2' : '#d0d7dd') }};">
-                        color: {{ $rating->status === 'active' ? '#2e7d32' : ($rating->status === 'edited' ? '#b85c00' : '#546e7a') }};
+                            border: 1px solid {{ $rating->status === 'active' ? '#c8e6c9' : ($rating->status === 'edited' ? '#ffe0b2' : '#d0d7dd') }};">
+                    color:
+                    {{ $rating->status === 'active' ? '#2e7d32' : ($rating->status === 'edited' ? '#b85c00' : '#546e7a') }};
                     {{ ucfirst($rating->status) }}
                 </span>
             </div>
@@ -123,23 +124,23 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-auto text-md-end mt-3 mt-md-0">
+                            {{-- <div class="col-md-auto text-md-end mt-3 mt-md-0">
                                 <div class="d-flex flex-column align-items-md-end">
-                                    <span class="h2 fw-bold mb-0"
-                                        style="color: #1e2937; line-height: 1;">{{ number_format($rating->overall_score, 1) }}</span>
+                                    <span class="h2 fw-bold mb-0" style="color: #1e2937; line-height: 1;">{{
+                                        number_format($rating->overall_score, 1) }}</span>
                                     <span class="small text-muted">overall rating</span>
                                     <div class="d-flex gap-1 mt-2">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                                <polygon
-                                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                                                    fill="{{ $i <= round($rating->overall_score) ? '#f8773c' : '#e2e8f0' }}"
-                                                    stroke="none" />
+                                        @for($i = 1; $i <= 5; $i++) <svg width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none">
+                                            <polygon
+                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                                                fill="{{ $i <= round($rating->overall_score) ? '#f8773c' : '#e2e8f0' }}"
+                                                stroke="none" />
                                             </svg>
-                                        @endfor
+                                            @endfor
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         @if($rating->scores && $rating->scores->count() > 0)
@@ -178,7 +179,7 @@
                     style="background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.03); border-color: #e2e8f0;">
                     <div class="card-body p-4 p-xl-5">
                         <h6 class="small fw-semibold text-uppercase mb-3" style="color: #64748b; letter-spacing: 0.02em;">
-                            Visitor Comment</h6>
+                            Student Comment</h6>
                         <div class="p-4 rounded-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                             @if($rating->comment)
                                 <p class="mb-0 lh-lg" style="color: #334155; white-space: pre-wrap; font-size: 1rem;">
@@ -258,21 +259,34 @@
                             Student</h6>
                         <div class="d-flex flex-column gap-3">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                    style="width: 48px; height: 48px; background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="fw-semibold"
-                                        style="color: #f8773c;">{{ substr($rating->student->name ?? 'A', 0, 1) }}</span>
-                                </div>
+                                @php
+                                    $student = $rating->student;
+                                    $photoUrl = $student && $student->photo ? asset('storage/' . $student->photo) : null;
+                                    $initial = $student && $student->name ? substr($student->name, 0, 1) : 'A';
+                                @endphp
+
+                                @if($photoUrl)
+                                    <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center"
+                                        style="width: 48px; height: 48px; border: 1px solid #e2e8f0;">
+                                        <img src="{{ $photoUrl }}" alt="{{ $student->name }}"
+                                            class="w-100 h-100 object-fit-cover">
+                                    </div>
+                                @else
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                        style="width: 48px; height: 48px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                                        <span class="fw-semibold" style="color: #f8773c;">{{ $initial }}</span>
+                                    </div>
+                                @endif
                                 <div>
                                     <div class="fw-medium" style="color: #1e2937;">
-                                        {{ $rating->student->name ?? 'Anonymous' }}
+                                        {{ $student->name ?? 'Anonymous' }}
                                     </div>
-                                    @if($rating->student && $rating->student->student_identifier)
-                                        <div class="small text-muted">{{ $rating->student->student_identifier }}</div>
+                                    @if($student && $student->student_identifier)
+                                        <div class="small text-muted">{{ $student->student_identifier }}</div>
                                     @endif
                                 </div>
                             </div>
-                            @if($rating->student && $rating->student->email)
+                            @if($student && $student->email)
                                 <div class="d-flex align-items-center gap-2 small">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                         fill="none" stroke="#94a3b8" stroke-width="2">
@@ -280,7 +294,7 @@
                                         </path>
                                         <polyline points="22,6 12,13 2,6"></polyline>
                                     </svg>
-                                    <span class="text-muted">{{ $rating->student->email }}</span>
+                                    <span class="text-muted">{{ $student->email }}</span>
                                 </div>
                             @endif
                         </div>
@@ -294,7 +308,6 @@
                             Actions</h6>
                         <div class="d-flex flex-column gap-2">
                             @if(!$rating->adminReply)
-                                {{-- Menggunakan button reply dengan style full (ada teksnya) --}}
                                 <x-admin.button type="reply-full" modalId="replyModal{{ $rating->id }}"
                                     tooltip="Reply to Rating" />
                             @endif

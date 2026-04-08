@@ -25,8 +25,8 @@ class DatabaseSeeder extends Seeder
             RatingScoreSeeder::class,
             AdminReplySeeder::class,
             ReportSeeder::class,
-            ModerationLogSeeder::class,
             StudentSeeder::class,
+            ModerationLogSeeder::class,
         ]);
     }
 }

@@ -6,14 +6,15 @@ use App\Services\Shared\BaseService;
 
 abstract class BaseStudentService extends BaseService
 {
-    protected function getStudentId(): ?int
+    protected function getStudentIdentifier(): ?string
     {
-        return session('student_id');
+        $student = auth('student')->user();
+        return $student ? $student->student_identifier : null;
     }
 
     protected function ensureStudentAuthenticated(): void
     {
-        if (!$this->getStudentId()) {
+        if (!$this->getStudentIdentifier()) {
             throw new \Exception('Sesi mahasiswa tidak ditemukan');
         }
     }
@@ -36,7 +37,9 @@ abstract class BaseStudentService extends BaseService
 
     protected function canEditRating($rating): bool
     {
-        if ($rating->student_id !== $this->getStudentId()) {
+        $studentIdentifier = $this->getStudentIdentifier();
+        
+        if ($rating->student_identifier !== $studentIdentifier) {
             return false;
         }
 
@@ -61,7 +64,9 @@ abstract class BaseStudentService extends BaseService
 
     protected function canReportRating($rating): bool
     {
-        if ($rating->student_id !== $this->getStudentId()) {
+        $studentIdentifier = $this->getStudentIdentifier();
+        
+        if ($rating->student_identifier !== $studentIdentifier) {
             return false;
         }
 

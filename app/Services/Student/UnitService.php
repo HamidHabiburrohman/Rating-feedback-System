@@ -26,7 +26,7 @@ class UnitService extends BaseStudentService
     {
         try {
             $query = $this->unit
-                ->with(['type', 'department', 'primaryPhoto'])
+                ->with(['type', 'department', 'primaryPhoto', 'photos'])
                 ->where('is_active', true);
 
             if (!empty($filters['search'])) {
@@ -60,7 +60,7 @@ class UnitService extends BaseStudentService
                     break;
             }
 
-            $perPage = $filters['per_page'] ?? 12;
+            $perPage = $filters['per_page'] ?? 6;
 
             return $query->paginate($perPage);
         } catch (\Exception $e) {
@@ -68,7 +68,7 @@ class UnitService extends BaseStudentService
                 'filters' => $filters,
                 'error' => $e->getMessage()
             ]);
-            
+
             return new LengthAwarePaginator([], 0, 12, 1);
         }
     }
@@ -112,6 +112,7 @@ class UnitService extends BaseStudentService
                 'type',
                 'department',
                 'facilities',
+                'primaryPhoto',
                 'photos' => function ($q) {
                     $q->orderBy('sort_order');
                 },
@@ -122,9 +123,9 @@ class UnitService extends BaseStudentService
                         ->limit(10);
                 }
             ])
-            ->where('slug', $slug)
-            ->where('is_active', true)
-            ->first();
+                ->where('slug', $slug)
+                ->where('is_active', true)
+                ->first();
 
             if (!$unit) {
                 throw new ModelNotFoundException();

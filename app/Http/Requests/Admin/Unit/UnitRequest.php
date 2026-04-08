@@ -45,7 +45,8 @@ class UnitRequest extends FormRequest
             'operational_status' => 'required|in:open,full,maintenance,closed',
             'facilities' => 'sometimes|array',
             'facilities.*' => 'exists:facilities,id',
-            'metadata' => 'nullable|array',
+            'open_days_start' => 'required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+            'open_days_end' => 'required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
         ];
     }
 

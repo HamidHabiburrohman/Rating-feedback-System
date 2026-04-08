@@ -2,6 +2,8 @@
 <script src="{{ asset('assets/admin/js/app.min.js') }}"></script>
 <script src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
 <script src="{{ asset('assets/components/components.js') }}"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

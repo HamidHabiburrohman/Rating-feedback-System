@@ -15,8 +15,10 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->foreignId('student_id')
-                ->constrained()
+            $table->string('student_identifier');
+            $table->foreign('student_identifier')
+                ->references('student_identifier')
+                ->on('students')
                 ->cascadeOnDelete();
 
             $table->decimal('overall_score', 3, 2);
@@ -33,9 +35,10 @@ return new class extends Migration {
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['unit_id', 'student_id']);
+            $table->unique(['unit_id', 'student_identifier']);
             $table->index(['unit_id', 'status']);
             $table->index('overall_score');
+            $table->index('student_identifier');
         });
     }
 

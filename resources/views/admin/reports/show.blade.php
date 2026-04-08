@@ -98,13 +98,22 @@
                         <div class="row g-4 align-items-start">
                             <div class="col-md-auto">
                                 <div class="rounded-4 overflow-hidden d-flex align-items-center justify-content-center"
-                                    style="width: 96px; height: 96px; background: #f8fafc; border: 1px solid #f0f0f0;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
-                                        fill="none" stroke="#f8773c" stroke-width="1.5">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
+                                    style="width: 64px; height: 64px; background: #fff5f0; border: 1px solid #f1c3ae;">
+                                    @php
+                                        $photo = $report->unit->photos->where('is_primary', true)->first() ?? $report->unit->photos->first();
+                                    @endphp
+
+                                    @if($photo && $photo->thumbnail_url && $photo->thumbnail_url !== '')
+                                        <img src="{{ $photo->thumbnail_url }}" alt="{{ $report->unit->name }}"
+                                            style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                            fill="none" stroke="#f8773c" stroke-width="1.5">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    @endif
                                 </div>
                             </div>
 
@@ -192,14 +201,13 @@
                             </div>
                         </div>
 
-                        <!-- Description -->
                         @if($report->description)
                             <div class="mt-5 pt-4" style="border-top: 1px solid #f0f0f0;">
                                 <h6 class="small fw-semibold text-uppercase mb-3"
                                     style="color: #64748b; letter-spacing: 0.02em;">
                                     Deskripsi Laporan</h6>
                                 <div class="p-4 rounded-4" style="background: #f8fafc; border: 1px solid #f0f0f0;">
-                                    <p class="mb-0 lh-lg" style="color: #334155; white-space: pre-wrap; font-size: 1rem;">
+                                    <p class="mb-0 lh-lg" style="color: #334155; font-size: 1rem;">
                                         {{ $report->description }}
                                     </p>
                                 </div>
@@ -215,7 +223,7 @@
                         <div class="card-body p-4 p-xl-5">
                             <h6 class="small fw-semibold text-uppercase mb-3" style="color: #64748b; letter-spacing: 0.02em;">
                                 Tanggapan Admin</h6>
-                            <div class="p-4 rounded-4" style="background: #fff5f0; border: 1px solid #f1c3ae;">
+                            <div class="p-4 rounded-4" style="background: #ffffff; border: 1px solid #f3f3f3;">
                                 <p class="mb-3 lh-lg" style="color: #1e2937; font-size: 1rem;">
                                     {{ $report->admin_response }}
                                 </p>
@@ -224,11 +232,11 @@
                                         <div class="rounded-circle d-flex align-items-center justify-content-center"
                                             style="width: 32px; height: 32px; background: white; border: 1px solid #f1c3ae;">
                                             <span class="fw-semibold small" style="color: #f8773c;">
-                                                {{ substr($report->admin->name ?? 'A', 0, 1) }}
+                                                {{ substr($report->admin->nama ?? 'A', 0, 1) }}
                                             </span>
                                         </div>
                                         <div>
-                                            <span class="fw-medium small">{{ $report->admin->name }}</span>
+                                            <span class="fw-medium small">{{ $report->admin->nama }}</span>
                                             @if($report->replied_at)
                                                 <span class="text-muted small d-block">
                                                     {{ \Carbon\Carbon::parse($report->replied_at)->format('d M Y • H:i') }}
@@ -242,127 +250,218 @@
                     </div>
                 @endif
 
-                <!-- Unit Information Card -->
                 @if($report->unit)
-                    <div class="card border-0 rounded-4 mb-4"
+                    <div class="card border-0 rounded-4 mb-4 overflow-hidden"
                         style="background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #e3e3e3;">
-                        <div class="card-body p-4 p-xl-5">
-                            <div class="d-flex align-items-center justify-content-between mb-4">
-                                <h6 class="small fw-semibold text-uppercase mb-0"
-                                    style="color: #64748b; letter-spacing: 0.02em;">
-                                    Unit Terkait
-                                </h6>
 
-                                <div class="d-flex align-items-center gap-3">
-                                    <!-- Badge Unit Name -->
-                                    <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #f1c3ae, #f8773c); 
-                             color: white; 
-                             font-size: 0.85rem; 
-                             font-weight: 500;
-                             border-radius: 30px;
-                             max-width: 250px;
-                             white-space: nowrap;
-                             overflow: hidden;
-                             text-overflow: ellipsis;
-                             box-shadow: 0 2px 4px rgba(248, 119, 60, 0.15);">
-                                        <i class="bi bi-building me-1" style="font-size: 0.8rem;"></i>
-                                        {{ Str::limit($report->unit->name ?? 'Tipe tidak diketahui', 30) }}
-                                    </span>
-
-                                    <!-- Detail Unit Link -->
-                                    <a href="{{ route('admin.units.show', $report->unit_id) }}"
-                                        class="text-decoration-none d-flex align-items-center gap-1 small fw-medium px-3 py-1 rounded-pill"
-                                        style="background: #f8fafc;
-                          color: #f8773c;
-                          border: 1px solid #f1c3ae;
-                          transition: all 0.2s ease;"
-                                        onmouseover="this.style.background='#f8773c'; this.style.color='white'; this.style.borderColor='#f8773c'"
-                                        onmouseout="this.style.background='#f8fafc'; this.style.color='#f8773c'; this.style.borderColor='#f1c3ae'">
-                                        <span>Detail Unit</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2"
-                                            style="transition: transform 0.2s;">
-                                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        {{-- Header with gradient --}}
+                        <div
+                            style="background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%); padding: 1rem 1.5rem; border-bottom: 1px solid #f0e6e0;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div
+                                        style="width: 32px; height: 32px; background: #f8773c; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="white" stroke-width="2">
+                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                                         </svg>
-                                    </a>
+                                    </div>
+                                    <h6 class="fw-semibold mb-0" style="color: #1e2937; letter-spacing: 0.01em;">Unit Terkait
+                                    </h6>
                                 </div>
-                            </div>
 
-                            <div class="d-flex align-items-center gap-3 mb-4">
-                                <div class="rounded-4 overflow-hidden d-flex align-items-center justify-content-center"
-                                    style="width: 64px; height: 64px; background: #fff5f0; border: 1px solid #f1c3ae;">
-                                    @if($report->unit->foto_unit)
-                                        <img src="{{ asset('storage/' . $report->unit->foto_unit) }}"
-                                            alt="{{ $report->unit->nama_unit }}"
+                                <a href="{{ route('admin.units.show', $report->unit_id) }}"
+                                    class="text-decoration-none d-flex align-items-center gap-1 small fw-medium px-3 py-1.5 rounded-pill"
+                                    style="background: #f8773c10; color: #f8773c; border: 1px solid #f1c3ae; transition: all 0.2s ease; font-size: 0.75rem;"
+                                    onmouseover="this.style.background='#f8773c'; this.style.color='white'; this.style.borderColor='#f8773c'"
+                                    onmouseout="this.style.background='#f8773c10'; this.style.color='#f8773c'; this.style.borderColor='#f1c3ae'">
+                                    <span>Detail Unit</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4 p-xl-5">
+                            {{-- Unit Profile Section --}}
+                            <div class="d-flex flex-column flex-md-row align-items-md-center gap-4 mb-4">
+                                {{-- Unit Avatar / Photo --}}
+                                <div class="rounded-4 overflow-hidden shrink-0 d-flex align-items-center justify-content-center mx-auto mx-md-0"
+                                    style="width: 80px; height: 80px; background: linear-gradient(135deg, #fff5f0, #fefaf5); border: 2px solid #f1c3ae; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                    @php
+                                        $photo = $report->unit->photos->where('is_primary', true)->first() ?? $report->unit->photos->first();
+                                    @endphp
+
+                                    @if($photo && $photo->thumbnail_url && $photo->thumbnail_url !== '')
+                                        <img src="{{ $photo->thumbnail_url }}" alt="{{ $report->unit->name }}"
                                             style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
-                                        <span class="fw-bold"
-                                            style="color: #f8773c;">{{ substr($report->unit->nama_unit, 0, 2) }}</span>
-                                    @endif
-                                </div>
-                                <div>
-                                    <h5 class="fw-semibold mb-1" style="color: #1e2937;">{{ $report->unit->nama_unit }}</h5>
-                                    <div class="d-flex flex-wrap gap-2 text-muted small">
-                                        <span>{{ $report->unit->type->name ?? 'Tidak ada tipe' }}</span>
-                                        <span>•</span>
-                                        <span>{{ $report->unit->kode_unit }}</span>
-                                        <span>•</span>
-                                        <span class="{{ $report->unit->status_aktif ? 'text-success' : 'text-secondary' }}">
-                                            {{ $report->unit->status_aktif ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if($report->unit->kapasitas || $report->unit->jam_buka || $report->unit->kontak_telepon || $report->unit->kontak_email)
-                                <div class="row g-3">
-                                    @if($report->unit->kapasitas)
-                                        <div class="col-6 col-md-3">
-                                            <div class="d-flex flex-column">
-                                                <span class="small text-muted">Kapasitas</span>
-                                                <span class="fw-medium">{{ number_format($report->unit->kapasitas) }} orang</span>
+                                        <div class="text-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"
+                                                fill="none" stroke="#f8773c" stroke-width="1.5">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="7 10 12 15 17 10"></polyline>
+                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                            </svg>
+                                            <div class="small fw-bold mt-1" style="color: #f8773c; font-size: 10px;">
+                                                {{ substr($report->unit->name ?? 'U', 0, 2) }}
                                             </div>
                                         </div>
                                     @endif
-                                    @if($report->unit->jam_buka && $report->unit->jam_tutup)
-                                        <div class="col-6 col-md-3">
-                                            <div class="d-flex flex-column">
-                                                <span class="small text-muted">Operasional</span>
-                                                <span class="fw-medium">
-                                                    {{ \Carbon\Carbon::parse($report->unit->jam_buka)->format('H:i') }} -
-                                                    {{ \Carbon\Carbon::parse($report->unit->jam_tutup)->format('H:i') }}
+                                </div>
+
+                                {{-- Unit Info --}}
+                                <div class="grow text-center text-md-start">
+                                    <h4 class="fw-bold mb-1" style="color: #0f172a; letter-spacing: -0.01em;">
+                                        {{ $report->unit->name }}</h4>
+                                    <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start mb-2">
+                                        <span class="badge px-2 py-1 rounded-pill"
+                                            style="background: #f1f5f9; color: #475569; font-size: 0.7rem; font-weight: 500;">
+                                            {{ $report->unit->type->name ?? 'Tidak ada tipe' }}
+                                        </span>
+                                        <span class="badge px-2 py-1 rounded-pill"
+                                            style="background: #f1f5f9; color: #475569; font-size: 0.7rem; font-weight: 500;">
+                                            Kode: {{ $report->unit->code ?? '-' }}
+                                        </span>
+                                        <span
+                                            class="badge px-2 py-1 rounded-pill {{ $report->unit->is_active ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' }}"
+                                            style="font-size: 0.7rem; font-weight: 500;">
+                                            {{ $report->unit->is_active ? '● Aktif' : '○ Nonaktif' }}
+                                        </span>
+                                    </div>
+
+                                    {{-- Location Info --}}
+                                    @if($report->unit->location || $report->unit->building)
+                                        <div
+                                            class="d-flex align-items-center gap-1 justify-content-center justify-content-md-start text-muted small">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                fill="none" stroke="#94a3b8" stroke-width="2">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                            <span>
+                                                @if($report->unit->location)
+                                                    {{ $report->unit->location }}
+                                                @elseif($report->unit->building)
+                                                    Gedung
+                                                    {{ $report->unit->building }}{{ $report->unit->floor ? ', Lantai ' . $report->unit->floor : '' }}
+                                                @else
+                                                    Lokasi tidak tersedia
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Detail Information Grid --}}
+                            <div style="background: #f8fafc; border-radius: 16px; padding: 1.25rem; margin-top: 0.5rem;">
+                                <div class="row g-3">
+                                    {{-- Capacity --}}
+                                    @if($report->unit->capacity)
+                                        <div class="col-6 col-sm-3">
+                                            <div
+                                                class="d-flex flex-column align-items-center align-items-sm-start text-center text-sm-start">
+                                                <div class="d-flex align-items-center gap-1 text-muted mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                        <circle cx="9" cy="7" r="4"></circle>
+                                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                                    </svg>
+                                                    <span class="small text-muted">Kapasitas</span>
+                                                </div>
+                                                <span class="fw-semibold"
+                                                    style="color: #1e2937;">{{ number_format($report->unit->capacity) }} <span
+                                                        class="small fw-normal text-muted">org</span></span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    {{-- Operational Hours --}}
+                                    @if($report->unit->open_time && $report->unit->close_time)
+                                        <div class="col-6 col-sm-3">
+                                            <div
+                                                class="d-flex flex-column align-items-center align-items-sm-start text-center text-sm-start">
+                                                <div class="d-flex align-items-center gap-1 text-muted mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                                    </svg>
+                                                    <span class="small text-muted">Operasional</span>
+                                                </div>
+                                                <span class="fw-semibold" style="color: #1e2937;">
+                                                    {{ \Carbon\Carbon::parse($report->unit->open_time)->format('H:i') }} -
+                                                    {{ \Carbon\Carbon::parse($report->unit->close_time)->format('H:i') }}
                                                 </span>
                                             </div>
                                         </div>
                                     @endif
-                                    @if($report->unit->kontak_telepon)
-                                        <div class="col-6 col-md-3">
-                                            <div class="d-flex flex-column">
-                                                <span class="small text-muted">Telepon</span>
-                                                <a href="tel:{{ $report->unit->kontak_telepon }}" class="fw-medium text-decoration-none"
+                                    @if($report->unit->phone)
+                                        <div class="col-6 col-sm-3">
+                                            <div
+                                                class="d-flex flex-column align-items-center align-items-sm-start text-center text-sm-start">
+                                                <div class="d-flex align-items-center gap-1 text-muted mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                                                        <path
+                                                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                                        </path>
+                                                    </svg>
+                                                    <span class="small text-muted">Telepon</span>
+                                                </div>
+                                                <a href="tel:{{ $report->unit->phone }}" class="fw-semibold text-decoration-none"
                                                     style="color: #f8773c;">
-                                                    {{ $report->unit->kontak_telepon }}
+                                                    {{ $report->unit->phone }}
                                                 </a>
                                             </div>
                                         </div>
                                     @endif
-                                    @if($report->unit->kontak_email)
-                                        <div class="col-6 col-md-3">
-                                            <div class="d-flex flex-column">
-                                                <span class="small text-muted">Email</span>
-                                                <a href="mailto:{{ $report->unit->kontak_email }}"
-                                                    class="fw-medium text-decoration-none" style="color: #f8773c;">
-                                                    {{ $report->unit->kontak_email }}
+                                    @if($report->unit->email)
+                                        <div class="col-6 col-sm-3">
+                                            <div
+                                                class="d-flex flex-column align-items-center align-items-sm-start text-center text-sm-start">
+                                                <div class="d-flex align-items-center gap-1 text-muted mb-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                                                        <path
+                                                            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                                        </path>
+                                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                                    </svg>
+                                                    <span class="small text-muted">Email</span>
+                                                </div>
+                                                <a href="mailto:{{ $report->unit->email }}" class="fw-semibold text-decoration-none"
+                                                    style="color: #f8773c; font-size: 0.85rem;">
+                                                    {{ Str::limit($report->unit->email, 25) }}
                                                 </a>
                                             </div>
                                         </div>
                                     @endif
                                 </div>
-                            @endif
+                            </div>
 
-                            @if($report->unit->deskripsi)
-                                <div class="mt-3 pt-3 small text-muted" style="border-top: 1px dashed #e9ecef;">
-                                    {{ Str::limit($report->unit->deskripsi, 100) }}
+                            {{-- Description --}}
+                            @if($report->unit->description)
+                                <div class="mt-3 pt-2">
+                                    <div class="d-flex align-items-center gap-1 mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="#94a3b8" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                        <span class="small fw-semibold text-muted">Deskripsi</span>
+                                    </div>
+                                    <p class="small mb-0" style="color: #475569; line-height: 1.5;">
+                                        {{ Str::limit($report->unit->description, 150) }}
+                                    </p>
                                 </div>
                             @endif
                         </div>
@@ -446,7 +545,8 @@
                                         <div class="fw-medium" style="color: #1e2937;">{{ $step['label'] }}</div>
                                         @if($step['time'])
                                             <div class="small text-muted">
-                                                {{ \Carbon\Carbon::parse($step['time'])->format('d M Y • H:i') }}</div>
+                                                {{ \Carbon\Carbon::parse($step['time'])->format('d M Y • H:i') }}
+                                            </div>
                                         @else
                                             <div class="small text-muted fst-italic">Menunggu</div>
                                         @endif

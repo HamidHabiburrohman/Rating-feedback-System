@@ -10,7 +10,7 @@ class GuestStudentMiddleware
     public function handle($request, Closure $next)
     {
         if (Auth::guard('student')->check()) {
-            return redirect()->route('student.units.index');
+            return redirect()->route('student.dashboard.index');
         }
 
         return $next($request);

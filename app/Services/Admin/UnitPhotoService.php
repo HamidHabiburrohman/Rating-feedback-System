@@ -170,11 +170,13 @@ class UnitPhotoService
                 }
             }
 
-            // Perbaikan: Kirimkan $photo (model) bukan stdClass
-            $this->logAdminAction('delete_photo', $photo, null, [
-                'unit_id' => $unitId,
-                'was_primary' => $wasPrimary
-            ]);
+            $unit = Unit::find($unitId);
+            if ($unit) {
+                $this->logAdminAction('delete_photo', $unit, null, [
+                    'photo_id' => $photo->id,
+                    'was_primary' => $wasPrimary
+                ]);
+            }
 
             return [
                 'success' => true,

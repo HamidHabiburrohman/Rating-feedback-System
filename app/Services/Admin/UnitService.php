@@ -109,20 +109,20 @@ class UnitService extends BaseAdminService
         return [
             'unitTypes' => UnitType::where('is_active', true)->orderBy('name')->get(),
             'unitDepartments' => UnitDepartment::where('is_active', true)->orderBy('name')->get(),
-            'facilities' => Facility::orderBy('name')->get()
+            'facilities' => Facility::orderBy('name')->get(),
         ];
     }
 
     public function getEditData(int|string $id): array
     {
-        $unit = $this->find($id, ['facilities']);
+        $unit = $this->find($id, ['facilities', 'photos']);
 
         return [
             'unit' => $unit,
             'unitTypes' => UnitType::where('is_active', true)->orderBy('name')->get(),
             'unitDepartments' => UnitDepartment::where('is_active', true)->orderBy('name')->get(),
             'facilities' => Facility::orderBy('name')->get(),
-            'selectedFacilities' => $unit->facilities->pluck('id')->toArray()
+            'selectedFacilities' => $unit->facilities->pluck('id')->toArray(),
         ];
     }
 
@@ -132,7 +132,15 @@ class UnitService extends BaseAdminService
         try {
             $data['slug'] = Str::slug($data['name']);
 
+            $openDaysStart = $data['open_days_start'] ?? 'monday';
+            $openDaysEnd = $data['open_days_end'] ?? 'friday';
+            unset($data['open_days_start'], $data['open_days_end']);
+
             $unit = parent::create($data);
+
+            $unit->open_days_start = $openDaysStart;
+            $unit->open_days_end = $openDaysEnd;
+            $unit->save();
 
             if (isset($data['facilities'])) {
                 $unit->facilities()->sync($data['facilities']);
@@ -161,10 +169,18 @@ class UnitService extends BaseAdminService
                 $data['slug'] = Str::slug($data['name']);
             }
 
+            $openDaysStart = $data['open_days_start'] ?? $unit->open_days_start;
+            $openDaysEnd = $data['open_days_end'] ?? $unit->open_days_end;
+            unset($data['open_days_start'], $data['open_days_end']);
+
             $unit = parent::update((int) $id, $data);
 
+            $unit->open_days_start = $openDaysStart;
+            $unit->open_days_end = $openDaysEnd;
+            $unit->save();
+
             if (isset($data['facilities'])) {
-                $unit->facilities()->sync($data['facilities'] ?? []);
+                $unit->facilities()->sync($data['facilities']);
             }
 
             DB::commit();
@@ -196,7 +212,7 @@ class UnitService extends BaseAdminService
             if ($result) {
                 $this->logAdminAction('delete_unit', $unit, null, [
                     'unit_id' => (int) $id,
-                    'unit_name' => $unit->name
+                    'unit_name' => $unit->name,
                 ]);
             }
 
@@ -228,7 +244,7 @@ class UnitService extends BaseAdminService
             if ($result) {
                 $this->logAdminAction('force_delete_unit', (object)['id' => (int) $id], null, [
                     'unit_id' => (int) $id,
-                    'unit_name' => $unit->name
+                    'unit_name' => $unit->name,
                 ]);
             }
 
@@ -260,7 +276,7 @@ class UnitService extends BaseAdminService
             if ($result) {
                 $this->logAdminAction('restore_unit', $unit, null, [
                     'unit_id' => (int) $id,
-                    'unit_name' => $unit->name
+                    'unit_name' => $unit->name,
                 ]);
             }
 
@@ -328,7 +344,7 @@ class UnitService extends BaseAdminService
             'full' => 'bg-warning-subtle text-warning',
             'maintenance' => 'bg-info-subtle text-info',
             'closed' => 'bg-danger-subtle text-danger',
-            default => 'bg-secondary-subtle text-secondary'
+            default => 'bg-secondary-subtle text-secondary',
         };
     }
 
@@ -339,7 +355,7 @@ class UnitService extends BaseAdminService
             'full' => 'Full',
             'maintenance' => 'Maintenance',
             'closed' => 'Closed',
-            default => ucfirst($status)
+            default => ucfirst($status),
         };
     }
 
@@ -348,7 +364,7 @@ class UnitService extends BaseAdminService
         return match (true) {
             $capacityPercent >= 90 => 'bg-danger',
             $capacityPercent >= 70 => 'bg-warning',
-            default => 'bg-primary'
+            default => 'bg-primary',
         };
     }
 

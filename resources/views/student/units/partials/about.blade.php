@@ -97,7 +97,7 @@
         </div>
 
         {{-- ── Operational Times Card (Static Version) ── --}}
-        @if ($unit->open_time)
+        @if($unit->open_time && $unit->close_time)
             <div
                 class="p-8 rounded-lg lg:rounded-2rem bg-surface-container-lowest shadow-[0_20px_40px_rgba(173,43,0,0.04)] border border-outline-variant/10">
                 <div class="flex items-center space-x-3 mb-6">
@@ -107,18 +107,17 @@
                     <h3 class="text-xl font-bold text-slate-800">Operational Times</h3>
                 </div>
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center pb-3 border-b border-outline-variant/10">
-                        <span class="font-semibold text-slate-800">Monday - Friday</span>
-                        <span class="text-slate-500">08:00 - 18:00</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-outline-variant/10">
-                        <span class="font-semibold text-slate-800">Saturday</span>
-                        <span class="text-slate-500">09:00 - 14:00</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-semibold text-slate-800">Sunday</span>
-                        <span class="text-red-500 font-medium">Closed</span>
-                    </div>
+                    @foreach($unit->operational_schedule as $schedule)
+                        <div
+                            class="flex justify-between items-center {{ !$loop->last ? 'pb-3 border-b border-outline-variant/10' : '' }}">
+                            <span class="font-semibold text-slate-800">{{ $schedule['days'] }}</span>
+                            @if($schedule['is_closed'])
+                                <span class="text-red-500 font-medium">Closed</span>
+                            @else
+                                <span class="text-slate-500">{{ $schedule['open'] }} - {{ $schedule['close'] }}</span>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
             </div>
         @endif
@@ -217,7 +216,7 @@ BOTTOM: Inside the Unit — Gallery Teaser
             @foreach($unit->photos->take(4) as $photo)
                 <div class="rounded-lg overflow-hidden h-48 bg-surface-container">
                     <img src="{{ $photo->thumbnail_url ?? $photo->url }}" alt="{{ $photo->alt_text ?? $unit->name }}"
-                        class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+                        class="w-full h-full object-cover transition-transform duration-500">
                 </div>
             @endforeach
 

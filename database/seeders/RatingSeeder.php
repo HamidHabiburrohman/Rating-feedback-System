@@ -23,7 +23,7 @@ class RatingSeeder extends Seeder
             
             foreach ($selectedStudents as $student) {
                 $ratingExist = Rating::where('unit_id', $unit->id)
-                    ->where('student_id', $student->id)
+                    ->where('student_identifier', $student->student_identifier)
                     ->exists();
                 
                 if (!$ratingExist) {

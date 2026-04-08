@@ -23,10 +23,10 @@ class RatingService extends BaseStudentService
         $this->ratingScore = $ratingScore;
     }
 
-    public function hasUserRated(int $unitId, int $studentId): bool
+    public function hasUserRated(int $unitId, string $studentIdentifier): bool
     {
         return $this->rating->where('unit_id', $unitId)
-            ->where('student_id', $studentId)
+            ->where('student_identifier', $studentIdentifier)
             ->where('status', '!=', 'archived')
             ->exists();
     }
@@ -50,15 +50,14 @@ class RatingService extends BaseStudentService
         }, $categories);
     }
 
-    public function submitRating(array $data, int $studentId): Rating
+    public function submitRating(array $data, string $studentIdentifier): Rating
     {
-        return DB::transaction(function () use ($data, $studentId) {
-
+        return DB::transaction(function () use ($data, $studentIdentifier) {
             $unit = Unit::findOrFail($data['unit_id']);
 
             $existing = $this->rating
                 ->where('unit_id', $unit->id)
-                ->where('student_id', $studentId)
+                ->where('student_identifier', $studentIdentifier)
                 ->first();
 
             if ($existing) {
@@ -70,7 +69,7 @@ class RatingService extends BaseStudentService
             $rating = $this->rating->create([
                 'tracking_code' => 'RTG-' . strtoupper(uniqid()),
                 'unit_id' => $unit->id,
-                'student_id' => $studentId,
+                'student_identifier' => $studentIdentifier,
                 'overall_score' => $overallScore,
                 'comment' => $data['comment'] ?? null,
                 'status' => 'active',
@@ -89,7 +88,6 @@ class RatingService extends BaseStudentService
             }
 
             $unit->increment('total_ratings');
-
             $this->updateUnitAverage($unit);
             $this->createUnitVisit($unit->id);
 
@@ -100,7 +98,6 @@ class RatingService extends BaseStudentService
     public function updateRating(Rating $rating, array $data): Rating
     {
         return DB::transaction(function () use ($rating, $data) {
-
             if (!$this->canEdit($rating)) {
                 throw new \Exception('Tidak dapat mengedit rating ini');
             }
@@ -137,23 +134,29 @@ class RatingService extends BaseStudentService
             ->firstOrFail();
     }
 
-    public function getUserRatings(int $studentId, array $filters = []): array
+    public function getUserRatings(string $studentIdentifier, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $query = $this->rating->with(['unit', 'scores.category'])
-            ->where('student_id', $studentId);
+            ->where('student_identifier', $studentIdentifier);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        }
+
+        // Handle search if present
+        if (!empty($filters['search'])) {
+            $query->whereHas('unit', function ($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['search']}%");
+            })->orWhere('comment', 'like', "%{$filters['search']}%");
         }
 
         $sort = $filters['sort'] ?? 'created_at';
         $order = $filters['order'] ?? 'desc';
         $perPage = $filters['per_page'] ?? 10;
 
-        return $query->orderBy($sort, $order)
-            ->paginate($perPage)
-            ->toArray();
+        return $query->orderBy($sort, $order)->paginate($perPage);
     }
+
 
     public function getUnitRatings(int $unitId, array $filters = []): array
     {
@@ -208,7 +211,29 @@ class RatingService extends BaseStudentService
 
     public function canEdit(Rating $rating): bool
     {
-        return $this->canEditRating($rating);
+        $studentIdentifier = auth('student')->user()->student_identifier;
+
+        if ($rating->student_identifier !== $studentIdentifier) {
+            return false;
+        }
+
+        if ($rating->status === 'archived') {
+            return false;
+        }
+
+        $hasActiveReport = $rating->activeReport()->exists();
+
+        if ($hasActiveReport) {
+            return false;
+        }
+
+        $lastReport = $rating->report()->where('status', 'resolved')->latest()->first();
+
+        if ($lastReport && $lastReport->updated_at->addDays(7) > now()) {
+            return false;
+        }
+
+        return true;
     }
 
     private function updateUnitAverage(Unit $unit): void

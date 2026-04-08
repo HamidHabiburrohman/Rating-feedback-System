@@ -19,9 +19,9 @@ class ReportController extends Controller
 
     public function create(Rating $rating)
     {
-        $studentId = auth('student')->id();
+        $studentIdentifier = auth('student')->user()->student_identifier;
 
-        if ($rating->student_id !== $studentId) {
+        if ($rating->student_identifier !== $studentIdentifier) {
             abort(403);
         }
 
@@ -36,11 +36,19 @@ class ReportController extends Controller
     public function store(StoreReportRequest $request)
     {
         try {
-            $data = array_merge($request->validated(), [
-                'student_id' => auth('student')->id()
-            ]);
+            $studentIdentifier = auth('student')->user()->student_identifier;
 
-            $report = $this->service->create($data);
+            $data = $request->validated();
+
+            $priorityMap = [
+                'technical' => 'high',
+                'facility' => 'medium',
+                'network' => 'critical',
+                'other' => 'low'
+            ];
+            $data['priority'] = $priorityMap[$data['category']] ?? 'medium';
+
+            $report = $this->service->createReport($data, $studentIdentifier);
 
             return redirect()->route('student.reports.show', $report->tracking_code)
                 ->with('success', 'Laporan berhasil dikirim');
@@ -54,8 +62,9 @@ class ReportController extends Controller
     {
         try {
             $report = $this->service->findByTrackingCode($trackingCode);
+            $studentIdentifier = auth('student')->user()->student_identifier;
 
-            if ($report->student_id !== auth('student')->id()) {
+            if ($report->student_identifier !== $studentIdentifier) {
                 abort(403);
             }
 
@@ -67,10 +76,10 @@ class ReportController extends Controller
 
     public function history(Request $request)
     {
-        $studentId = auth('student')->id();
+        $studentIdentifier = auth('student')->user()->student_identifier;
 
         return view('student.reports.history', [
-            'reports' => $this->service->getUserReports($studentId, $request->only(['status', 'search']))
+            'reports' => $this->service->getUserReports($studentIdentifier, $request->only(['status', 'search']))
         ]);
     }
 

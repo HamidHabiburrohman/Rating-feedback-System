@@ -1,0 +1,82 @@
+.pagination {
+    --bs-pagination-color: #6b7280;
+    --bs-pagination-bg: transparent;
+    --bs-pagination-border-color: #e5e7eb;
+    --bs-pagination-hover-color: #ffffff;
+    --bs-pagination-hover-bg: linear-gradient(135deg, #f1c3ae, #f8773c);
+    --bs-pagination-hover-border-color: #f8773c;
+    --bs-pagination-focus-color: #374151;
+    --bs-pagination-focus-bg: #f9fafb;
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(248, 119, 60, 0.2);
+    --bs-pagination-active-color: #ffffff;
+    --bs-pagination-active-bg: linear-gradient(135deg, #f1c3ae, #f8773c);
+    --bs-pagination-active-border-color: #f8773c;
+    --bs-pagination-disabled-color: #9ca3af;
+    --bs-pagination-disabled-bg: transparent;
+    --bs-pagination-disabled-border-color: #e5e7eb;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0 8px;
+    margin: 0;
+    border: 1px solid var(--bs-pagination-border-color);
+    transition: all 0.3s ease;
+    color: var(--bs-pagination-color);
+    background: var(--bs-pagination-bg);
+}
+
+.page-link:hover:not(.disabled):not(.active) {
+    background: var(--bs-pagination-hover-bg);
+    border-color: var(--bs-pagination-hover-border-color);
+    color: var(--bs-pagination-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(248, 119, 60, 0.2);
+}
+
+.page-item.active .page-link {
+    background: var(--bs-pagination-active-bg);
+    border-color: var(--bs-pagination-active-border-color);
+    color: var(--bs-pagination-active-color);
+    box-shadow: 0 4px 12px rgba(248, 119, 60, 0.3);
+    font-weight: 600;
+}
+
+.page-item.disabled .page-link {
+    color: var(--bs-pagination-disabled-color);
+    background: var(--bs-pagination-disabled-bg);
+    border-color: var(--bs-pagination-disabled-border-color);
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.page-link svg {
+    stroke-width: 2.5;
+    transition: stroke 0.3s ease;
+}
+
+.page-link:hover svg {
+    stroke: #ffffff;
+}
+
+.page-item:first-child .page-link {
+    margin-right: 4px;
+}
+
+.page-item:last-child .page-link {
+    margin-left: 4px;
+}
+
+@media (max-width: 576px) {
+    .page-link {
+        min-width: 32px;
+        height: 32px;
+        font-size: 0.8125rem;
+    }
+}

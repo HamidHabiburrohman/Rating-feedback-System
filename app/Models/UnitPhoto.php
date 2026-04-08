@@ -4,109 +4,93 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class UnitPhoto extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'unit_id',
         'uploaded_by_admin_id',
         'original_path',
         'thumbnail_path',
-        'medium_path',
-        'large_path',
         'file_name',
         'mime_type',
         'file_size',
-        'alt_text',
         'sort_order',
         'is_primary'
     ];
 
     protected $casts = [
-        'file_size' => 'integer',
-        'sort_order' => 'integer',
         'is_primary' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime'
+        'file_size' => 'integer',
+        'sort_order' => 'integer'
     ];
 
-    // Relasi
-    public function unit()
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    public function uploader()
+    public function uploadedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by_admin_id');
     }
 
-    // Accessors
-    public function getUrlAttribute()
+    public function getThumbnailUrlAttribute(): ?string
     {
-        return asset('storage/' . $this->original_path);
-    }
-
-    public function getThumbnailUrlAttribute()
-    {
-        return $this->thumbnail_path 
-            ? asset('storage/' . $this->thumbnail_path) 
-            : $this->url;
-    }
-
-    public function getMediumUrlAttribute()
-    {
-        return $this->medium_path 
-            ? asset('storage/' . $this->medium_path) 
-            : $this->url;
-    }
-
-    public function getLargeUrlAttribute()
-    {
-        return $this->large_path 
-            ? asset('storage/' . $this->large_path) 
-            : $this->url;
-    }
-
-    public function getFormattedSizeAttribute()
-    {
-        $bytes = $this->file_size;
-        $units = ['B', 'KB', 'MB', 'GB'];
-        
-        for ($i = 0; $bytes > 1024; $i++) {
-            $bytes /= 1024;
+        if ($this->thumbnail_path && !empty($this->thumbnail_path)) {
+            if (filter_var($this->thumbnail_path, FILTER_VALIDATE_URL)) {
+                return $this->thumbnail_path;
+            }
+            
+            $path = $this->thumbnail_path;
+            $path = str_replace('\\', '/', $path);
+            $path = str_replace(public_path(), '', $path);
+            $path = ltrim($path, '/');
+            
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::url($path);
+            }
         }
         
-        return round($bytes, 2) . ' ' . $units[$i];
+        if ($this->original_path && !empty($this->original_path)) {
+            if (filter_var($this->original_path, FILTER_VALIDATE_URL)) {
+                return $this->original_path;
+            }
+            
+            $path = $this->original_path;
+            $path = str_replace('\\', '/', $path);
+            $path = str_replace(public_path(), '', $path);
+            $path = ltrim($path, '/');
+            
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::url($path);
+            }
+        }
+        
+        return null;
     }
 
-    // Scope
-    public function scopePrimary($query)
+    public function getOriginalUrlAttribute(): ?string
     {
-        return $query->where('is_primary', true);
-    }
-
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('sort_order');
-    }
-
-    // Helper methods
-    public function setAsPrimary()
-    {
-        // Reset primary pada foto lain di unit yang sama
-        self::where('unit_id', $this->unit_id)
-            ->where('id', '!=', $this->id)
-            ->update(['is_primary' => false]);
-
-        // Set foto ini sebagai primary
-        $this->update(['is_primary' => true]);
-
-        // Update atau create primary_photo_id di tabel units? 
-        // Kalau mau simpan reference bisa ditambah kolom di units, tapi di migration belum ada
+        if ($this->original_path && !empty($this->original_path)) {
+            if (filter_var($this->original_path, FILTER_VALIDATE_URL)) {
+                return $this->original_path;
+            }
+            
+            $path = $this->original_path;
+            $path = str_replace('\\', '/', $path);
+            $path = str_replace(public_path(), '', $path);
+            $path = ltrim($path, '/');
+            
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::url($path);
+            }
+        }
+        
+        return null;
     }
 }

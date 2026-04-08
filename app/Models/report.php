@@ -13,9 +13,13 @@ class Report extends Model
         'tracking_code',
         'rating_id',
         'unit_id',
-        'student_id',
+        'student_identifier',
         'title',
         'description',
+        'attachment_path',
+        'attachment_original_name',
+        'attachment_mime_type',
+        'attachment_size',
         'priority',
         'status',
         'admin_id',
@@ -31,6 +35,21 @@ class Report extends Model
         'updated_at' => 'datetime'
     ];
 
+    // Accessor untuk mendapatkan URL attachment
+    public function getAttachmentUrlAttribute()
+    {
+        if ($this->attachment_path) {
+            return asset('storage/' . $this->attachment_path);
+        }
+        return null;
+    }
+
+    // Helper untuk cek apakah ada attachment
+    public function hasAttachment(): bool
+    {
+        return !is_null($this->attachment_path);
+    }
+
     // Relasi
     public function rating()
     {
@@ -44,7 +63,7 @@ class Report extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'student_identifier', 'student_identifier');
     }
 
     public function admin()
@@ -101,7 +120,7 @@ class Report extends Model
         };
     }
 
-    // Scope
+    // Scopes
     public function scopeNew($query)
     {
         return $query->where('status', 'new');
@@ -137,9 +156,9 @@ class Report extends Model
         return $query->where('unit_id', $unitId);
     }
 
-    public function scopeByStudent($query, $studentId)
+    public function scopeByStudent($query, $studentIdentifier)
     {
-        return $query->where('student_id', $studentId);
+        return $query->where('student_identifier', $studentIdentifier);
     }
 
     public function scopeSearch($query, $search)

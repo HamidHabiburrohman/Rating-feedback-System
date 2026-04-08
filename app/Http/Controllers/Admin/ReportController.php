@@ -36,7 +36,20 @@ class ReportController extends Controller
     {
         try {
             $report = $this->service->findReport($id);
-            return view('admin.reports.show', compact('report'));
+
+            // Ambil photo unit - pastikan URL valid
+            $photoUrl = null;
+            if ($report->unit && $report->unit->photos) {
+                $primaryPhoto = $report->unit->photos->where('is_primary', true)->first();
+                $photo = $primaryPhoto ? $primaryPhoto : $report->unit->photos->first();
+
+                // Cek apakah photo ada dan thumbnail_url tidak kosong
+                if ($photo && $photo->thumbnail_url && $photo->thumbnail_url !== '') {
+                    $photoUrl = $photo->thumbnail_url;
+                }
+            }
+
+            return view('admin.reports.show', compact('report', 'photoUrl'));
         } catch (\Exception $e) {
             return redirect()->route('admin.reports.index')->with('error', 'Laporan tidak ditemukan');
         }

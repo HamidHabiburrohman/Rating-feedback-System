@@ -198,17 +198,12 @@ class UnitFactory extends Factory
         $unitType = UnitType::inRandomOrder()->first() ?? UnitType::factory()->create();
         $typeName = $unitType->name;
 
-        // Generate nama unik dengan kombinasi agar tidak duplicate
         $prefixes = ['Utama', 'Sentra', 'Pusat', 'Unit', 'Fasilitas', 'Gedung', 'Area', 'Ruang'];
-        $suffixes = ['Kampus', 'Universitas', 'Mahasiswa', 'Akademik', 'Terpadu', 'Modern', 'Digital'];
 
         if (isset($this->unitNames[$typeName]) && !empty($this->unitNames[$typeName])) {
-            // Ambil random dari array yang ada
             $baseName = $this->faker->randomElement($this->unitNames[$typeName]);
-            // Tambahkan prefix/suffix untuk variasi
             $name = $baseName . ' ' . $this->faker->randomElement($prefixes);
         } else {
-            // Generate nama custom
             $name = $typeName . ' ' . $this->faker->randomElement($prefixes) . ' ' . $this->faker->numberBetween(1, 99);
         }
 
@@ -251,10 +246,13 @@ class UnitFactory extends Factory
             $lastRatedAt = null;
         }
 
+        $openDaysStart = $this->faker->randomElement(['monday', 'tuesday', 'wednesday', 'thursday', 'friday']);
+        $openDaysEnd = $this->faker->randomElement(['wednesday', 'thursday', 'friday', 'saturday']);
+
         return [
             'code' => strtoupper($this->faker->unique()->bothify('??-###')),
             'name' => $name,
-            'slug' => Str::slug($name . '-' . Str::random(4)), // Tambah random string untuk unique slug
+            'slug' => Str::slug($name . '-' . Str::random(4)),
             'unit_type_id' => $unitType->id,
             'unit_department_id' => $department->id,
             'description' => $this->faker->paragraphs(3, true),
@@ -275,6 +273,8 @@ class UnitFactory extends Factory
             'avg_quality_score' => $avgQuality,
             'last_rated_at' => $lastRatedAt,
             'metadata' => json_encode([
+                'open_days_start' => $openDaysStart,
+                'open_days_end' => $openDaysEnd,
                 'has_ac' => $this->faker->boolean(80),
                 'has_wifi' => $this->faker->boolean(70),
                 'has_projector' => $this->faker->boolean(50),
@@ -288,6 +288,31 @@ class UnitFactory extends Factory
                 return $this->faker->dateTimeBetween($attributes['created_at'], 'now');
             },
         ];
+    }
+
+    public function configure()
+    {
+        return $this->afterCreating(function (Unit $unit) {
+            $placeholderPath = public_path('assets/images/UnitPlaceholder.png');
+
+            $photoCount = rand(1, 3);
+
+            for ($i = 0; $i < $photoCount; $i++) {
+                $unit->photos()->create([
+                    'uploaded_by_admin_id' => 1,
+                    'original_path' => $placeholderPath,
+                    'thumbnail_path' => $placeholderPath,
+                    'medium_path' => $placeholderPath,
+                    'large_path' => $placeholderPath,
+                    'file_name' => "placeholder-{$unit->id}-{$i}.png",
+                    'mime_type' => 'image/png',
+                    'file_size' => file_exists($placeholderPath) ? filesize($placeholderPath) : 5000,
+                    'alt_text' => "Foto {$unit->name}",
+                    'sort_order' => $i,
+                    'is_primary' => $i === 0,
+                ]);
+            }
+        });
     }
 
     public function active(): static

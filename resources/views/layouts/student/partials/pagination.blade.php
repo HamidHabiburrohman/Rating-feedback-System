@@ -14,24 +14,37 @@
             @endif
 
             <div class="flex gap-2">
-                @foreach($elements as $element)
-                    @if(is_string($element))
-                        <span
-                            class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center text-sm font-medium">{{ $element }}</span>
-                    @endif
-
-                    @if(is_array($element))
-                        @foreach($element as $page => $url)
-                            @if($page == $paginator->currentPage())
-                                <span
-                                    class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/20">{{ $page }}</span>
-                            @else
-                                <a href="{{ $url }}"
-                                    class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center text-sm font-medium hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">{{ $page }}</a>
-                            @endif
-                        @endforeach
-                    @endif
-                @endforeach
+                @php
+                    $currentPage = $paginator->currentPage();
+                    $lastPage = $paginator->lastPage();
+                    $start = max(1, $currentPage - 2);
+                    $end = min($lastPage, $currentPage + 2);
+                    
+                    if ($start > 1) {
+                        $firstPageUrl = $paginator->url(1);
+                        echo '<a href="' . $firstPageUrl . '" class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center text-sm font-medium hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">1</a>';
+                        if ($start > 2) {
+                            echo '<span class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center text-sm font-medium">...</span>';
+                        }
+                    }
+                    
+                    for ($page = $start; $page <= $end; $page++) {
+                        $url = $paginator->url($page);
+                        if ($page == $currentPage) {
+                            echo '<span class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/20">' . $page . '</span>';
+                        } else {
+                            echo '<a href="' . $url . '" class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center text-sm font-medium hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">' . $page . '</a>';
+                        }
+                    }
+                    
+                    if ($end < $lastPage) {
+                        if ($end < $lastPage - 1) {
+                            echo '<span class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center text-sm font-medium">...</span>';
+                        }
+                        $lastPageUrl = $paginator->url($lastPage);
+                        echo '<a href="' . $lastPageUrl . '" class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center text-sm font-medium hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">' . $lastPage . '</a>';
+                    }
+                @endphp
             </div>
 
             @if($paginator->hasMorePages())

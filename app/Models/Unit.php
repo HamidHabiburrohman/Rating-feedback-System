@@ -57,6 +57,24 @@ class Unit extends Model
         'deleted_at' => 'datetime'
     ];
 
+    protected $appends = [
+        'thumbnail_url'
+    ];
+
+    protected function getMetadataArray(): array
+    {
+        if (is_array($this->metadata)) {
+            return $this->metadata;
+        }
+        
+        if (is_string($this->metadata)) {
+            $decoded = json_decode($this->metadata, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        
+        return [];
+    }
+
     public function type(): BelongsTo
     {
         return $this->belongsTo(UnitType::class, 'unit_type_id');
@@ -80,7 +98,7 @@ class Unit extends Model
 
     public function primaryPhoto(): HasOne
     {
-        return $this->hasOne(UnitPhoto::class)->where('is_primary', true);
+        return $this->hasOne(UnitPhoto::class, 'unit_id')->where('is_primary', true);
     }
 
     public function ratings(): HasMany
@@ -105,8 +123,24 @@ class Unit extends Model
 
     public function getThumbnailUrlAttribute(): ?string
     {
-        $primary = $this->primaryPhoto;
-        return $primary ? $primary->thumbnail_path : null;
+        if (!$this->relationLoaded('primaryPhoto')) {
+            $this->load('primaryPhoto');
+        }
+        
+        $primary = $this->getRelation('primaryPhoto');
+        
+        if ($primary && $primary instanceof UnitPhoto) {
+            return $primary->thumbnail_path ?? $primary->original_path ?? null;
+        }
+        
+        if ($this->relationLoaded('photos')) {
+            $firstPhoto = $this->photos->first();
+            if ($firstPhoto) {
+                return $firstPhoto->thumbnail_path ?? $firstPhoto->original_path ?? null;
+            }
+        }
+        
+        return null;
     }
 
     public function getIsOpenAttribute(): ?bool
@@ -131,6 +165,168 @@ class Unit extends Model
             'quality' => $this->avg_quality_score,
             'total_ratings' => $this->total_ratings
         ];
+    }
+
+    public function getOpenDaysStartAttribute(): ?string
+    {
+        $metadata = $this->getMetadataArray();
+        return $metadata['open_days_start'] ?? 'monday';
+    }
+
+    public function setOpenDaysStartAttribute(?string $value): void
+    {
+        $metadata = $this->getMetadataArray();
+        $metadata['open_days_start'] = $value;
+        $this->metadata = $metadata;
+    }
+
+    public function getOpenDaysEndAttribute(): ?string
+    {
+        $metadata = $this->getMetadataArray();
+        return $metadata['open_days_end'] ?? 'friday';
+    }
+
+    public function setOpenDaysEndAttribute(?string $value): void
+    {
+        $metadata = $this->getMetadataArray();
+        $metadata['open_days_end'] = $value;
+        $this->metadata = $metadata;
+    }
+
+    public function getOpenDaysListAttribute(): array
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $start = $this->open_days_start;
+        $end = $this->open_days_end;
+
+        $startIndex = array_search($start, $days);
+        $endIndex = array_search($end, $days);
+
+        if ($startIndex === false || $endIndex === false) {
+            return $days;
+        }
+
+        if ($startIndex <= $endIndex) {
+            return array_slice($days, $startIndex, $endIndex - $startIndex + 1);
+        }
+
+        return array_merge(
+            array_slice($days, $startIndex),
+            array_slice($days, 0, $endIndex + 1)
+        );
+    }
+
+    public function getClosedDaysAttribute(): array
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $openDays = $this->open_days_list;
+        return array_values(array_diff($days, $openDays));
+    }
+
+    public function getOperationalScheduleAttribute(): array
+    {
+        $daysMap = [
+            'monday' => 'Senin',
+            'tuesday' => 'Selasa',
+            'wednesday' => 'Rabu',
+            'thursday' => 'Kamis',
+            'friday' => 'Jumat',
+            'saturday' => 'Sabtu',
+            'sunday' => 'Minggu'
+        ];
+
+        $openDays = $this->open_days_list;
+        $closedDays = $this->closed_days;
+        $openTime = $this->open_time ? date('H:i', strtotime($this->open_time)) : null;
+        $closeTime = $this->close_time ? date('H:i', strtotime($this->close_time)) : null;
+
+        $schedule = [];
+
+        if (!empty($openDays) && $openTime && $closeTime) {
+            if (count($openDays) === 7) {
+                $schedule[] = [
+                    'days' => 'Setiap Hari',
+                    'open' => $openTime,
+                    'close' => $closeTime,
+                    'is_closed' => false
+                ];
+            } else {
+                $ranges = $this->groupConsecutiveDays($openDays, $daysMap);
+                foreach ($ranges as $range) {
+                    $schedule[] = [
+                        'days' => $range,
+                        'open' => $openTime,
+                        'close' => $closeTime,
+                        'is_closed' => false
+                    ];
+                }
+            }
+        }
+
+        if (!empty($closedDays)) {
+            $closedRanges = $this->groupConsecutiveDays($closedDays, $daysMap);
+            foreach ($closedRanges as $range) {
+                $schedule[] = [
+                    'days' => $range,
+                    'open' => null,
+                    'close' => null,
+                    'is_closed' => true
+                ];
+            }
+        }
+
+        usort($schedule, function($a, $b) {
+            $order = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+            $aDay = is_string($a['days']) ? explode(' - ', $a['days'])[0] : $a['days'];
+            $bDay = is_string($b['days']) ? explode(' - ', $b['days'])[0] : $b['days'];
+            $aIndex = array_search($aDay, $order);
+            $bIndex = array_search($bDay, $order);
+            return $aIndex <=> $bIndex;
+        });
+
+        return $schedule;
+    }
+
+    private function groupConsecutiveDays(array $days, array $daysMap): array
+    {
+        if (empty($days)) {
+            return [];
+        }
+        
+        $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayIndices = array_flip($dayOrder);
+
+        usort($days, function($a, $b) use ($dayIndices) {
+            return $dayIndices[$a] <=> $dayIndices[$b];
+        });
+
+        $ranges = [];
+        $currentRange = [$days[0]];
+
+        for ($i = 1; $i < count($days); $i++) {
+            $prevIndex = $dayIndices[$days[$i - 1]];
+            $currIndex = $dayIndices[$days[$i]];
+
+            if ($currIndex === $prevIndex + 1) {
+                $currentRange[] = $days[$i];
+            } else {
+                $ranges[] = $this->formatDayRange($currentRange, $daysMap);
+                $currentRange = [$days[$i]];
+            }
+        }
+
+        $ranges[] = $this->formatDayRange($currentRange, $daysMap);
+
+        return $ranges;
+    }
+
+    private function formatDayRange(array $days, array $daysMap): string
+    {
+        if (count($days) === 1) {
+            return $daysMap[$days[0]];
+        }
+
+        return $daysMap[$days[0]] . ' - ' . $daysMap[end($days)];
     }
 
     public function scopeActive($query)

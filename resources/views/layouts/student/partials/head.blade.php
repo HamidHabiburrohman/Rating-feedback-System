@@ -98,4 +98,14 @@
     .tonal-transition {
         transition: background-color 0.3s ease;
     }
+
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+
+    .star-active {
+        font-variation-settings: 'FILL' 1;
+        color: #ad2b00;
+    }
 </style>

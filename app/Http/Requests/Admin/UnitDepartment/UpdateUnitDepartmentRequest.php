@@ -24,7 +24,7 @@ class UpdateUnitDepartmentRequest extends FormRequest
                 Rule::unique('unit_departments')->ignore($id),
             ],
             'slug' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
                 Rule::unique('unit_departments')->ignore($id),

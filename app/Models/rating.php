@@ -13,7 +13,7 @@ class Rating extends Model
     protected $fillable = [
         'tracking_code',
         'unit_id',
-        'student_id',
+        'student_identifier',
         'overall_score',
         'comment',
         'is_comment_censored',
@@ -41,7 +41,7 @@ class Rating extends Model
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'student_identifier', 'student_identifier');
     }
 
     public function scores()
@@ -69,10 +69,6 @@ class Rating extends Model
         return $this->hasOne(Report::class)
             ->whereIn('status', ['new', 'in_progress', 'replied']);
     }
-
-    // public function getUser () {
- 
-    // }
 
     public function getCommentDisplayAttribute()
     {
@@ -129,9 +125,9 @@ class Rating extends Model
         return $query->where('unit_id', $unitId);
     }
 
-    public function scopeByStudent($query, $studentId)
+    public function scopeByStudent($query, $studentIdentifier)
     {
-        return $query->where('student_id', $studentId);
+        return $query->where('student_identifier', $studentIdentifier);
     }
 
     public function scopeWithScores($query)
@@ -207,5 +203,4 @@ class Rating extends Model
 
         return $code;
     }
-    
 }

@@ -95,8 +95,8 @@
                         <div class="mt-2">
                             <h6 class="small fw-semibold text-uppercase mb-3"
                                 style="color: #64748b; letter-spacing: 0.02em;">Isi Balasan</h6>
-                            <div class="p-4 rounded-4" style="background: #fff5f0; border: 1px solid #f1c3ae;">
-                                <p class="mb-0 lh-lg" style="color: #1e2937; white-space: pre-wrap; font-size: 1rem;">
+                            <div class="p-4 rounded-4 border" style="background: #ffffff;">
+                                <p class="mb-0 lh-lg" style="color: #1e2937; font-size: 1rem;">
                                     {{ $reply->reply_message }}
                                 </p>
                             </div>

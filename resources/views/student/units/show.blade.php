@@ -5,26 +5,32 @@
 @section('content')
 
     @php
-        $primaryPhoto = $unit->photos->where('is_primary', true)->first() ?? $unit->photos->first();
-        $imageUrl = $primaryPhoto
-            ? ($primaryPhoto->url ?? asset('images/unit-placeholder.jpg'))
-            : asset('images/unit-placeholder.jpg');
+        $imageUrl = asset('assets/images/UnitPlaceholder.png');
+
+        if ($unit->primaryPhoto) {
+            $photo = $unit->primaryPhoto;
+            $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
+            if ($url) {
+                $imageUrl = $url;
+            }
+        } elseif ($unit->photos->isNotEmpty()) {
+            $photo = $unit->photos->first();
+            $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
+            if ($url) {
+                $imageUrl = $url;
+            }
+        }
+
         $avgRounded = round($unit->avg_rating ?? 0);
         $emptyStars = 5 - $avgRounded;
     @endphp
-
     <div class="pt-24 pb-20 max-w-7xl mx-auto px-8">
 
-        {{-- ════════════════════════════════════════════
-        HERO SECTION
-        ════════════════════════════════════════════ --}}
         <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
 
-            {{-- Cover Image --}}
             <div class="lg:col-span-8">
                 <div class="relative overflow-hidden rounded-lg aspect-16/9 shadow-lg group">
-                    <img src="{{ $imageUrl }}" alt="{{ $unit->name }}"
-                        class="w-full h-full object-cover">
+                    <img src="{{ $imageUrl }}" alt="{{ $unit->name }}" class="w-full h-full object-cover">
 
                     @if($unit->type)
                         <div class="absolute top-6 left-6">
@@ -37,7 +43,6 @@
                 </div>
             </div>
 
-            {{-- Meta Info --}}
             <div class="lg:col-span-4 flex flex-col justify-center space-y-6">
 
                 <div>
@@ -49,7 +54,6 @@
                     </p>
                 </div>
 
-                {{-- Stars + Score --}}
                 <div class="flex items-center space-x-2">
                     <div class="flex text-primary">
                         @for($i = 0; $i < $avgRounded; $i++)
@@ -63,7 +67,6 @@
                     <span class="text-on-surface-variant text-sm">({{ $unit->total_ratings ?? 0 }} Reviews)</span>
                 </div>
 
-                {{-- Dropdown Menu --}}
                 <div class="relative flex items-start gap-2" x-data="{ open: false }">
                     <div class="relative">
                         <button @click="open = !open" @click.outside="open = false"
@@ -84,24 +87,33 @@
                                 <span>Favorite</span>
                             </button>
 
-                            @auth
-                                <a href="{{ route('student.reports.create', $unit->id) }}"
-                                    class="w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-surface-container-low transition-colors text-sm font-medium">
-                                    <span class="material-symbols-outlined text-[20px]">flag</span>
-                                    <span>Report Issue</span>
-                                </a>
+                            @auth('student')
+                                @if($userRating && $canReport)
+                                    <a href="{{ route('student.reports.create', $userRating->id) }}"
+                                        class="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                                        <span class="material-symbols-outlined text-[20px]">flag</span>
+                                        <span>Laporkan Rating</span>
+                                    </a>
+                                @elseif(!$userRating)
+                                    <a href="{{ route('student.ratings.create', $unit->slug) }}"
+                                        class="w-full flex items-center space-x-3 px-4 py-3 text-primary hover:bg-primary/10 transition-colors text-sm font-medium">
+                                        <span class="material-symbols-outlined text-[20px]">rate_review</span>
+                                        <span>Beri Rating</span>
+                                    </a>
+                                @endif
                             @else
-                                <button
+                                <a href="{{ route('student.login') }}"
                                     class="w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-surface-container-low transition-colors text-sm font-medium">
-                                    <span class="material-symbols-outlined text-[20px]">flag</span>
-                                    <span>Report Issue</span>
-                                </button>
+                                    <span class="material-symbols-outlined text-[20px]">login</span>
+                                    <span>Login to Rate</span>
+                                </a>
                             @endauth
 
                             <button onclick="navigator.clipboard.writeText(window.location.href).then(() => {
-                                            const el = this.querySelector('span:last-child');
-                                            el.textContent = 'Copied!';
-                                            setTimeout(() => el.textContent = 'Share', 1500);
+                                            const btn = this;
+                                            const span = btn.querySelector('span:last-child');
+                                            span.textContent = 'Copied!';
+                                            setTimeout(() => span.textContent = 'Share', 1500);
                                         })"
                                 class="w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-surface-container-low transition-colors text-sm font-medium">
                                 <span class="material-symbols-outlined text-[20px]">share</span>
@@ -114,9 +126,6 @@
             </div>
         </section>
 
-        {{-- ════════════════════════════════════════════
-        TAB NAVIGATION
-        ════════════════════════════════════════════ --}}
         <nav class="flex border-b-2 border-outline-variant/10 space-x-12 mb-10">
             <button data-tab="about"
                 class="tab-button pb-4 text-lg transition-all -mb-[2px] text-primary border-b-[3px] border-primary font-bold">
@@ -137,9 +146,6 @@
             </button>
         </nav>
 
-        {{-- ════════════════════════════════════════════
-        TAB CONTENTS
-        ════════════════════════════════════════════ --}}
         <div id="tab-about" class="tab-content">
             @include('student.units.partials.about', ['unit' => $unit])
         </div>
@@ -186,7 +192,6 @@
                     });
                 });
 
-                // Triggered from "View Full Gallery" inside about tab
                 window.addEventListener('switch-tab', function (e) {
                     if (e.detail?.tab) activateTab(e.detail.tab);
                 });

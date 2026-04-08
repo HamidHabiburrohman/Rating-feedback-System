@@ -23,7 +23,7 @@
                     stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" /> 
                 </svg>
                 <div>
                     <strong>Terjadi kesalahan:</strong>
@@ -106,12 +106,12 @@
             </div>
 
             <div class="form-actions">
-                <a href="{{ route('admin.facilities.index') }}" class="btn-ghost">Batal</a>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span class="btn-text">Simpan Fasilitas</span>
-                    <span class="btn-loader" hidden>
+                <a href="{{ route('admin.facilities.index') }}" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-light" style="color:#ffff; background-color: #FF5625;" id="submitBtn">
+                    <span class="btn-text">Add Facilities</span>
+                    <span class="btn-loader" style="display: none;">
                         <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
+                            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none"
                                 stroke-dasharray="60" stroke-dashoffset="20" />
                         </svg>
                         Menyimpan...
@@ -1005,8 +1005,8 @@
                     submitBtn.disabled = true;
                     const btnText = submitBtn.querySelector('.btn-text');
                     const btnLoader = submitBtn.querySelector('.btn-loader');
-                    if (btnText) btnText.hidden = true;
-                    if (btnLoader) btnLoader.hidden = false;
+                    if (btnText) btnText.style.display = 'none';
+                    if (btnLoader) btnLoader.style.display = 'inline-flex';
                 }
             });
 

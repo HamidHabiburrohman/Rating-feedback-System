@@ -141,8 +141,8 @@
             <div class="form-actions">
                 <a href="{{ route('admin.unit-types.index') }}"  class="btn btn-secondary">Batal</a>
                 <button type="submit" class="btn btn-light" style="color:#ffff; background-color: #FF5625;" id="submitBtn">
-                    <span class="btn-text">Update</span>
-                    <span class="btn-loader" hidden>
+                    <span class="btn-text">Update Type</span>
+                    <span class="btn-loader" style="display: none;">
                         <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"
                                 stroke-dasharray="60" stroke-dashoffset="20" />

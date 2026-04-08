@@ -21,11 +21,24 @@
             @php
                 $featured = $photos->first();
                 $rest = $photos->skip(1);
+                
+                $getPhotoUrl = function($photo) {
+                    if ($photo->thumbnail_url) {
+                        return $photo->thumbnail_url;
+                    }
+                    if ($photo->thumbnail_path) {
+                        return asset($photo->thumbnail_path);
+                    }
+                    if ($photo->original_path) {
+                        return asset($photo->original_path);
+                    }
+                    return asset('assets/images/UnitPlaceholder.png');
+                };
             @endphp
 
             <div
                 class="md:col-span-8 group cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm relative md:h-[500px]">
-                <img src="{{ $featured->url }}" alt="{{ $featured->alt_text ?? 'Gallery' }}"
+                <img src="{{ $getPhotoUrl($featured) }}" alt="{{ $featured->alt_text ?? 'Gallery' }}"
                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                 <div
                     class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
@@ -40,7 +53,7 @@
                 $rest = $rest->skip(1); @endphp
                 <div
                     class="md:col-span-4 group cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm relative md:h-[500px]">
-                    <img src="{{ $side->url }}" alt="{{ $side->alt_text ?? 'Gallery' }}"
+                    <img src="{{ $getPhotoUrl($side) }}" alt="{{ $side->alt_text ?? 'Gallery' }}"
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                     <div
                         class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -56,7 +69,7 @@
             @foreach ($rest as $item)
                 <div
                     class="md:col-span-4 group cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm relative aspect-4/3">
-                    <img src="{{ $item->url }}" alt="{{ $item->alt_text ?? 'Gallery' }}"
+                    <img src="{{ $getPhotoUrl($item) }}" alt="{{ $item->alt_text ?? 'Gallery' }}"
                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                     <div
                         class="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">

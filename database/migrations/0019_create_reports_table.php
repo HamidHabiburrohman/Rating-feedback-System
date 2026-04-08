@@ -19,15 +19,23 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->foreignId('student_id')
-                ->constrained()
+            $table->string('student_identifier');
+            $table->foreign('student_identifier')
+                ->references('student_identifier')
+                ->on('students')
                 ->cascadeOnDelete();
 
             $table->string('title');
             $table->text('description');
+            
+            // Kolom attachment
+            $table->string('attachment_path')->nullable();
+            $table->string('attachment_original_name')->nullable();
+            $table->string('attachment_mime_type')->nullable();
+            $table->unsignedBigInteger('attachment_size')->nullable();
 
             $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium');
-            $table->enum('status', ['new', 'in_progress', 'replied', 'resolved', 'rejected','pending preview'])->default('new');
+            $table->enum('status', ['new', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview'])->default('new');
 
             $table->foreignId('admin_id')
                 ->nullable()
@@ -42,6 +50,7 @@ return new class extends Migration {
             $table->index(['unit_id', 'status']);
             $table->index(['rating_id', 'status']);
             $table->index('priority');
+            $table->index('student_identifier');
         });
     }
 

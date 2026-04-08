@@ -1,4 +1,5 @@
 <?php
+// database/factories/StudentFactory.php
 
 namespace Database\Factories;
 
@@ -13,11 +14,18 @@ class StudentFactory extends Factory
     {
         $year = $this->faker->numberBetween(2020, 2024);
         $sequence = $this->faker->unique()->numberBetween(1, 9999);
-        
+
         return [
             'student_identifier' => $year . str_pad($sequence, 4, '0', STR_PAD_LEFT),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
+            'major' => $this->faker->optional()->randomElement(['Teknik Informatika', 'Teknik Sipil', 'Teknik Elektro', 'Teknik Mesin', 'Teknik Industri']),
+            'class_year' => $this->faker->optional()->numberBetween(2018, 2024),
+            'bio' => $this->faker->optional()->paragraph(),
+            'phone' => $this->faker->optional()->phoneNumber(),
+            'location' => $this->faker->optional()->city(),
+            'portfolio_url' => $this->faker->optional()->url(),
+            'linkedin_url' => $this->faker->optional()->url(),
             'created_at' => $this->faker->dateTimeBetween('-2 years', 'now'),
             'updated_at' => function (array $attributes) {
                 return $this->faker->dateTimeBetween($attributes['created_at'], 'now');

@@ -132,8 +132,8 @@ Route::prefix('student')->name('student.')->group(function () {
         | DASHBOARD MODULE
         |===================================================================
         */
-        Route::prefix('dashboard')->group(function () {
-            Route::get('/', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::prefix('dashboard')->name('dashboard.')->group(function () {
+            Route::get('/', [StudentDashboardController::class, 'index'])->name('index');
         });
 
         /*
@@ -188,9 +188,7 @@ Route::prefix('student')->name('student.')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
             Route::get('/check', [AuthController::class, 'check'])->name('check');
         });
-
     });
-
 });
 
 /*
@@ -440,7 +438,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/unit-types', [ExportController::class, 'exportUnitTypes'])->name('unit-types');
         Route::get('/download/{id}', [ExportController::class, 'downloadExport'])->name('download');
     });
-
 });
 
 /*

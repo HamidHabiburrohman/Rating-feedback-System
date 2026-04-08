@@ -859,7 +859,7 @@
                         &nbsp;·&nbsp; Semester Genap 2025/2026
                     </p>
                 </div>
-                <a href="{{ route('visitor.browse') }}" class="btn-browse">
+                <a href="" class="btn-browse">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
@@ -1117,7 +1117,7 @@
                     <div class="card reveal d3" style="border-radius:24px;padding:18px">
                         <div class="stag" style="margin-bottom:14px">Aksi Cepat</div>
                         <div class="qa-grid">
-                            <a href="{{ route('visitor.browse') }}" class="qa-btn">
+                            <a href="" class="qa-btn">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="1.8" stroke-linecap="round">
                                     <circle cx="11" cy="11" r="8" />
@@ -1235,7 +1235,7 @@
             });
 
             const fetchChart = period => {
-                fetch(`{{ route('student.dashboard.activity') }}?period=${period}`, {
+                fetch(`{{ route('student.dashboard.index') }}?period=${period}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 })
                     .then(r => r.json())

@@ -52,7 +52,7 @@ class ExportManager implements ExportInterface
         string $format, 
         string $type
     ): Response {
-        $filename = $options['filename'] ?? "{$type}_export_" . date('Y_m_d_His');
+        $filename = $options['filename'] ?? "{$type}_export_" ;
         $title = $options['title'] ?? ucfirst($type) . ' Export';
         
         return match(strtolower($format)) {

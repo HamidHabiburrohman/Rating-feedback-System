@@ -49,8 +49,12 @@ class UnitController extends Controller
     public function store(UnitRequest $request)
     {
         try {
-            $this->service->create($request->validated());
-            return redirect()->route('admin.units.index')->with('success', 'Unit berhasil ditambahkan');
+            $unit = $this->service->create($request->validated());
+
+            // Redirect ke edit agar user bisa langsung upload foto via AJAX
+            return redirect()
+                ->route('admin.units.edit', $unit->id)
+                ->with('success', 'Unit berhasil ditambahkan. Anda dapat menambahkan foto sekarang.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menambahkan unit: ' . $e->getMessage())->withInput();
         }

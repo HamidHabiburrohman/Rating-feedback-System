@@ -1,0 +1,24 @@
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(248, 119, 60, 0.02);
+    --bs-table-hover-bg: rgba(248, 119, 60, 0.04);
+}
+
+.table> :not(:first-child) {
+    border-top: 2px solid #e5e7eb;
+}
+
+.badge-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.badge-type {
+    background: rgba(59, 130, 246, .1);
+    color: #3b82f6;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: .75rem;
+    font-weight: 500;
+}

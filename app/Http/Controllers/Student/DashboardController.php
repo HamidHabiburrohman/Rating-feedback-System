@@ -39,7 +39,7 @@ class DashboardController extends Controller
                 'line' => $e->getLine()
             ]);
 
-            return redirect()->route('student.dashboard')->with('error', 'Gagal memuat dashboard');
+            return redirect()->route('student.dashboard.index')->with('error', 'Gagal memuat dashboard');
         }
     }
 }

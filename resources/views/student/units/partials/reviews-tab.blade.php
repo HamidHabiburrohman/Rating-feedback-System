@@ -111,8 +111,8 @@
 
 @auth('student')
     @php
-        $hasReviewed = $unit->ratings()->where('student_id', auth('student')->id())->exists();
-        $existingReview = $unit->ratings()->where('student_id', auth('student')->id())->first();
+        $hasReviewed = $unit->ratings()->where('student_identifier', auth('student')->id())->exists();
+        $existingReview = $unit->ratings()->where('student_identifier', auth('student')->id())->first();
     @endphp
 
     @if(!$hasReviewed)

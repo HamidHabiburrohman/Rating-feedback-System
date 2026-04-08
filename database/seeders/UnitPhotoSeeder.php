@@ -13,6 +13,8 @@ class UnitPhotoSeeder extends Seeder
     {
         $units = Unit::all();
         $adminIds = User::whereIn('role', ['admin', 'super_admin'])->pluck('id')->toArray();
+        
+        $placeholderPath = public_path('assets/images/UnitPlaceholder.png');
 
         foreach ($units as $index => $unit) {
             $photoCount = rand(1, 4);
@@ -21,14 +23,14 @@ class UnitPhotoSeeder extends Seeder
                 UnitPhoto::create([
                     'unit_id' => $unit->id,
                     'uploaded_by_admin_id' => $adminIds[array_rand($adminIds)],
-                    'original_path' => "units/unit-{$unit->id}/photo-{$i}.jpg",
-                    'thumbnail_path' => "units/unit-{$unit->id}/thumb-{$i}.jpg",
-                    'medium_path' => "units/unit-{$unit->id}/medium-{$i}.jpg",
-                    'large_path' => "units/unit-{$unit->id}/large-{$i}.jpg",
-                    'file_name' => "unit-{$unit->id}-{$i}.jpg",
-                    'mime_type' => 'image/jpeg',
-                    'file_size' => rand(50000, 500000),
-                    'alt_text' => "Foto {$unit->name} - {$i}",
+                    'original_path' => $placeholderPath,
+                    'thumbnail_path' => $placeholderPath,
+                    'medium_path' => $placeholderPath,
+                    'large_path' => $placeholderPath,
+                    'file_name' => "placeholder-{$unit->id}-{$i}.png",
+                    'mime_type' => 'image/png',
+                    'file_size' => file_exists($placeholderPath) ? filesize($placeholderPath) : 5000,
+                    'alt_text' => "Foto {$unit->name}",
                     'sort_order' => $i,
                     'is_primary' => $i === 0,
                 ]);

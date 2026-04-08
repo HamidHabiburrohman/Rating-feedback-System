@@ -4,6 +4,8 @@ namespace App\Services\Student;
 
 use App\Models\Report;
 use App\Models\Rating;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ReportService extends BaseStudentService
 {
@@ -16,9 +18,9 @@ class ReportService extends BaseStudentService
 
     public function canReport(Rating $rating): bool
     {
-        $studentId = auth('student')->id();
+        $studentIdentifier = auth('student')->user()->student_identifier;
 
-        if ($rating->student_id !== $studentId) {
+        if ($rating->student_identifier !== $studentIdentifier) {
             return false;
         }
 
@@ -41,9 +43,9 @@ class ReportService extends BaseStudentService
 
     public function getReportStatusMessage(Rating $rating): string
     {
-        $studentId = auth('student')->id();
+        $studentIdentifier = auth('student')->user()->student_identifier;
 
-        if ($rating->student_id !== $studentId) {
+        if ($rating->student_identifier !== $studentIdentifier) {
             return 'Anda tidak memiliki akses ke rating ini';
         }
 
@@ -68,24 +70,39 @@ class ReportService extends BaseStudentService
         return 'Anda dapat melaporkan rating ini';
     }
 
-    public function createReport(array $data, int $studentId): Report
+    public function createReport(array $data, string $studentIdentifier): Report
     {
-        $rating = Rating::with('unit')->findOrFail($data['rating_id']);
+        return DB::transaction(function () use ($data, $studentIdentifier) {
+            $rating = Rating::with('unit')->findOrFail($data['rating_id']);
 
-        if (!$this->canReport($rating)) {
-            throw new \Exception('Tidak dapat melaporkan rating ini');
-        }
+            if (!$this->canReport($rating)) {
+                throw new \Exception('Tidak dapat melaporkan rating ini');
+            }
 
-        return $this->report->create([
-            'tracking_code' => 'RPT-' . strtoupper(uniqid()),
-            'rating_id' => $rating->id,
-            'unit_id' => $rating->unit_id,
-            'student_id' => $studentId,
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'priority' => 'medium',
-            'status' => 'new'
-        ]);
+            $reportData = [
+                'tracking_code' => 'RPT-' . strtoupper(uniqid()),
+                'rating_id' => $rating->id,
+                'unit_id' => $rating->unit_id,
+                'student_identifier' => $studentIdentifier,
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'priority' => $data['priority'] ?? 'medium',
+                'status' => 'new'
+            ];
+
+            // Handle file upload
+            if (isset($data['attachment']) && $data['attachment']->isValid()) {
+                $file = $data['attachment'];
+                $path = $file->store('reports/' . date('Y/m/d'), 'public');
+
+                $reportData['attachment_path'] = $path;
+                $reportData['attachment_original_name'] = $file->getClientOriginalName();
+                $reportData['attachment_mime_type'] = $file->getMimeType();
+                $reportData['attachment_size'] = $file->getSize();
+            }
+
+            return $this->report->create($reportData);
+        });
     }
 
     public function findByTrackingCode(string $trackingCode): Report
@@ -95,10 +112,10 @@ class ReportService extends BaseStudentService
             ->firstOrFail();
     }
 
-    public function getUserReports(int $studentId, array $filters = []): array
+    public function getUserReports(string $studentIdentifier, array $filters = []): array
     {
         $query = $this->report->with(['unit'])
-            ->where('student_id', $studentId);
+            ->where('student_identifier', $studentIdentifier);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
