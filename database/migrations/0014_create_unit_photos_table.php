@@ -16,7 +16,7 @@ return new class extends Migration {
 
             $table->foreignId('uploaded_by_admin_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('admins')
                 ->nullOnDelete();
 
             $table->string('original_path');

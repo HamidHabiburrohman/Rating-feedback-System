@@ -13,7 +13,6 @@
 
 <title>@yield('title', 'Itenas Unit - Admin Panel')</title>
 
-
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="{{ asset('assets/admin/css/styles.min.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/icons/tabler-icons/tabler-icons.css') }}">

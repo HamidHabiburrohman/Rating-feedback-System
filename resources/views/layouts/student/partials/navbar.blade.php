@@ -6,10 +6,10 @@
             <div class="hidden md:flex gap-6 font-manrope text-sm font-semibold tracking-tight">
                 <a href="{{ route('student.units.index') }}"
                     class="{{ request()->routeIs('student.units.*') ? 'text-primary font-bold border-b-2 border-primary' : 'text-slate-600 hover:text-primary hover:bg-orange-50 transition-all duration-300' }}">Units</a>
-                <a href="{{ route('student.reports.history') }}"
-                    class="{{ request()->routeIs('student.reports.history') ? 'text-primary font-bold border-b-2 border-primary' : 'text-slate-600 hover:text-primary hover:bg-orange-50 transition-all duration-300' }}">Reports</a>
-                <a href="{{ route('student.ratings.history') }}"
-                    class="{{ request()->routeIs('student.ratings.history') ? 'text-primary font-bold border-b-2 border-primary' : 'text-slate-600 hover:text-primary hover:bg-orange-50 transition-all duration-300' }}">Ratings</a>
+                <a href="{{ route('student.activities.index') }}"
+                    class="text-on-surface-variant hover:text-primary transition-colors {{ request()->routeIs('student.activities.*') ? 'text-primary font-bold border-b-2 border-primary' : '' }}">
+                    Activity
+                </a>
             </div>
         </div>
 
@@ -23,7 +23,8 @@
                     <button @click="open = !open"
                         class="flex items-center gap-2 text-slate-700 font-semibold hover:text-primary transition-colors px-3 py-2 rounded-full hover:bg-orange-50">
                         @if($photoUrl && $photoUrl !== 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=ad2b00&color=fff&size=256')
-                            <img src="{{ $photoUrl }}" alt="{{ $student->name }}" class="w-8 h-8 rounded-full object-cover border border-primary/20">
+                            <img src="{{ $photoUrl }}" alt="{{ $student->name }}"
+                                class="w-8 h-8 rounded-full object-cover border border-primary/20">
                         @else
                             <span class="material-symbols-outlined text-primary">account_circle</span>
                         @endif
@@ -40,23 +41,11 @@
                         class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
                         style="display: none;">
 
-                        <div class="px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-slate-200">
-                            <p class="text-sm font-bold text-slate-900">{{ $student->name }}</p>
-                            <p class="text-xs text-slate-600">
-                                {{ $student->student_identifier ?? 'Student' }}</p>
-                            <p class="text-xs text-slate-600 truncate">{{ $student->email }}</p>
-                        </div>
-
                         <div class="py-2">
                             <a href="{{ route('student.profile.show') }}"
                                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 transition-colors">
                                 <span class="material-symbols-outlined text-primary text-base">account_circle</span>
                                 My Profile
-                            </a>
-                            <a href="{{ route('student.profile.sessions') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 transition-colors">
-                                <span class="material-symbols-outlined text-primary text-base">devices</span>
-                                Active Sessions
                             </a>
                             <a href="{{ route('student.ratings.history') }}"
                                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 transition-colors">
@@ -70,12 +59,6 @@
                             </a>
 
                             <div class="border-t border-slate-200 my-1"></div>
-
-                            <a href="{{ route('student.profile.edit') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 transition-colors">
-                                <span class="material-symbols-outlined text-primary text-base">edit_note</span>
-                                Edit Profile
-                            </a>
 
                             <form method="POST" action="{{ route('student.auth.logout') }}" class="block">
                                 @csrf
@@ -94,7 +77,7 @@
                     Login
                 </a>
                 <a href="{{ route('student.register') }}"
-                    class="bg-gradient-to-r from-primary to-primary-container text-white px-6 py-2 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-transform">
+                    class="bg-linear-to-r from-primary to-primary-container text-white px-6 py-2 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-transform">
                     Register
                 </a>
             @endauth

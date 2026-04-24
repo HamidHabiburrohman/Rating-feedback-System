@@ -1,12 +1,11 @@
 <?php
-// app/Services/Student/ProfileService.php
 
 namespace App\Services\Student;
 
 use App\Models\Student;
 use App\Models\StudentSession;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Collection;
 
 class ProfileService extends BaseStudentService
 {
@@ -21,40 +20,24 @@ class ProfileService extends BaseStudentService
 
     public function getProfile(string $studentIdentifier): Student
     {
-        Log::info('[PROFILE SERVICE] getProfile called with student_identifier: ' . $studentIdentifier);
-
         $student = $this->student->where('student_identifier', $studentIdentifier)->first();
 
-        Log::info('[PROFILE SERVICE] where(student_identifier) result: ' . ($student ? 'found - ' . $student->name : 'NULL'));
-
         if (!$student) {
-            Log::error('[PROFILE SERVICE] Student not found for student_identifier: ' . $studentIdentifier);
             throw new \Exception('Student not found');
         }
 
-        Log::info('[PROFILE SERVICE] Student found: ' . $student->student_identifier . ' - ' . $student->name . ' (internal id: ' . $student->id . ')');
         return $student;
     }
 
     public function getStats(string $studentIdentifier): array
     {
-        Log::info('[PROFILE SERVICE] getStats called with student_identifier: ' . $studentIdentifier);
-
         $student = $this->getProfile($studentIdentifier);
 
-        Log::info('[PROFILE SERVICE] Getting ratings count...');
         $ratingsCount = $student->ratings()->count();
-        Log::info('[PROFILE SERVICE] Ratings count: ' . $ratingsCount);
-
-        Log::info('[PROFILE SERVICE] Getting reports count...');
         $reportsCount = $student->reports()->count();
-        Log::info('[PROFILE SERVICE] Reports count: ' . $reportsCount);
-
-        Log::info('[PROFILE SERVICE] Getting sessions count...');
         $sessionsCount = $student->sessions()->count();
-        Log::info('[PROFILE SERVICE] Sessions count: ' . $sessionsCount);
 
-        $stats = [
+        return [
             'total_ratings' => $ratingsCount,
             'total_reports' => $reportsCount,
             'total_sessions' => $sessionsCount,
@@ -64,16 +47,53 @@ class ProfileService extends BaseStudentService
             'average_rating' => round($student->ratings()->avg('overall_score') ?? 0, 2),
             'member_since' => $student->created_at->format('d M Y')
         ];
+    }
 
-        Log::info('[PROFILE SERVICE] Stats result: ' . json_encode($stats));
-        return $stats;
+    public function getRecentActivities(string $studentIdentifier): Collection
+    {
+        $student = $this->getProfile($studentIdentifier);
+        
+        $ratings = $student->ratings()->with('unit')->latest()->limit(10)->get()->map(function($rating) {
+            return (object)[
+                'type' => 'rating',
+                'description' => 'Memberikan rating untuk ' . ($rating->unit->name ?? 'Unit'),
+                'created_at' => $rating->created_at,
+                'unit_name' => $rating->unit->name ?? null,
+            ];
+        });
+        
+        $reports = $student->reports()->with('rating.unit')->latest()->limit(10)->get()->map(function($report) {
+            return (object)[
+                'type' => 'report',
+                'description' => 'Melaporkan masalah pada ' . ($report->rating->unit->name ?? 'Unit'),
+                'created_at' => $report->created_at,
+                'unit_name' => $report->rating->unit->name ?? null,
+            ];
+        });
+        
+        $activities = $ratings->concat($reports)->sortByDesc('created_at')->take(10);
+        
+        return $activities->values();
+    }
+
+    public function getWeeklyEngagement(string $studentIdentifier): array
+    {
+        $student = $this->getProfile($studentIdentifier);
+        
+        $weeklyData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $count = $student->ratings()
+                ->whereDate('created_at', $date)
+                ->count();
+            $weeklyData[] = $count;
+        }
+        
+        return $weeklyData;
     }
 
     public function updateProfile(string $studentIdentifier, array $data, $photo = null): Student
     {
-        Log::info('[PROFILE SERVICE] updateProfile called for student_identifier: ' . $studentIdentifier);
-        Log::info('[PROFILE SERVICE] Data to update: ' . json_encode($data));
-
         $student = $this->getProfile($studentIdentifier);
 
         $allowedFields = [
@@ -88,8 +108,6 @@ class ProfileService extends BaseStudentService
             unset($filteredData['password']);
         }
 
-        Log::info('[PROFILE SERVICE] Filtered data to update: ' . json_encode($filteredData));
-
         if ($photo && $photo->isValid()) {
             if ($student->photo && Storage::disk('public')->exists($student->photo)) {
                 Storage::disk('public')->delete($student->photo);
@@ -97,14 +115,10 @@ class ProfileService extends BaseStudentService
 
             $path = $photo->store('student/profile-photos', 'public');
             $filteredData['photo'] = $path;
-            Log::info('[PROFILE SERVICE] Photo uploaded to: ' . $path);
         }
 
         if (!empty($filteredData)) {
             $student->update($filteredData);
-            Log::info('[PROFILE SERVICE] Update executed successfully');
-        } else {
-            Log::warning('[PROFILE SERVICE] No data to update');
         }
 
         return $student->fresh();
@@ -112,14 +126,9 @@ class ProfileService extends BaseStudentService
 
     public function getActiveSessions(string $studentIdentifier): array
     {
-        Log::info('[PROFILE SERVICE] getActiveSessions called for student_identifier: ' . $studentIdentifier);
-
         $student = $this->getProfile($studentIdentifier);
-        $internalId = $student->id;
 
-        Log::info('[PROFILE SERVICE] Internal student ID for sessions query: ' . $internalId);
-
-        return $this->studentSession->where('student_id', $internalId)
+        return $this->studentSession->where('student_id', $student->id)
             ->where('last_activity_at', '>=', now()->subMinutes(30))
             ->orderByDesc('last_activity_at')
             ->get()
@@ -136,12 +145,9 @@ class ProfileService extends BaseStudentService
 
     public function terminateSession(string $studentIdentifier, int $sessionId): bool
     {
-        Log::info('[PROFILE SERVICE] terminateSession called for student_identifier: ' . $studentIdentifier . ', sessionId: ' . $sessionId);
-
         $student = $this->getProfile($studentIdentifier);
-        $internalId = $student->id;
 
-        $session = $this->studentSession->where('student_id', $internalId)
+        $session = $this->studentSession->where('student_id', $student->id)
             ->where('id', $sessionId)
             ->first();
 
@@ -158,12 +164,9 @@ class ProfileService extends BaseStudentService
 
     public function terminateAllSessions(string $studentIdentifier): int
     {
-        Log::info('[PROFILE SERVICE] terminateAllSessions called for student_identifier: ' . $studentIdentifier);
-
         $student = $this->getProfile($studentIdentifier);
-        $internalId = $student->id;
 
-        return $this->studentSession->where('student_id', $internalId)
+        return $this->studentSession->where('student_id', $student->id)
             ->where('session_token', '!=', session()->getId())
             ->delete();
     }

@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\UnitType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class UnitTypeSeeder extends Seeder
 {
@@ -47,25 +46,25 @@ class UnitTypeSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Cafetaria',
-                'slug' => 'cafetaria',
+                'name' => 'Kantin',
+                'slug' => 'kantin',
                 'icon_key' => 'coffee',
                 'description' => 'Tempat makan dan berkumpul',
                 'is_active' => true,
             ],
             [
-                'name' => 'Sports Center',
-                'slug' => 'sports-center',
+                'name' => 'Olahraga',
+                'slug' => 'olahraga',
                 'icon_key' => 'dumbbell',
                 'description' => 'Fasilitas olahraga dan kebugaran',
                 'is_active' => true,
             ],
             [
-                'name' => 'Student Lounge',
-                'slug' => 'student-lounge',
-                'icon_key' => 'sofa',
-                'description' => 'Ruang santai mahasiswa',
-                'is_active' => false,
+                'name' => 'Layanan',
+                'slug' => 'layanan',
+                'icon_key' => 'building',
+                'description' => 'Fasilitas layanan umum kampus',
+                'is_active' => true,
             ],
         ];
 

@@ -36,7 +36,7 @@ class UnitPhoto extends Model
 
     public function uploadedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'uploaded_by_admin_id');
+        return $this->belongsTo(Admin::class, 'uploaded_by_admin_id');
     }
 
     public function getThumbnailUrlAttribute(): ?string

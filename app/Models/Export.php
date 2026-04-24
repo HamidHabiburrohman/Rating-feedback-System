@@ -10,7 +10,7 @@ class Export extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'admin_id',
         'export_type',
         'format',
         'file_name',
@@ -28,9 +28,9 @@ class Export extends Model
         'updated_at' => 'datetime'
     ];
 
-    public function user()
+    public function admin()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
     public function getFileSizeFormattedAttribute()

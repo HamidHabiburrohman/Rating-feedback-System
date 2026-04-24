@@ -1,10 +1,10 @@
-<script src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
-<script src="{{ asset('assets/admin/js/app.min.js') }}"></script>
-<script src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
-<script src="{{ asset('assets/components/components.js') }}"></script>
+<script defer src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
+<script defer src="{{ asset('assets/admin/js/app.min.js') }}"></script>
+<script defer src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
+<script defer src="{{ asset('assets/components/components.js') }}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-
+{{-- Inline JS ini harus tetep jalan, gak perlu diubah --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const elements = [

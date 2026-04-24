@@ -27,7 +27,7 @@ class ReportController extends Controller
 
         if (!$this->service->canReport($rating)) {
             return redirect()->route('student.ratings.show', $rating->tracking_code)
-                ->with('error', 'Tidak dapat melaporkan rating ini');
+                ->with('error', $this->service->getReportStatusMessage($rating));
         }
 
         return view('student.reports.create', compact('rating'));
@@ -37,7 +37,6 @@ class ReportController extends Controller
     {
         try {
             $studentIdentifier = auth('student')->user()->student_identifier;
-
             $data = $request->validated();
 
             $priorityMap = [
@@ -70,7 +69,8 @@ class ReportController extends Controller
 
             return view('student.reports.show', compact('report'));
         } catch (\Exception $e) {
-            return redirect()->route('student.reports.history')->with('error', 'Laporan tidak ditemukan');
+            return redirect()->route('student.reports.history')
+                ->with('error', 'Laporan tidak ditemukan');
         }
     }
 
@@ -78,9 +78,12 @@ class ReportController extends Controller
     {
         $studentIdentifier = auth('student')->user()->student_identifier;
 
-        return view('student.reports.history', [
-            'reports' => $this->service->getUserReports($studentIdentifier, $request->only(['status', 'search']))
-        ]);
+        $reports = $this->service->getUserReports(
+            $studentIdentifier,
+            $request->only(['status', 'search', 'per_page'])
+        );
+
+        return view('student.reports.history', compact('reports'));
     }
 
     public function checkCanReport(Rating $rating)
@@ -92,7 +95,10 @@ class ReportController extends Controller
                 'message' => $this->service->getReportStatusMessage($rating)
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal memeriksa status laporan'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa status laporan'
+            ], 500);
         }
     }
 }

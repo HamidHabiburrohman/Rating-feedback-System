@@ -108,4 +108,34 @@
         font-variation-settings: 'FILL' 1;
         color: #ad2b00;
     }
+
+    @keyframes heartbeat {
+        0% {
+            transform: scale(1);
+        }
+
+        25% {
+            transform: scale(1.3);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        75% {
+            transform: scale(1.2);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .animate-heartbeat {
+        animation: heartbeat 0.6s ease-in-out;
+    }
+
+    .material-symbols-outlined {
+        transition: all 0.2s ease;
+    }
 </style>

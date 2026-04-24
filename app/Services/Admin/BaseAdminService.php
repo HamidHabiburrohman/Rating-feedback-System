@@ -14,9 +14,10 @@ abstract class BaseAdminService extends BaseService
     {
         parent::__construct();
     }
+
     protected function getAdminId(): ?int
     {
-        return Auth::id();
+        return Auth::guard('admin')->id();
     }
 
     protected function logAdminAction(string $action, $target, ?string $reason = null, array $metadata = []): void
@@ -48,9 +49,6 @@ abstract class BaseAdminService extends BaseService
         ], $customOptions);
     }
 
-    /**
-     * Override delete method with better error handling
-     */
     public function delete(int $id): bool
     {
         try {
@@ -64,7 +62,6 @@ abstract class BaseAdminService extends BaseService
                 return false;
             }
             
-            // Perform delete
             $result = $model->delete();
             
             if ($result) {

@@ -1,32 +1,29 @@
 @php
-    $user = Auth::guard('web')->user();
-    $userName = $user?->name ?? $user?->nama ?? 'Admin';
-    $userPhoto = $user?->profile_photo_path ?? null;
-    $userRole = $user?->role ?? 'admin';
+    $admin = Auth::guard('admin')->user();
+    $adminName = $admin?->nama ?? 'Admin';
+    $adminPhoto = $admin?->photo ?? null;
+    $adminRole = $admin?->role ?? 'admin';
+    $adminPhotoUrl = $admin?->photo_url ?? null;
+    $adminInitials = $admin?->initials ?? 'AD';
 @endphp
 
 <nav class="navbar navbar-expand w-100">
-    <!-- Left side - breadcrumb atau judul halaman -->
     <div class="d-flex align-items-center">
-        <!-- Sidebar toggle button untuk mobile -->
         <button class="btn btn-link d-xl-none p-0 me-3" type="button" id="sidebarToggle">
             <i class="ti ti-menu-2" style="font-size: 1.5rem; color: #64748b;"></i>
         </button>
-        
-        <!-- Breadcrumb bisa ditambahkan di sini nanti -->
     </div>
 
-    <!-- Right side - user menu -->
     <ul class="navbar-nav ms-auto">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" 
                id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <div class="avatar-wrapper">
-                    @if($userPhoto)
-                        <img src="{{ asset('storage/' . $userPhoto) }}" alt="{{ $userName }}" class="rounded-circle">
+                    @if($adminPhotoUrl)
+                        <img src="{{ $adminPhotoUrl }}" alt="{{ $adminName }}" class="rounded-circle">
                     @else
                         <div class="avatar-fallback">
-                            <i class="ti ti-user"></i>
+                            <span class="fw-bold" style="font-size: 0.875rem;">{{ $adminInitials }}</span>
                         </div>
                     @endif
                 </div>
@@ -34,30 +31,38 @@
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <!-- Profile Header -->
                 <li>
                     <div class="dropdown-header d-flex align-items-center gap-3 py-3">
                         <div class="avatar-wrapper-lg">
-                            @if($userPhoto)
-                                <img src="{{ asset('storage/' . $userPhoto) }}" alt="{{ $userName }}" class="rounded">
+                            @if($adminPhotoUrl)
+                                <img src="{{ $adminPhotoUrl }}" alt="{{ $adminName }}" class="rounded">
                             @else
                                 <div class="avatar-fallback-lg">
-                                    <i class="ti ti-user"></i>
+                                    <span class="fw-bold" style="font-size: 1.25rem;">{{ $adminInitials }}</span>
                                 </div>
                             @endif
                         </div>
                         <div>
-                            <h6 class="mb-0 fw-semibold">{{ $userName }}</h6>
-                            <small class="text-muted text-uppercase">{{ $userRole }}</small>
+                            <h6 class="mb-0 fw-semibold">{{ $adminName }}</h6>
+                            <small class="text-muted text-uppercase">
+                                @if($adminRole === 'super_admin')
+                                    Super Admin
+                                @elseif($adminRole === 'admin')
+                                    Administrator
+                                @elseif($adminRole === 'unit')
+                                    Unit Admin
+                                @else
+                                    {{ ucfirst($adminRole) }}
+                                @endif
+                            </small>
                         </div>
                     </div>
                 </li>
                 
                 <li><hr class="dropdown-divider"></li>
                 
-                <!-- Menu Items -->
                 <li>
-                    <a class="dropdown-item" href="#">
+                    <a class="dropdown-item" href="{{ route('admin.profile.show') }}">
                         <i class="ti ti-user me-2"></i> My Profile
                     </a>
                 </li>
@@ -74,9 +79,8 @@
                 
                 <li><hr class="dropdown-divider"></li>
                 
-                <!-- Logout -->
                 <li>
-                    <form method="POST" action="{{ route('logout') }}" id="logout-form" class="d-none">
+                    <form method="POST" action="{{ route('admin.logout') }}" id="logout-form" class="d-none">
                         @csrf
                     </form>
                     <button type="button" class="dropdown-item text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -89,12 +93,11 @@
 </nav>
 
 <style>
-/* Hanya styling minimal yang diperlukan, sisanya pakai dari header.scss */
 .avatar-wrapper {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #f8fafc;
+    background: linear-gradient(135deg, #f8773c, #e5652a);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -114,23 +117,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
-}
-
-.avatar-fallback i {
-    font-size: 1.2rem;
+    color: white;
 }
 
 .avatar-wrapper-lg {
     width: 48px;
     height: 48px;
     border-radius: 8px;
-    background: #f8fafc;
+    background: linear-gradient(135deg, #f8773c, #e5652a);
     display: flex;
     align-items: center;
     justify-content: center;
     border: 1px solid #edf2f7;
     overflow: hidden;
+}
+
+.avatar-wrapper-lg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .avatar-fallback-lg {
@@ -139,14 +144,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
-    font-size: 1.5rem;
+    color: white;
 }
 
-/* Override Bootstrap dropdown styling agar sesuai dengan tema */
 .navbar .dropdown-menu {
     border: 1px solid #edf2f7 !important;
-    box-shadow: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
     border-radius: 12px !important;
     padding: 8px !important;
     margin-top: 8px !important;
@@ -163,7 +166,7 @@
 
 .navbar .dropdown-item:hover {
     background: #f8fafc;
-    color: #2563eb;
+    color: #f8773c;
 }
 
 .navbar .dropdown-item i {
@@ -172,11 +175,12 @@
 }
 
 .navbar .dropdown-item:hover i {
-    color: #2563eb;
+    color: #f8773c;
 }
 
 .navbar .dropdown-item.text-danger:hover {
     background: #fef2f2 !important;
+    color: #dc2626 !important;
 }
 
 .navbar .dropdown-item.text-danger:hover i {
@@ -193,7 +197,6 @@
     border-top-color: #edf2f7;
 }
 
-/* Styling untuk toggle button */
 .navbar {
     display: flex;
     align-items: center;
@@ -209,9 +212,8 @@
     transition: all 0.2s ease;
 }
 
-
 .navbar .nav-link.dropdown-toggle::after {
-    display: none; /* Hide default Bootstrap dropdown arrow */
+    display: none;
 }
 
 .navbar .nav-link.dropdown-toggle i.ti-chevron-down {
@@ -223,7 +225,6 @@
     transform: rotate(180deg);
 }
 
-/* Mobile toggle button */
 #sidebarToggle {
     background: transparent;
     border: none;

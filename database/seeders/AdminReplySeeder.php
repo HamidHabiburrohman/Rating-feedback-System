@@ -16,7 +16,7 @@ class AdminReplySeeder extends Seeder
             return;
         }
 
-        $ratingsWithReply = $ratings->random($ratings->count() * 0.3);
+        $ratingsWithReply = $ratings->random((int)($ratings->count() * 0.3));
 
         foreach ($ratingsWithReply as $rating) {
             $existingReply = AdminReply::where('rating_id', $rating->id)->exists();

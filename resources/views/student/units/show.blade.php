@@ -9,13 +9,13 @@
 
         if ($unit->primaryPhoto) {
             $photo = $unit->primaryPhoto;
-            $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
+            $url = $photo->thumbnail_url ?? ($photo->original_url ?? null);
             if ($url) {
                 $imageUrl = $url;
             }
         } elseif ($unit->photos->isNotEmpty()) {
             $photo = $unit->photos->first();
-            $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
+            $url = $photo->thumbnail_url ?? ($photo->original_url ?? null);
             if ($url) {
                 $imageUrl = $url;
             }
@@ -26,14 +26,20 @@
     @endphp
     <div class="pt-24 pb-20 max-w-7xl mx-auto px-8">
 
+
         <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
 
             <div class="lg:col-span-8">
-                <div class="relative overflow-hidden rounded-lg aspect-16/9 shadow-lg group">
+                <div class="relative overflow-hidden rounded-lg aspect-16/9 shadow-lg group border">
                     <img src="{{ $imageUrl }}" alt="{{ $unit->name }}" class="w-full h-full object-cover">
 
-                    @if($unit->type)
-                        <div class="absolute top-6 left-6">
+                    <a href="{{ route('student.units.index') }}"
+                        class="absolute top-6 left-6 z-10 inline-flex items-center justify-center w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 hover:scale-105 transition-all duration-200 border border-white/20">
+                        <span class="material-symbols-outlined text-xl">arrow_back</span>
+                    </a>
+
+                    @if ($unit->type)
+                        <div class="absolute top-6 right-6">
                             <span
                                 class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase">
                                 {{ $unit->type->name }}
@@ -43,32 +49,11 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-4 flex flex-col justify-center space-y-6">
+            <div class="lg:col-span-4 flex flex-col space-y-6">
 
-                <div>
-                    <h1 class="text-5xl font-extrabold text-on-surface tracking-tight mb-2">
-                        {{ $unit->name }}
-                    </h1>
-                    <p class="text-on-surface-variant text-lg">
-                        {{ $unit->department->name ?? 'Itenas' }}
-                    </p>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <div class="flex text-primary">
-                        @for($i = 0; $i < $avgRounded; $i++)
-                            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">star</span>
-                        @endfor
-                        @for($i = 0; $i < $emptyStars; $i++)
-                            <span class="material-symbols-outlined">star</span>
-                        @endfor
-                    </div>
-                    <span class="font-bold text-xl">{{ number_format($unit->avg_rating ?? 0, 1) }}</span>
-                    <span class="text-on-surface-variant text-sm">({{ $unit->total_ratings ?? 0 }} Reviews)</span>
-                </div>
-
-                <div class="relative flex items-start gap-2" x-data="{ open: false }">
-                    <div class="relative">
+                {{-- Dropdown Action di Top Right --}}
+                <div class="flex justify-end">
+                    <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" @click.outside="open = false"
                             class="p-3 rounded-full hover:bg-surface-container-high transition-colors flex items-center justify-center text-on-surface-variant">
                             <span class="material-symbols-outlined">more_vert</span>
@@ -79,7 +64,7 @@
                             x-transition:leave="transition ease-in duration-100"
                             x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                             x-cloak
-                            class="absolute left-0 mt-2 w-48 bg-white rounded-[1rem] shadow-lg border border-outline-variant/10 py-2 z-20 overflow-hidden origin-top-left">
+                            class="absolute right-0 mt-2 w-48 bg-white rounded-[1rem] shadow-lg border border-outline-variant/10 py-2 z-20 overflow-hidden origin-top-right">
 
                             <button
                                 class="w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-surface-container-low transition-colors text-sm font-medium">
@@ -88,7 +73,7 @@
                             </button>
 
                             @auth('student')
-                                @if($userRating && $canReport)
+                                @if ($userRating && $canReport)
                                     <a href="{{ route('student.reports.create', $userRating->id) }}"
                                         class="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
                                         <span class="material-symbols-outlined text-[20px]">flag</span>
@@ -109,18 +94,43 @@
                                 </a>
                             @endauth
 
-                            <button onclick="navigator.clipboard.writeText(window.location.href).then(() => {
-                                            const btn = this;
-                                            const span = btn.querySelector('span:last-child');
-                                            span.textContent = 'Copied!';
-                                            setTimeout(() => span.textContent = 'Share', 1500);
-                                        })"
+                            <button
+                                onclick="navigator.clipboard.writeText(window.location.href).then(() => {
+                                    const btn = this;
+                                    const span = btn.querySelector('span:last-child');
+                                    span.textContent = 'Copied!';
+                                    setTimeout(() => span.textContent = 'Share', 1500);
+                                })"
                                 class="w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-surface-container-low transition-colors text-sm font-medium">
                                 <span class="material-symbols-outlined text-[20px]">share</span>
                                 <span>Share</span>
                             </button>
                         </div>
                     </div>
+                </div>
+
+                {{-- Judul dan Info --}}
+                <div>
+                    <h1 class="text-5xl font-extrabold text-on-surface tracking-tight mb-2">
+                        {{ $unit->name }}
+                    </h1>
+                    <p class="text-on-surface-variant text-lg">
+                        {{ $unit->department->name ?? 'Itenas' }}
+                    </p>
+                </div>
+
+                {{-- Rating Stars --}}
+                <div class="flex items-center space-x-2">
+                    <div class="flex text-primary">
+                        @for ($i = 0; $i < $avgRounded; $i++)
+                            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">star</span>
+                        @endfor
+                        @for ($i = 0; $i < $emptyStars; $i++)
+                            <span class="material-symbols-outlined">star</span>
+                        @endfor
+                    </div>
+                    <span class="font-bold text-xl">{{ number_format($unit->avg_rating ?? 0, 1) }}</span>
+                    <span class="text-on-surface-variant text-sm">({{ $unit->total_ratings ?? 0 }} Reviews)</span>
                 </div>
 
             </div>
@@ -138,7 +148,7 @@
             <button data-tab="reviews"
                 class="tab-button pb-4 text-lg transition-all -mb-[2px] text-on-surface-variant hover:text-on-surface font-medium">
                 Reviews
-                @if(($unit->total_ratings ?? 0) > 0)
+                @if (($unit->total_ratings ?? 0) > 0)
                     <span class="ml-2 text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                         {{ $unit->total_ratings }}
                     </span>
@@ -147,7 +157,7 @@
         </nav>
 
         <div id="tab-about" class="tab-content">
-            @include('student.units.partials.about', ['unit' => $unit])
+            @include('student.units.partials.about', ['unit' => $unit, 'stats' => $stats])
         </div>
 
         <div id="tab-gallery" class="tab-content hidden">
@@ -155,14 +165,14 @@
         </div>
 
         <div id="tab-reviews" class="tab-content hidden">
-            @include('student.units.partials.reviews-tab', ['unit' => $unit])
+            @include('student.units.partials.reviews-tab', ['unit' => $unit, 'stats' => $stats])
         </div>
 
     </div>
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 const tabs = document.querySelectorAll('.tab-button');
                 const contents = {
                     about: document.getElementById('tab-about'),
@@ -187,12 +197,12 @@
                 }
 
                 tabs.forEach(btn => {
-                    btn.addEventListener('click', function () {
+                    btn.addEventListener('click', function() {
                         activateTab(this.getAttribute('data-tab'));
                     });
                 });
 
-                window.addEventListener('switch-tab', function (e) {
+                window.addEventListener('switch-tab', function(e) {
                     if (e.detail?.tab) activateTab(e.detail.tab);
                 });
             });

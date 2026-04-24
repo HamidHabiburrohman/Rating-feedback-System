@@ -2,7 +2,17 @@
   <div class="sidebar-container">
     <div class="brand-logo d-flex align-items-center justify-content-between">
       <a href="{{ route('admin.dashboard.index') }}" class="text-nowrap logo-img">
-        <img src="{{ asset('assets/images/logos/logo1.svg')}}" alt="Unit Rating Feedback" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="188" height="50" fill="none" xmlns:v="https://vecta.io/nano">
+          <path
+            d="M19 8.711L1.615 18.165a1 1 0 0 0 0 1.757l16.907 9.195a1 1 0 0 0 .956 0l13.59-7.392a1 1 0 0 1 1.478.878v9.218a1 1 0 0 0 1 1H37a1 1 0 0 0 1-1V19.044"
+            fill="#2f2d2d" />
+          <path
+            d="M8.387 28.626a1 1 0 0 0-1.478.878v4.612a1 1 0 0 0 .522.878l11.091 6.035a1 1 0 0 0 .956 0l11.091-6.035a1 1 0 0 0 .522-.878v-4.612a1 1 0 0 0-1.478-.878l-10.135 5.515a1 1 0 0 1-.956 0L8.387 28.626z"
+            fill="#ff590d" />
+          <path
+            d="M57.848 35V17.12h2.832V35h-2.832zm11.891.144c-1.36 0-2.416-.384-3.168-1.152s-1.128-1.848-1.128-3.24v-6.288h-2.28v-2.448h.36c.608 0 1.08-.176 1.416-.528s.504-.832.504-1.44V19.04h2.712v2.976h2.952v2.448h-2.952v6.168c0 .448.072.832.216 1.152a1.59 1.59 0 0 0 .696.72c.32.16.736.24 1.248.24.128 0 .272-.008.432-.024l.456-.048V35l-.744.096a6.25 6.25 0 0 1-.72.048zm9.972.144c-1.296 0-2.448-.296-3.456-.888-.992-.608-1.768-1.424-2.328-2.448-.56-1.04-.84-2.2-.84-3.48 0-1.312.28-2.472.84-3.48.576-1.008 1.344-1.8 2.304-2.376.96-.592 2.048-.888 3.264-.888.976 0 1.848.168 2.616.504s1.416.8 1.944 1.392a5.87 5.87 0 0 1 1.2 1.992 6.65 6.65 0 0 1 .432 2.4l-.024.648c-.016.224-.048.432-.096.624H75.223v-2.16h8.808l-1.296.984c.16-.784.104-1.48-.168-2.088-.256-.624-.656-1.112-1.2-1.464-.528-.368-1.152-.552-1.872-.552s-1.36.184-1.92.552c-.56.352-.992.864-1.296 1.536-.304.656-.424 1.456-.36 2.4-.08.88.04 1.648.36 2.304a3.81 3.81 0 0 0 1.392 1.536c.608.368 1.296.552 2.064.552.784 0 1.448-.176 1.992-.528.56-.352 1-.808 1.32-1.368l2.208 1.08c-.256.608-.656 1.16-1.2 1.656-.528.48-1.168.864-1.92 1.152-.736.272-1.544.408-2.424.408zM88.334 35V22.016h2.592v2.544l-.312-.336c.32-.816.832-1.432 1.536-1.848.704-.432 1.52-.648 2.448-.648.96 0 1.808.208 2.544.624s1.312.992 1.728 1.728.624 1.584.624 2.544V35h-2.688v-7.656c0-.656-.12-1.208-.36-1.656-.24-.464-.584-.816-1.032-1.056-.432-.256-.928-.384-1.488-.384s-1.064.128-1.512.384c-.432.24-.768.592-1.008 1.056s-.36 1.016-.36 1.656V35h-2.712zm17.951.288c-.88 0-1.656-.152-2.328-.456-.656-.32-1.168-.752-1.536-1.296-.368-.56-.552-1.216-.552-1.968 0-.704.152-1.336.456-1.896.32-.56.808-1.032 1.464-1.416s1.48-.656 2.472-.816l4.512-.744v2.136l-3.984.696c-.72.128-1.248.36-1.584.696-.336.32-.504.736-.504 1.248a1.55 1.55 0 0 0 .552 1.224c.384.304.872.456 1.464.456.736 0 1.376-.16 1.92-.48.56-.32.992-.744 1.296-1.272.304-.544.456-1.144.456-1.8v-3.336c0-.64-.24-1.16-.72-1.56-.464-.416-1.088-.624-1.872-.624-.72 0-1.352.192-1.896.576-.528.368-.92.848-1.176 1.44l-2.256-1.128c.24-.64.632-1.2 1.176-1.68.544-.496 1.176-.88 1.896-1.152a6.66 6.66 0 0 1 2.327-.408c1.025 0 1.929.192 2.713.576.8.384 1.416.92 1.848 1.608.448.672.672 1.456.672 2.352V35h-2.592v-2.352l.552.072c-.304.528-.696.984-1.176 1.368a5.07 5.07 0 0 1-1.608.888c-.592.208-1.256.312-1.992.312zm14.787 0c-1.328 0-2.496-.328-3.504-.984-.992-.656-1.688-1.536-2.089-2.64l2.089-.984c.352.736.832 1.32 1.44 1.752.624.432 1.312.648 2.064.648.64 0 1.16-.144 1.56-.432a1.37 1.37 0 0 0 .6-1.176c0-.32-.088-.576-.264-.768-.176-.208-.4-.376-.672-.504a3.62 3.62 0 0 0-.792-.288l-2.04-.576c-1.12-.32-1.96-.8-2.52-1.44-.544-.656-.816-1.416-.816-2.28 0-.784.2-1.464.6-2.04.4-.592.952-1.048 1.656-1.368s1.496-.48 2.376-.48c1.184 0 2.24.296 3.168.888a4.68 4.68 0 0 1 1.968 2.424l-2.088.984c-.256-.624-.664-1.12-1.224-1.488-.544-.368-1.16-.552-1.848-.552-.592 0-1.064.144-1.416.432-.352.272-.528.632-.528 1.08 0 .304.08.56.24.768a1.91 1.91 0 0 0 .624.48c.256.112.52.208.792.288l2.112.624c1.072.304 1.896.784 2.472 1.44.576.64.864 1.408.864 2.304 0 .768-.208 1.448-.624 2.04-.4.576-.96 1.032-1.68 1.368-.72.32-1.56.48-2.52.48zm18.636 0c-1.328 0-2.512-.28-3.552-.84-1.024-.56-1.832-1.328-2.424-2.304-.576-.976-.864-2.088-.864-3.336V17.12h2.832v11.568c0 .784.168 1.48.504 2.088a3.76 3.76 0 0 0 1.416 1.416c.608.336 1.304.504 2.088.504.8 0 1.496-.168 2.088-.504.608-.336 1.08-.808 1.416-1.416.352-.608.528-1.304.528-2.088V17.12h2.808v11.688c0 1.248-.288 2.36-.864 3.336s-1.384 1.744-2.424 2.304c-1.024.56-2.208.84-3.552.84zM149.834 35V22.016h2.592v2.544l-.312-.336c.32-.816.832-1.432 1.536-1.848.704-.432 1.52-.648 2.448-.648.96 0 1.808.208 2.544.624s1.312.992 1.728 1.728.624 1.584.624 2.544V35h-2.688v-7.656c0-.656-.12-1.208-.36-1.656-.24-.464-.584-.816-1.032-1.056-.432-.256-.928-.384-1.488-.384s-1.064.128-1.512.384c-.432.24-.768.592-1.008 1.056s-.36 1.016-.36 1.656V35h-2.712zm14.062 0V22.016h2.713V35h-2.713zm0-14.76v-3.12h2.713v3.12h-2.713zm11.499 14.904c-1.36 0-2.416-.384-3.168-1.152s-1.128-1.848-1.128-3.24v-6.288h-2.28v-2.448h.36c.608 0 1.08-.176 1.416-.528s.504-.832.504-1.44V19.04h2.712v2.976h2.952v2.448h-2.952v6.168c0 .448.072.832.216 1.152a1.59 1.59 0 0 0 .696.72c.32.16.736.24 1.248.24.128 0 .272-.008.432-.024l.456-.048V35l-.744.096a6.25 6.25 0 0 1-.72.048z"
+            fill="#1b1b1b" />
+        </svg>
       </a>
       <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarClose">
         <i class="ti ti-x fs-8"></i>
@@ -252,197 +262,3 @@
     </nav>
   </div>
 </aside>
-
-<style>
-  .left-sidebar {
-    background: white;
-    border-right: 1px solid #edf2f7;
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    width: 280px;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  .sidebar-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .brand-logo {
-    padding: 20px 24px;
-    border-bottom: 1px solid #edf2f7;
-    flex-shrink: 0;
-  }
-
-  .sidebar-nav {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    min-height: 0;
-    padding: 1rem 0.75rem !important;
-  }
-
-  .sidebar-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #d1d5db #f9fafb;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-track {
-    background: #f9fafb;
-    border-radius: 10px;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-thumb:active {
-    background: #6b7280;
-  }
-
-  .settings-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    padding-bottom: 2rem;
-  }
-
-  .settings-nav-item {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    color: #4b5563;
-    text-decoration: none;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    position: relative;
-    margin: 2px 0;
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: 450;
-    font-size: 0.9rem;
-  }
-
-  .settings-nav-item:hover {
-    background: #fef6f0;
-    color: #f8773c;
-  }
-
-  .settings-nav-item:hover svg,
-  .settings-nav-item:hover i {
-    color: #f8773c;
-    stroke: #f8773c;
-  }
-
-  .settings-nav-active {
-    background: linear-gradient(135deg, #fff4ed, #fff);
-    color: #f8773c !important;
-    font-weight: 600;
-    box-shadow: inset 0 0 0 1px rgba(248, 119, 60, 0.1);
-  }
-
-  .settings-nav-active svg,
-  .settings-nav-active i,
-  .settings-nav-active span {
-    color: #f8773c !important;
-    stroke: #f8773c !important;
-  }
-
-  .settings-nav-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-
-  .settings-nav-icon svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .settings-nav-label {
-    flex: 1;
-    font-size: 0.9rem;
-    font-weight: 450;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  .settings-nav-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 8px;
-    color: #f8773c;
-    font-size: 1rem;
-    opacity: 1;
-  }
-
-  .settings-nav-arrow i {
-    font-size: 1.1rem;
-    stroke-width: 1.8;
-  }
-
-  .nav-small-cap {
-    color: #9ca3af;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 14px 16px 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  .nav-small-cap span {
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: 600;
-    font-size: 0.75rem;
-  }
-
-  .nav-small-cap-icon {
-    font-size: 1rem;
-    color: #9ca3af;
-  }
-
-  @media (max-width: 1199.98px) {
-    .left-sidebar {
-      position: fixed;
-      left: -280px;
-      transition: left 0.2s ease;
-      z-index: 1050;
-      width: 280px;
-      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-    }
-
-    .left-sidebar.show {
-      left: 0;
-    }
-
-    .brand-logo {
-      padding: 16px 20px;
-    }
-  }
-</style>

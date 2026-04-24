@@ -2,320 +2,21 @@
 
 @section('title', 'Dashboard')
 
-@push('admin-scripts')
-    <script src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/apexcharts/dist/apexcharts.min.js') }}"></script>
-    <script src="{{ asset('assets/admin/js/dashboard.js') }}"></script>
-@endpush
-
-@section('admin-content')
-    <div class="dashboard-container" data-dashboard-overview="{{ route('admin.dashboard.overview') }}"
-        data-dashboard-stats="{{ route('admin.dashboard.stats') }}"
-        data-dashboard-charts="{{ route('admin.dashboard.charts') }}"
-        data-audit-logs="{{ route('admin.dashboard.audit-logs') }}"
-        data-recent-rated="{{ route('admin.dashboard.recent-rated') }}"
-        data-top-units="{{ route('admin.dashboard.top-units', ['type' => 'all']) }}">
-
-
-        <!-- KPI Stats Row - Enhanced Visual Hierarchy -->
-        <div class="kpi-section">
-            <div class="kpi-card ">
-                <div class="kpi-icon accent">
-                    <i class="ti ti-users"></i>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Today Visitors</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value" id="visitors-today">0</span>
-                        <span class="kpi-trend up">
-                            <i class="ti ti-trending-up"></i> +12%
-                        </span>
-                    </div>
-                    <span class="kpi-comparison">vs yesterday</span>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon accent">
-                    <i class="ti ti-star"></i>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Today Ratings</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value" id="ratings-today">0</span>
-                        <span class="kpi-trend up">
-                            <i class="ti ti-trending-up"></i> +8%
-                        </span>
-                    </div>
-                    <span class="kpi-comparison">vs yesterday</span>
-                </div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-icon accent">
-                    <i class="ti ti-chart-bar"></i>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Weekly Visitors</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value" id="visitors-week">0</span>
-                        <span class="kpi-trend down">
-                            <i class="ti ti-trending-down"></i> -3%
-                        </span>
-                    </div>
-                    <span class="kpi-comparison">vs last week</span>
-                </div>
-            </div>
-
-            <div class="kpi-card highlight">
-                <div class="kpi-icon solid">
-                    <i class="ti ti-building"></i>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Active Units</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value" id="active-units">0</span>
-                        <span class="kpi-trend up">
-                            <i class="ti ti-trending-up"></i> +5%
-                        </span>
-                    </div>
-                    <span class="kpi-comparison">vs last month</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Alert Banner (Conditional) -->
-        <div class="alert-banner warning" id="alert-banner" style="display: none;">
-            <div class="alert-icon">
-                <i class="ti ti-alert-circle"></i>
-            </div>
-            <div class="alert-content">
-                <strong>Attention Needed:</strong> 3 units have rating below 2.5.
-                <a href="#" class="alert-link">Review now →</a>
-            </div>
-            <button class="alert-close" onclick="this.parentElement.style.display='none'">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-
-        <!-- Charts Section - Row 2 -->
-        <div class="analytics-section">
-            <div class="chart-container main-chart">
-                <div class="chart-header">
-                    <div>
-                        <h3 class="chart-title">Monthly Unit Growth</h3>
-                        <p class="chart-subtitle">Total units: <span id="total-units-display"
-                                class="highlight-text">0</span></p>
-                    </div>
-                    <div class="chart-legend">
-                        <span class="legend-item">
-                            <span class="legend-dot primary"></span> New Units
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot secondary"></span> Cumulative
-                        </span>
-                    </div>
-                </div>
-                <div id="chart-units-monthly"></div>
-            </div>
-
-            <div class="chart-container">
-                <div class="chart-header">
-                    <div>
-                        <h3 class="chart-title">Visitor Trends</h3>
-                        <p class="chart-subtitle">Peak: <span id="peak-visitors" class="highlight-text">0</span></p>
-                    </div>
-                </div>
-                <div id="chart-visitors"></div>
-            </div>
-        </div>
-
-        <!-- Data Table Section - Row 4 -->
-        <div class="table-section">
-            <div class="table-header-enhanced">
-                <div class="table-header-left">
-                    <h3 class="table-title">Top Rated Units</h3>
-                    <span class="table-subtitle">Manage and monitor unit performance</span>
-                </div>
-                <div class="table-controls">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-filter="all">All Units</button>
-                        <button class="filter-tab" data-filter="popularity">Most Popular</button>
-                        <button class="filter-tab" data-filter="quality">Top Rated</button>
-                        <button class="filter-tab" data-filter="attention">Needs Attention</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="data-table-enhanced">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="name">
-                                Unit <i class="ti ti-arrows-sort"></i>
-                            </th>
-                            <th class="sortable" data-sort="category">
-                                Category <i class="ti ti-arrows-sort"></i>
-                            </th>
-                            <th class="sortable" data-sort="rating">
-                                Rating <i class="ti ti-arrows-sort"></i>
-                            </th>
-                            <th class="sortable" data-sort="reviews">
-                                Reviews <i class="ti ti-arrows-sort"></i>
-                            </th>
-                            <th>Status</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="units-table-body">
-                        <tr>
-                            <td colspan="6" class="py-5">
-                                <div class="loading-state">
-                                    <div class="spinner-border text-orange" role="status"></div>
-                                    <p>Loading units...</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="table-footer">
-                <span class="showing-text">Showing <span id="showing-count">0</span> of <span id="total-count">0</span>
-                    units</span>
-                <div class="pagination" id="pagination-container">
-                </div>
-            </div>
-        </div>
-
-        {{-- <div class="monitoring-section mt-5">
-            <div class="activity-panel">
-                <div class="panel-header">
-                    <h3 class="panel-title">Recent Activity</h3>
-                    <span class="badge-live">Live</span>
-                </div>
-                <div class="activity-list" id="audit-log-list">
-                    <div class="activity-item skeleton">
-                        <div class="activity-avatar skeleton-circle"></div>
-                        <div class="activity-details">
-                            <div class="skeleton-line w-75"></div>
-                            <div class="skeleton-line w-50"></div>
-                        </div>
-                    </div>
-                </div>
-                <a href="" class="view-all-link">
-                    View all activity <i class="ti ti-arrow-right"></i>
-                </a>
-            </div>
-
-            <div class="activity-panel">
-                <div class="panel-header">
-                    <h3 class="panel-title">Recently Rated</h3>
-                    <span class="badge-count" id="new-ratings-count">0 new</span>
-                </div>
-                <div class="rated-list" id="recent-rated-list">
-                    <div class="rated-item skeleton">
-                        <div class="rated-icon skeleton-circle"></div>
-                        <div class="rated-details">
-                            <div class="skeleton-line w-75"></div>
-                            <div class="skeleton-line w-50"></div>
-                        </div>
-                    </div>
-                </div>
-                <a href="{{ route('admin.ratings.index') }}" class="view-all-link">
-                    View all ratings <i class="ti ti-arrow-right"></i>
-                </a>
-            </div>
-        </div> --}}
-
-    </div>
-
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                console.log('DOM Content Loaded');
-
-                const container = document.querySelector('.dashboard-container');
-                if (!container) {
-                    console.error('Dashboard container not found');
-                    return;
-                }
-
-                const routes = {
-                    overview: container.dataset.dashboardOverview,
-                    stats: container.dataset.dashboardStats,
-                    charts: container.dataset.dashboardCharts,
-                    auditLogs: container.dataset.auditLogs,
-                    recentRated: container.dataset.recentRated,
-                    topUnits: container.dataset.topUnits
-                };
-
-                console.log('Routes from DOM:', routes);
-
-                document.querySelectorAll('.time-filter').forEach(btn => {
-                    btn.addEventListener('click', function () {
-                        document.querySelectorAll('.time-filter').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-
-                        if (typeof window.loadDashboardData === 'function') {
-                            window.loadDashboardData(routes);
-                        }
-                    });
-                });
-
-                const searchInput = document.getElementById('table-search');
-                if (searchInput) {
-                    searchInput.addEventListener('input', debounce(function () {
-                        console.log('Searching:', this.value);
-                    }, 300));
-                }
-
-                if (typeof window.loadDashboardData === 'function') {
-                    console.log('Calling loadDashboardData with routes:', routes);
-                    window.loadDashboardData(routes);
-                } else {
-                    console.error('loadDashboardData function not found');
-                }
-            });
-
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-        </script>
-    @endpush
-        
-    @push('styles')
-          <style>
+@push('styles')
+    <style>
         :root {
-            /* Refined Color System - 60-30-10 */
             --primary: #f8773c;
             --primary-light: #fff5f0;
             --primary-dark: #e56a2e;
             --primary-hover: #f0692d;
-
-            /* 60% - Background/Neutral */
             --bg-main: #ffffff;
             --bg-surface: #ffffff;
             --bg-elevated: #ffffff;
-
-            /* 30% - Surface/Secondary */
             --surface: #f3f4f6;
             --surface-hover: #e5e7eb;
             --border: #e5e7eb;
             --border-light: #f3f4f6;
-
-            /* 10% - Accent/Primary Usage */
             --accent: #f8773c;
-
-            /* Semantic Colors */
             --success: #10b981;
             --success-light: #d1fae5;
             --warning: #f59e0b;
@@ -324,17 +25,11 @@
             --danger-light: #fee2e2;
             --info: #3b82f6;
             --info-light: #dbeafe;
-
-            /* Text Colors */
             --text-primary: #111827;
             --text-secondary: #6b7280;
             --text-muted: #9ca3af;
             --text-inverse: #ffffff;
-
-            /* Typography */
-            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-
-            /* Spacing Scale */
+            --font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             --space-1: 4px;
             --space-2: 8px;
             --space-3: 12px;
@@ -342,21 +37,16 @@
             --space-5: 20px;
             --space-6: 24px;
             --space-8: 32px;
-
-            /* Shadows */
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
             --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-            /* Radius */
             --radius-sm: 8px;
             --radius: 12px;
             --radius-lg: 16px;
             --radius-xl: 20px;
         }
 
-        /* Base Container */
         .dashboard-container {
             background-color: var(--bg-main);
             font-family: var(--font-family);
@@ -367,7 +57,6 @@
             margin: 0 auto;
         }
 
-        /* Header Row */
         .dashboard-header-row {
             display: flex;
             justify-content: space-between;
@@ -391,7 +80,6 @@
             margin: var(--space-1) 0 0 0;
         }
 
-        /* Time Filter */
         .time-filter-group {
             display: flex;
             gap: var(--space-1);
@@ -422,7 +110,6 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* KPI Section - Enhanced Hierarchy */
         .kpi-section {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -542,7 +229,6 @@
             color: var(--text-muted);
         }
 
-        /* Alert Banner */
         .alert-banner {
             display: flex;
             align-items: center;
@@ -590,10 +276,9 @@
             opacity: 1;
         }
 
-        /* Analytics Section */
         .analytics-section {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: var(--space-5);
             margin-bottom: var(--space-6);
         }
@@ -604,14 +289,16 @@
             padding: var(--space-5);
             box-shadow: var(--shadow);
             border: 1px solid var(--border-light);
+            width: 100%;
         }
-
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: var(--space-5);
+            flex-wrap: wrap;
+            gap: var(--space-3);
         }
 
         .chart-title {
@@ -659,10 +346,22 @@
             background: var(--text-muted);
         }
 
-        /* Monitoring Section */
+        .chart-wrapper {
+            width: 100%;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .chart-wrapper canvas,
+        .chart-wrapper svg {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 350px;
+        }
+
         .monitoring-section {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: var(--space-5);
             margin-bottom: var(--space-6);
         }
@@ -730,8 +429,8 @@
             flex-direction: column;
             gap: var(--space-3);
             flex: 1;
-            max-height: 320px;
-            overflow-y: auto;
+            max-height: none;
+            overflow-y: visible;
         }
 
         .activity-item,
@@ -857,7 +556,6 @@
             background: var(--primary-light);
         }
 
-        /* Insight Panel */
         .insight-panel {
             background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
         }
@@ -912,7 +610,6 @@
             margin-bottom: 2px;
         }
 
-        /* Table Section */
         .table-section {
             background: var(--bg-surface);
             border-radius: var(--radius-lg);
@@ -1011,7 +708,6 @@
             color: var(--text-inverse);
         }
 
-        /* Enhanced Table */
         .data-table-enhanced {
             width: 100%;
             border-collapse: separate;
@@ -1190,7 +886,6 @@
             color: var(--primary);
         }
 
-        /* Table Footer */
         .table-footer {
             display: flex;
             justify-content: space-between;
@@ -1242,7 +937,6 @@
             cursor: not-allowed;
         }
 
-        /* Loading State */
         .loading-state {
             display: flex;
             flex-direction: column;
@@ -1257,7 +951,6 @@
             font-size: 14px;
         }
 
-        /* Skeleton */
         .skeleton {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -1276,235 +969,6 @@
             margin-bottom: var(--space-2);
         }
 
-        /* Monitoring Section */
-        .monitoring-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-5);
-            margin-bottom: var(--space-6);
-        }
-
-        .activity-panel {
-            background: var(--bg-surface);
-            border-radius: var(--radius-lg);
-            padding: var(--space-5);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-light);
-            display: flex;
-            flex-direction: column;
-            height: fit-content;
-            max-height: 450px;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-4);
-            padding-bottom: var(--space-3);
-            border-bottom: 1px solid var(--border-light);
-            flex-shrink: 0;
-        }
-
-        .panel-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--text-primary);
-        }
-
-        .badge-live {
-            background: var(--danger-light);
-            color: var(--danger);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .badge-live::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: var(--danger);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .badge-count {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 12px;
-        }
-
-        .activity-list,
-        .rated-list {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            flex: 1;
-            overflow-y: auto;
-            max-height: 280px;
-            padding-right: var(--space-2);
-        }
-
-        /* Custom Scrollbar */
-        .activity-list::-webkit-scrollbar,
-        .rated-list::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .activity-list::-webkit-scrollbar-track,
-        .rated-list::-webkit-scrollbar-track {
-            background: var(--surface);
-            border-radius: 4px;
-        }
-
-        .activity-list::-webkit-scrollbar-thumb,
-        .rated-list::-webkit-scrollbar-thumb {
-            background: var(--text-muted);
-            border-radius: 4px;
-        }
-
-        .activity-list::-webkit-scrollbar-thumb:hover,
-        .rated-list::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
-        }
-
-        .activity-item,
-        .rated-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-3);
-            border-radius: var(--radius);
-            transition: background 0.2s;
-            background: var(--bg-main);
-        }
-
-        .activity-item:hover,
-        .rated-item:hover {
-            background: var(--surface);
-        }
-
-        .activity-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-light);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .activity-details,
-        .rated-details {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .activity-text,
-        .rated-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: block;
-        }
-
-        .activity-meta,
-        .rated-date {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .activity-action {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 6px;
-            flex-shrink: 0;
-        }
-
-        .activity-action.create {
-            background: var(--success-light);
-            color: var(--success);
-        }
-
-        .activity-action.update {
-            background: var(--info-light);
-            color: var(--info);
-        }
-
-        .activity-action.delete {
-            background: var(--danger-light);
-            color: var(--danger);
-        }
-
-        .activity-action.login {
-            background: #f3e8ff;
-            color: #9333ea;
-        }
-
-        .rated-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .rated-rating {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--primary);
-            background: var(--primary-light);
-            padding: 4px 10px;
-            border-radius: 20px;
-            flex-shrink: 0;
-        }
-
-        .view-all-link {
-            margin-top: var(--space-4);
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            padding: var(--space-3);
-            border-radius: var(--radius);
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .view-all-link:hover {
-            background: var(--primary-light);
-        }
-
-        /* Animations */
         @keyframes pulse {
 
             0%,
@@ -1529,7 +993,6 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 1200px) {
             .kpi-section {
                 grid-template-columns: repeat(2, 1fr);
@@ -1540,11 +1003,16 @@
             }
 
             .monitoring-section {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
             }
 
-            .insight-panel {
-                grid-column: span 2;
+            .chart-wrapper {
+                min-height: 350px;
+            }
+
+            .chart-wrapper canvas,
+            .chart-wrapper svg {
+                min-height: 300px;
             }
         }
 
@@ -1572,10 +1040,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .insight-panel {
-                grid-column: span 1;
-            }
-
             .table-header-enhanced {
                 flex-direction: column;
             }
@@ -1593,7 +1057,229 @@
                 overflow-x: auto;
                 padding-bottom: var(--space-2);
             }
+
+            .chart-wrapper {
+                min-height: 300px;
+            }
+
+            .chart-wrapper canvas,
+            .chart-wrapper svg {
+                min-height: 250px;
+            }
         }
     </style>
+@endpush
+
+@push('admin-scripts')
+    <script src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
+    <script defer src="{{ asset('assets/libs/apexcharts/dist/apexcharts.min.js') }}"></script>
+    <script defer src="{{ asset('assets/admin/js/dashboard.js') }}"></script>
+@endpush
+
+@section('admin-content')
+    <div class="dashboard-container" data-dashboard-overview="{{ route('admin.dashboard.overview') }}"
+        data-dashboard-stats="{{ route('admin.dashboard.stats') }}"
+        data-dashboard-charts="{{ route('admin.dashboard.charts') }}"
+        data-audit-logs="{{ route('admin.dashboard.audit-logs') }}"
+        data-recent-rated="{{ route('admin.dashboard.recent-rated') }}"
+        data-top-units="{{ route('admin.dashboard.top-units', ['type' => 'all']) }}">
+
+        <div class="kpi-section">
+            <div class="kpi-card">
+                <div class="kpi-icon accent">
+                    <i class="ti ti-users"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Today Students</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="students-today">0</span>
+                        <span class="kpi-trend up">
+                            <i class="ti ti-trending-up"></i> +0%
+                        </span>
+                    </div>
+                    <span class="kpi-comparison">vs yesterday</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon accent">
+                    <i class="ti ti-star"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Today Ratings</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="ratings-today">0</span>
+                        <span class="kpi-trend up">
+                            <i class="ti ti-trending-up"></i> +0%
+                        </span>
+                    </div>
+                    <span class="kpi-comparison">vs yesterday</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon accent">
+                    <i class="ti ti-chart-bar"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Weekly Students</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="students-week">0</span>
+                        <span class="kpi-trend down">
+                            <i class="ti ti-trending-down"></i> -0%
+                        </span>
+                    </div>
+                    <span class="kpi-comparison">vs last week</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon accent">
+                    <i class="ti ti-building"></i>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Active Units</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="active-units">0</span>
+                        <span class="kpi-trend up">
+                            <i class="ti ti-trending-up"></i> +0%
+                        </span>
+                    </div>
+                    <span class="kpi-comparison">vs last month</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Student Login Trends</h3>
+                        <p class="chart-subtitle">Peak students: <span id="peak-students" class="highlight-text">0</span>
+                        </p>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item">
+                            <span class="legend-dot primary"></span> Daily Active Students
+                        </span>
+                    </div>
+                </div>
+                <div id="chart-students"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Monthly Unit Growth</h3>
+                        <p class="chart-subtitle">Total units: <span id="total-units-display"
+                                class="highlight-text">0</span></p>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item">
+                            <span class="legend-dot primary"></span> New Units
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-dot secondary"></span> Cumulative
+                        </span>
+                    </div>
+                </div>
+                <div id="chart-units-monthly"></div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header-enhanced">
+                <div class="table-header-left">
+                    <h3 class="table-title">Top Rated Units</h3>
+                    <span class="table-subtitle">Manage and monitor unit performance</span>
+                </div>
+                <div class="table-controls">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">All Units</button>
+                        <button class="filter-tab" data-filter="popularity">Most Popular</button>
+                        <button class="filter-tab" data-filter="quality">Top Rated</button>
+                        <button class="filter-tab" data-filter="attention">Needs Attention</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table-enhanced">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="name">
+                                Unit <i class="ti ti-arrows-sort"></i>
+                            </th>
+                            <th class="sortable" data-sort="category">
+                                Category <i class="ti ti-arrows-sort"></i>
+                            </th>
+                            <th class="sortable" data-sort="rating">
+                                Rating <i class="ti ti-arrows-sort"></i>
+                            </th>
+                            <th class="sortable" data-sort="reviews">
+                                Reviews <i class="ti ti-arrows-sort"></i>
+                            </th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="units-table-body">
+                        <tr>
+                            <td colspan="6" class="py-5">
+                                <div class="loading-state">
+                                    <div class="spinner-border text-orange" role="status"></div>
+                                    <p>Loading units...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span class="showing-text">Showing <span id="showing-count">0</span> of <span id="total-count">0</span>
+                    units</span>
+                <div class="pagination" id="pagination-container"></div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const container = document.querySelector('.dashboard-container');
+                if (!container) {
+                    console.error('Dashboard container not found');
+                    return;
+                }
+
+                const routes = {
+                    overview: container.dataset.dashboardOverview,
+                    stats: container.dataset.dashboardStats,
+                    charts: container.dataset.dashboardCharts,
+                    auditLogs: container.dataset.auditLogs,
+                    recentRated: container.dataset.recentRated,
+                    topUnits: container.dataset.topUnits
+                };
+
+                document.querySelectorAll('.time-filter').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.time-filter').forEach(b => b.classList.remove(
+                            'active'));
+                        this.classList.add('active');
+                        if (typeof window.loadDashboardData === 'function') {
+                            window.loadDashboardData(routes);
+                        }
+                    });
+                });
+
+                if (typeof window.loadDashboardData === 'function') {
+                    window.loadDashboardData(routes);
+                } else {
+                    console.error('loadDashboardData function not found');
+                }
+            });
+        </script>
     @endpush
+
 @endsection

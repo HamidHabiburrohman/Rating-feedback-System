@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Admin;
 use App\Models\ModerationLog;
 use App\Models\User;
 use App\Services\Admin\BaseAdminService;
@@ -55,7 +56,7 @@ class ModerationLogService extends BaseAdminService
         return [
             'actions' => $this->model->distinct()->pluck('action')->filter()->values(),
             'target_types' => $this->model->distinct()->pluck('target_type')->filter()->values(),
-            'admins' => User::whereIn('role', ['admin', 'super_admin'])->orderBy('nama')->get(['id', 'nama'])
+            'admins' => Admin::whereIn('role', ['admin', 'super_admin'])->orderBy('nama')->get(['id', 'nama'])
         ];
     }
 

@@ -66,12 +66,12 @@ class Unit extends Model
         if (is_array($this->metadata)) {
             return $this->metadata;
         }
-        
+
         if (is_string($this->metadata)) {
             $decoded = json_decode($this->metadata, true);
             return is_array($decoded) ? $decoded : [];
         }
-        
+
         return [];
     }
 
@@ -126,20 +126,20 @@ class Unit extends Model
         if (!$this->relationLoaded('primaryPhoto')) {
             $this->load('primaryPhoto');
         }
-        
+
         $primary = $this->getRelation('primaryPhoto');
-        
+
         if ($primary && $primary instanceof UnitPhoto) {
             return $primary->thumbnail_path ?? $primary->original_path ?? null;
         }
-        
+
         if ($this->relationLoaded('photos')) {
             $firstPhoto = $this->photos->first();
             if ($firstPhoto) {
                 return $firstPhoto->thumbnail_path ?? $firstPhoto->original_path ?? null;
             }
         }
-        
+
         return null;
     }
 
@@ -275,7 +275,7 @@ class Unit extends Model
             }
         }
 
-        usort($schedule, function($a, $b) {
+        usort($schedule, function ($a, $b) {
             $order = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
             $aDay = is_string($a['days']) ? explode(' - ', $a['days'])[0] : $a['days'];
             $bDay = is_string($b['days']) ? explode(' - ', $b['days'])[0] : $b['days'];
@@ -292,11 +292,11 @@ class Unit extends Model
         if (empty($days)) {
             return [];
         }
-        
+
         $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $dayIndices = array_flip($dayOrder);
 
-        usort($days, function($a, $b) use ($dayIndices) {
+        usort($days, function ($a, $b) use ($dayIndices) {
             return $dayIndices[$a] <=> $dayIndices[$b];
         });
 
@@ -441,5 +441,18 @@ class Unit extends Model
         if ($this->total_ratings > 0) {
             $this->decrement('total_ratings');
         }
+    }
+
+    public function getRatingStatsAttribute(): array
+    {
+        $ratingService = app(\App\Services\Student\RatingService::class);
+        return $ratingService->getRatingStats($this->id);
+    }
+
+    public function getCategoryAveragesAttribute(): array
+    {
+        $ratingService = app(\App\Services\Student\RatingService::class);
+        $stats = $ratingService->getRatingStats($this->id);
+        return $stats['by_category'] ?? [];
     }
 }

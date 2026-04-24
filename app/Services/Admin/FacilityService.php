@@ -30,7 +30,7 @@ class FacilityService extends BaseAdminService
                 'filters' => $filters,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return new LengthAwarePaginator(
                 collect([]),
                 0,
@@ -41,25 +41,17 @@ class FacilityService extends BaseAdminService
         }
     }
 
+    // Di FacilityService.php
     public function getAvailableIcons(): array
     {
-        return [
-            'air-conditioner' => 'AC',
-            'wifi' => 'WiFi',
-            'projector' => 'Proyektor',
-            'whiteboard' => 'Whiteboard',
-            'computer' => 'Komputer',
-            'printer' => 'Printer',
-            'mosque' => 'Musala',
-            'toilet' => 'Toilet',
-            'cafe' => 'Kantin',
-            'parking' => 'Parkir',
-            'wheelchair' => 'Akses Kursi Roda',
-            'waiting-room' => 'Ruang Tunggu',
-            'water-dispenser' => 'Air Minum',
-            'locker' => 'Loker',
-            'speaker' => 'Sound System'
-        ];
+        $iconService = app(IconService::class);
+        $icons = [];
+
+        foreach ($iconService->getAllIcons() as $key => $icon) {
+            $icons[$key] = $icon['name'];
+        }
+
+        return $icons;
     }
 
     public function getStats(): array

@@ -24,7 +24,7 @@ body {
    ========================================================================== */
 :root {
     /* Primary Colors - 60-30-10 Theory */
-    --color-primary: ##FF5625;
+    --color-primary: ##ff5625;
     --color-primary-light: #f1c3ae;
     --color-primary-dark: #e55a2b;
     --color-primary-50: #fff5f0;
@@ -303,7 +303,6 @@ h6 {
     background: var(--color-gray-100);
     color: var(--color-gray-900);
 }
-
 
 /* Action Buttons (Icon Only) */
 .action-btn {
@@ -1300,5 +1299,227 @@ tr:has(.rating-checkbox:checked) {
     body {
         background: white !important;
         padding: 1rem !important;
+    }
+}
+
+.left-sidebar {
+    background: white;
+    border-right: 1px solid #edf2f7;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    font-family:
+        "Open Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+}
+
+.sidebar-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.brand-logo {
+    padding: 20px 24px;
+    border-bottom: 1px solid #edf2f7;
+    flex-shrink: 0;
+}
+
+.sidebar-nav {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 1rem 0.75rem !important;
+}
+
+.sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f9fafb;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: #f9fafb;
+    border-radius: 10px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:active {
+    background: #6b7280;
+}
+
+.settings-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding-bottom: 2rem;
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #4b5563;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    margin: 2px 0;
+    font-family:
+        "Open Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    font-weight: 450;
+    font-size: 0.9rem;
+}
+
+.settings-nav-item:hover {
+    background: #fef6f0;
+    color: #f8773c;
+}
+
+.settings-nav-item:hover svg,
+.settings-nav-item:hover i {
+    color: #f8773c;
+    stroke: #f8773c;
+}
+
+.settings-nav-active {
+    background: linear-gradient(135deg, #fff4ed, #fff);
+    color: #f8773c !important;
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(248, 119, 60, 0.1);
+}
+
+.settings-nav-active svg,
+.settings-nav-active i,
+.settings-nav-active span {
+    color: #f8773c !important;
+    stroke: #f8773c !important;
+}
+
+.settings-nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.settings-nav-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.settings-nav-label {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 450;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family:
+        "Open Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+}
+
+.settings-nav-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    color: #f8773c;
+    font-size: 1rem;
+    opacity: 1;
+}
+
+.settings-nav-arrow i {
+    font-size: 1.1rem;
+    stroke-width: 1.8;
+}
+
+.nav-small-cap {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 14px 16px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family:
+        "Open Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+}
+
+.nav-small-cap span {
+    font-family:
+        "Open Sans",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.nav-small-cap-icon {
+    font-size: 1rem;
+    color: #9ca3af;
+}
+
+@media (max-width: 1199.98px) {
+    .left-sidebar {
+        position: fixed;
+        left: -280px;
+        transition: left 0.2s ease;
+        z-index: 1050;
+        width: 280px;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .left-sidebar.show {
+        left: 0;
+    }
+
+    .brand-logo {
+        padding: 16px 20px;
     }
 }

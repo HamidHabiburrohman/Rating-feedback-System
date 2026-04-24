@@ -45,7 +45,8 @@ class RatingService extends BaseStudentService
         $scores = $rating->scores->keyBy('rating_category_id');
 
         return array_map(function ($category) use ($scores) {
-            $category['score'] = $scores[$category['id']]->score ?? null;
+            $score = $scores[$category['id']] ?? null;
+            $category['score'] = $score ? $score->score : null;
             return $category;
         }, $categories);
     }
@@ -87,8 +88,7 @@ class RatingService extends BaseStudentService
                 ]);
             }
 
-            $unit->increment('total_ratings');
-            $this->updateUnitAverage($unit);
+            $this->syncUnitAverages($unit);
             $this->createUnitVisit($unit->id);
 
             return $rating->fresh(['unit', 'scores.category']);
@@ -121,15 +121,74 @@ class RatingService extends BaseStudentService
                 );
             }
 
-            $this->updateUnitAverage($rating->unit);
+            $this->syncUnitAverages($rating->unit);
 
             return $rating->fresh(['scores.category']);
         });
     }
 
+    private function syncUnitAverages(Unit $unit): void
+    {
+        $activeRatings = $this->rating
+            ->where('unit_id', $unit->id)
+            ->whereIn('status', ['active', 'edited'])
+            ->get();
+
+        if ($activeRatings->isEmpty()) {
+            $unit->update([
+                'avg_rating' => 0,
+                'total_ratings' => 0,
+                'avg_facility_score' => 0,
+                'avg_service_score' => 0,
+                'avg_quality_score' => 0,
+                'last_rated_at' => null
+            ]);
+            return;
+        }
+
+        $totalRatings = $activeRatings->count();
+        $avgOverall = $activeRatings->avg('overall_score');
+
+        $categoryScores = [
+            'facility' => [],
+            'service' => [],
+            'quality' => []
+        ];
+
+        $categories = $this->getActiveCategories();
+        $categorySlugToField = [
+            'facility' => 'avg_facility_score',
+            'service' => 'avg_service_score',
+            'quality' => 'avg_quality_score'
+        ];
+
+        foreach ($activeRatings as $rating) {
+            foreach ($rating->scores as $score) {
+                $category = $score->category;
+                if ($category && isset($categorySlugToField[$category->slug])) {
+                    $categoryScores[$category->slug][] = $score->score;
+                }
+            }
+        }
+
+        $updateData = [
+            'avg_rating' => round($avgOverall, 2),
+            'total_ratings' => $totalRatings,
+            'last_rated_at' => $activeRatings->max('created_at')
+        ];
+
+        foreach ($categorySlugToField as $slug => $field) {
+            $scores = $categoryScores[$slug] ?? [];
+            $average = !empty($scores) ? array_sum($scores) / count($scores) : 0;
+            $updateData[$field] = round($average, 2);
+        }
+
+        $unit->update($updateData);
+    }
+
     public function findByTrackingCode(string $trackingCode): Rating
     {
-        return $this->rating->with(['unit', 'student', 'scores.category'])
+        return $this->rating->with(['unit', 'scores.category'])
             ->where('tracking_code', $trackingCode)
             ->firstOrFail();
     }
@@ -143,11 +202,12 @@ class RatingService extends BaseStudentService
             $query->where('status', $filters['status']);
         }
 
-        // Handle search if present
         if (!empty($filters['search'])) {
-            $query->whereHas('unit', function ($q) use ($filters) {
-                $q->where('name', 'like', "%{$filters['search']}%");
-            })->orWhere('comment', 'like', "%{$filters['search']}%");
+            $query->where(function ($q) use ($filters) {
+                $q->whereHas('unit', function ($q2) use ($filters) {
+                    $q2->where('name', 'like', "%{$filters['search']}%");
+                })->orWhere('comment', 'like', "%{$filters['search']}%");
+            });
         }
 
         $sort = $filters['sort'] ?? 'created_at';
@@ -157,12 +217,11 @@ class RatingService extends BaseStudentService
         return $query->orderBy($sort, $order)->paginate($perPage);
     }
 
-
-    public function getUnitRatings(int $unitId, array $filters = []): array
+    public function getUnitRatings(int $unitId, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->rating->with(['student'])
+        $query = $this->rating->with(['student', 'scores.category'])
             ->where('unit_id', $unitId)
-            ->where('status', 'active');
+            ->whereIn('status', ['active', 'edited']);
 
         if (!empty($filters['sort']) && $filters['sort'] === 'highest') {
             $query->orderByDesc('overall_score');
@@ -174,20 +233,20 @@ class RatingService extends BaseStudentService
 
         $perPage = $filters['per_page'] ?? 10;
 
-        return $query->paginate($perPage)->toArray();
+        return $query->paginate($perPage);
     }
 
     public function getRatingStats(int $unitId): array
     {
         $ratings = $this->rating->where('unit_id', $unitId)
-            ->where('status', 'active');
+            ->whereIn('status', ['active', 'edited']);
 
         $categories = $this->getActiveCategories();
         $categoryAverages = [];
 
         foreach ($categories as $category) {
             $avg = $this->ratingScore->whereHas('rating', function ($q) use ($unitId) {
-                $q->where('unit_id', $unitId)->where('status', 'active');
+                $q->where('unit_id', $unitId)->whereIn('status', ['active', 'edited']);
             })
                 ->where('rating_category_id', $category['id'])
                 ->avg('score');
@@ -227,12 +286,6 @@ class RatingService extends BaseStudentService
             return false;
         }
 
-        $lastReport = $rating->report()->where('status', 'resolved')->latest()->first();
-
-        if ($lastReport && $lastReport->updated_at->addDays(7) > now()) {
-            return false;
-        }
-
         return true;
     }
 
@@ -240,7 +293,7 @@ class RatingService extends BaseStudentService
     {
         $avg = $this->rating
             ->where('unit_id', $unit->id)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'edited'])
             ->avg('overall_score');
 
         $unit->update([

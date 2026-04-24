@@ -1,5 +1,4 @@
 <?php
-// app/Models/Student.php
 
 namespace App\Models;
 
@@ -25,6 +24,7 @@ class Student extends Model implements Authenticatable
         'portfolio_url',
         'linkedin_url',
         'photo',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -35,6 +35,7 @@ class Student extends Model implements Authenticatable
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'last_login_at' => 'datetime',
     ];
 
     public function sessions()
@@ -88,7 +89,18 @@ class Student extends Model implements Authenticatable
         if ($this->photo && file_exists(storage_path('app/public/' . $this->photo))) {
             return asset('storage/' . $this->photo);
         }
-        
+
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=ad2b00&color=fff&size=256';
+    }
+
+    public function favoriteUnits()
+    {
+        return $this->belongsToMany(Unit::class, 'favorite_units', 'student_id', 'unit_id')
+            ->withTimestamps();
+    }
+
+    public function isFavoriteUnit($unitId)
+    {
+        return $this->favoriteUnits()->where('unit_id', $unitId)->exists();
     }
 }

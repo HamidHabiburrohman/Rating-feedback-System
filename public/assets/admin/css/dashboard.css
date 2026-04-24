@@ -272,7 +272,7 @@
 
 .analytics-section {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-5);
     margin-bottom: var(--space-6);
 }
@@ -283,6 +283,20 @@
     padding: var(--space-5);
     box-shadow: var(--shadow);
     border: 1px solid var(--border-light);
+    width: 100%;
+}
+
+.chart-wrapper {
+    width: 100%;
+    min-height: 400px;
+    position: relative;
+}
+
+.chart-wrapper canvas,
+.chart-wrapper svg {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 350px;
 }
 
 .chart-header {
@@ -290,6 +304,35 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: var(--space-5);
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+/* Responsive adjustment untuk chart */
+@media (max-width: 1200px) {
+    .analytics-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-wrapper {
+        min-height: 350px;
+    }
+    
+    .chart-wrapper canvas,
+    .chart-wrapper svg {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-wrapper {
+        min-height: 300px;
+    }
+    
+    .chart-wrapper canvas,
+    .chart-wrapper svg {
+        min-height: 250px;
+    }
 }
 
 .chart-title {

@@ -111,9 +111,7 @@
                     if ($rating->status === 'edited') $statusLabel = 'Diedit';
                     if ($rating->status === 'archived') $statusLabel = 'Diarsipkan';
                 @endphp
-                <div class="group bg-white rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all duration-300 hover:shadow-lg border border-slate-200">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 {{ $statusColor }} rounded-l-lg"></div>
-                    
+                <div class="group bg-white rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all duration-300 hover:shadow-lg border border-slate-200">                    
                     <div class="flex-1 space-y-2 pl-4">
                         <div class="flex flex-wrap items-center gap-3">
                             <h3 class="text-xl font-bold text-on-surface">{{ $rating->unit->name }}</h3>

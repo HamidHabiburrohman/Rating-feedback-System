@@ -7,6 +7,7 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -23,37 +24,44 @@ class AuthController extends Controller
         ]);
 
         if (Auth::guard('student')->attempt($credentials, $request->boolean('remember'))) {
+            $student = Auth::guard('student')->user();
+            
+            Student::where('id', $student->id)->update(['last_login_at' => Carbon::now()]);
+            
             $request->session()->regenerate();
             
-            return redirect()->intended(route('student.dashboard.index'));
+            return redirect()->intended(route('student.units.index'));
         }
 
         return back()->withErrors([
-            'student_identifier' => 'The provided credentials do not match our records.',
+            'student_identifier' => 'NIM atau password salah.',
         ])->onlyInput('student_identifier');
     }
 
     public function showRegistrationForm()
     {
-        return view('student.auth.register');
+        return view('auth.student.register');
     }
 
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'student_identifier' => 'required|string|unique:students',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students',
-            'password' => 'required|string|min:8|confirmed',
+            'student_identifier' => 'required|string|unique:students,student_identifier',
+            'email' => 'required|email|unique:students,email',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-
-        $student = Student::create($validated);
+        $student = Student::create([
+            'name' => $validated['name'],
+            'student_identifier' => $validated['student_identifier'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+        ]);
 
         Auth::guard('student')->login($student);
 
-        return redirect()->route('student.dashboard.index');
+        return redirect()->route('student.units.index')->with('success', 'Registration successful! Welcome to Itenas Portal.');
     }
 
     public function logout(Request $request)

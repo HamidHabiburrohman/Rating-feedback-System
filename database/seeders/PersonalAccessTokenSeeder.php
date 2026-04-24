@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Database\Seeder;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -10,7 +10,7 @@ class PersonalAccessTokenSeeder extends Seeder
 {
     public function run()
     {
-        $admin = User::where('email', 'admin@university.edu')->first();
+        $admin = Admin::where('email', 'superadmin@admin.com')->first();
         
         if ($admin) {
             $token = $admin->createToken('admin-api-token', ['admin:access'])->plainTextToken;

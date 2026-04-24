@@ -19,29 +19,6 @@
             </p>
         </div>
 
-        {{-- DEBUGGING CARD --}}
-        <div class="mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-            <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-yellow-600">bug_report</span>
-                <div class="flex-1">
-                    <p class="font-bold text-yellow-800 text-sm mb-2">Debug Information:</p>
-                    <div class="text-xs text-yellow-700 space-y-1">
-                        <p><strong>Rating ID:</strong> {{ $rating->id }}</p>
-                        <p><strong>Rating Tracking Code:</strong> {{ $rating->tracking_code }}</p>
-                        <p><strong>Rating Unit ID:</strong> {{ $rating->unit_id }}</p>
-                        <p><strong>Rating Unit Name:</strong> {{ $rating->unit->name }}</p>
-                        <p><strong>Rating Student Identifier:</strong> {{ $rating->student_identifier }}</p>
-                        <p><strong>Auth Student Identifier:</strong> {{ auth('student')->user()->student_identifier }}</p>
-                        <p><strong>Student Check:</strong> {{ auth('student')->check() ? 'Logged In' : 'Not Logged In' }}</p>
-                        <p><strong>Can Report:</strong> {{ app(\App\Services\Student\ReportService::class)->canReport($rating) ? 'Yes' : 'No' }}</p>
-                        <p><strong>Route to Submit:</strong> {{ route('student.reports.store') }}</p>
-                        <p><strong>CSRF Token Present:</strong> {{ csrf_token() ? 'Yes' : 'No' }}</p>
-                        <p><strong>Form Action:</strong> {{ route('student.reports.store') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         {{-- Error Alert --}}
         @if($errors->any())
         <div class="mb-6 p-4 rounded-lg bg-error/10 border border-error/20">
@@ -160,42 +137,9 @@
                     @enderror
                 </div>
 
-                {{-- Attachment (Optional) --}}
-                <div class="space-y-2">
-                    <label class="block text-xs font-extrabold uppercase tracking-widest text-on-surface-variant ml-2">
-                        Attachment <span class="normal-case font-medium">(Optional)</span>
-                    </label>
-                    <label for="attachment"
-                           class="flex flex-col items-center justify-center px-6 pt-6 pb-7 border-2 border-dashed border-outline-variant/30 rounded-lg bg-surface-container-low hover:bg-surface-container hover:border-primary/30 transition-all cursor-pointer group">
-                        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-4xl mb-2">
-                            cloud_upload
-                        </span>
-                        <div class="flex items-center gap-1 text-sm">
-                            <span class="font-bold text-primary">Upload a file</span>
-                            <span class="text-on-surface-variant">or drag and drop</span>
-                        </div>
-                        <p class="text-xs text-on-surface-variant/60 mt-1 uppercase tracking-wider">PNG, JPG, PDF up to 10MB</p>
-                        <input id="attachment" name="attachment" type="file" accept=".png,.jpg,.jpeg,.pdf" class="sr-only">
-                    </label>
-                    @error('attachment')
-                        <p class="text-error text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- Debug Form Data Preview --}}
-                <div class="text-xs text-slate-400 p-3 bg-slate-100 rounded-lg">
-                    <p class="font-bold mb-1">Form Data akan dikirim:</p>
-                    <p>rating_id: {{ $rating->id }}</p>
-                    <p>category: [akan diambil dari radio button]</p>
-                    <p>title: [dari input]</p>
-                    <p>description: [dari textarea]</p>
-                    <p>attachment: [optional file]</p>
-                </div>
-
-                {{-- Submit --}}
                 <div class="pt-4">
                     <button type="submit"
-                        class="w-full py-5 rounded-full bg-gradient-to-r from-primary to-primary-container text-white font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2">
+                        class="w-full py-4 rounded-full bg-red-600 text-white font-bold text-lg shadow-lg hover:bg-red-700 transition-all duration-300">
                         Submit Report
                         <span class="material-symbols-outlined">send</span>
                     </button>

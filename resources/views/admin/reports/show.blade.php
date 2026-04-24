@@ -104,7 +104,7 @@
                                     @endphp
 
                                     @if($photo && $photo->thumbnail_url && $photo->thumbnail_url !== '')
-                                        <img src="{{ $photo->thumbnail_url }}" alt="{{ $report->unit->name }}"
+                                        <img src="{{ $photo->thumbnail_url }}" alt="{{ $report->unit->name }}"  
                                             style="width: 100%; height: 100%; object-fit: cover;">
                                     @else
                                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
@@ -306,9 +306,6 @@
                                                 <polyline points="7 10 12 15 17 10"></polyline>
                                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                                             </svg>
-                                            <div class="small fw-bold mt-1" style="color: #f8773c; font-size: 10px;">
-                                                {{ substr($report->unit->name ?? 'U', 0, 2) }}
-                                            </div>
                                         </div>
                                     @endif
                                 </div>

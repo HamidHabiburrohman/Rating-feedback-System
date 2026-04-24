@@ -22,7 +22,6 @@ class AdminReply extends Model
         'updated_at' => 'datetime'
     ];
 
-    // Relasi
     public function rating()
     {
         return $this->belongsTo(Rating::class);
@@ -30,16 +29,14 @@ class AdminReply extends Model
 
     public function admin()
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
-    // Accessors
     public function getFormattedReplyAttribute()
     {
         return nl2br(e($this->reply_message));
     }
 
-    // Helper methods
     protected static function booted()
     {
         static::created(function ($reply) {

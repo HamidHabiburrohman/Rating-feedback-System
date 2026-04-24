@@ -4,8 +4,10 @@ namespace App\Services\Admin;
 
 use App\Models\Unit;
 use App\Models\Rating;
+use App\Models\Student;
 use App\Models\UnitVisit;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class DashboardService
 {
@@ -32,23 +34,24 @@ class DashboardService
     public function getStats()
     {
         try {
-            $today = now()->startOfDay();
-            $weekStart = now()->startOfWeek();
+            $today = Carbon::today();
+            $yesterday = Carbon::yesterday();
+            $weekStart = Carbon::now()->startOfWeek();
 
-            $visitorsToday = UnitVisit::whereDate('tanggal', $today)->count();
-            $visitorsWeek = UnitVisit::where('tanggal', '>=', $weekStart)->count();
-            $visitorsYesterday = UnitVisit::whereDate('tanggal', now()->subDay()->startOfDay())->count();
+            $studentsToday = Student::whereDate('last_login_at', $today)->count();
+            $studentsWeek = Student::where('last_login_at', '>=', $weekStart)->count();
+            $studentsYesterday = Student::whereDate('last_login_at', $yesterday)->count();
 
             $ratingsToday = Rating::whereDate('created_at', $today)->count();
-            $ratingsYesterday = Rating::whereDate('created_at', now()->subDay()->startOfDay())->count();
+            $ratingsYesterday = Rating::whereDate('created_at', $yesterday)->count();
 
             $activeUnits = Unit::where('is_active', true)->count();
             $totalUnits = Unit::count();
             $unitsLastWeek = Unit::where('created_at', '>=', $weekStart)->count();
 
-            $visitorTrend = $visitorsYesterday > 0
-                ? round((($visitorsToday - $visitorsYesterday) / $visitorsYesterday) * 100)
-                : ($visitorsToday > 0 ? 100 : 0);
+            $studentTrend = $studentsYesterday > 0
+                ? round((($studentsToday - $studentsYesterday) / $studentsYesterday) * 100)
+                : ($studentsToday > 0 ? 100 : 0);
 
             $ratingTrend = $ratingsYesterday > 0
                 ? round((($ratingsToday - $ratingsYesterday) / $ratingsYesterday) * 100)
@@ -63,11 +66,11 @@ class DashboardService
             return [
                 'success' => true,
                 'data' => [
-                    'visitors' => [
-                        'today' => $visitorsToday,
-                        'this_week' => $visitorsWeek,
+                    'students' => [
+                        'today' => $studentsToday,
+                        'this_week' => $studentsWeek,
                         'trend' => [
-                            'daily' => $visitorTrend,
+                            'daily' => $studentTrend,
                             'weekly' => $unitTrend
                         ]
                     ],
@@ -88,7 +91,7 @@ class DashboardService
             return [
                 'success' => false,
                 'data' => [
-                    'visitors' => ['today' => 0, 'this_week' => 0, 'trend' => ['daily' => 0, 'weekly' => 0]],
+                    'students' => ['today' => 0, 'this_week' => 0, 'trend' => ['daily' => 0, 'weekly' => 0]],
                     'ratings' => ['today' => 0, 'trend' => 0],
                     'units' => ['active' => 0, 'total' => 0, 'trend' => 0],
                     'unit_growth' => $this->getMockUnitGrowthData()
@@ -359,23 +362,23 @@ class DashboardService
     public function getCharts()
     {
         try {
-            $visitationTrend = [];
+            $studentLoginTrend = [];
             $unitGrowth = $this->getUnitGrowthData();
 
             for ($i = 6; $i >= 0; $i--) {
-                $date = now()->subDays($i);
-                $visits = UnitVisit::whereDate('tanggal', $date)->count();
-                $visitationTrend[] = [
+                $date = Carbon::now()->subDays($i);
+                $students = Student::whereDate('last_login_at', $date)->count();
+                $studentLoginTrend[] = [
                     'day' => $date->format('D'),
                     'date' => $date->format('Y-m-d'),
-                    'visitors' => $visits
+                    'students' => $students
                 ];
             }
 
             return [
                 'success' => true,
                 'data' => [
-                    'visitation_trend' => $visitationTrend,
+                    'student_login_trend' => $studentLoginTrend,
                     'unit_growth' => $unitGrowth
                 ]
             ];
@@ -384,7 +387,7 @@ class DashboardService
             return [
                 'success' => false,
                 'data' => [
-                    'visitation_trend' => [],
+                    'student_login_trend' => [],
                     'unit_growth' => $this->getMockUnitGrowthData()
                 ]
             ];

@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-
     @include('layouts.admin.partials.head')
 
     @stack('styles')
@@ -41,12 +40,19 @@
 
     <x-admin.logout-modal />
 
-    <script src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
-    <script src="{{ asset('assets/components/components.js') }}"></script>
+    {{-- SEMUA SCRIPT DI SATUKAN DI SINI DENGAN URUTAN YANG BENAR --}}
+    <script defer src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
+    <script defer src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+    
+    {{-- Script yang butuh jQuery --}}
+    <script defer src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
+    <script defer src="{{ asset('assets/admin/js/app.min.js') }}"></script>
+    <script defer src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
+    <script defer src="{{ asset('assets/components/components.js') }}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    @include('layouts.admin.partials.scripts')
+    {{-- Hapus @include('layouts.admin.partials.scripts') karena kita pindahin ke sini --}}
 
     @stack('admin-scripts')
     @stack('scripts')

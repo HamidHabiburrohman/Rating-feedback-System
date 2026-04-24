@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignId('admin_id')
-                ->constrained('users')
+                ->constrained('admins')
                 ->cascadeOnDelete();
 
             $table->string('action');

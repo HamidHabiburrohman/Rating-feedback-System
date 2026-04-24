@@ -14,10 +14,12 @@ use Illuminate\Support\Facades\Log;
 class RatingController extends Controller
 {
     protected RatingService $service;
+    protected ReportService $reportService;
 
-    public function __construct(RatingService $service)
+    public function __construct(RatingService $service, ReportService $reportService)
     {
         $this->service = $service;
+        $this->reportService = $reportService;
     }
 
     public function create(Unit $unit)
@@ -64,8 +66,7 @@ class RatingController extends Controller
             }
 
             $canEdit = $this->service->canEdit($rating);
-            $reportService = app(ReportService::class);
-            $canReport = $reportService->canReport($rating);
+            $canReport = $this->reportService->canReport($rating);
 
             return view('student.ratings.show', [
                 'rating' => $rating,
@@ -91,13 +92,10 @@ class RatingController extends Controller
 
             if (!$this->service->canEdit($rating)) {
                 return redirect()->route('student.ratings.show', $trackingCode)
-                    ->with('error', 'Belum bisa mengedit rating');
+                    ->with('error', 'Tidak dapat mengedit rating ini');
             }
 
             $categories = $this->service->getActiveCategoriesWithScores($rating);
-
-            // Debug: lihat data categories
-            Log::info('Categories for edit:', $categories);
 
             return view('student.ratings.edit', [
                 'rating' => $rating,

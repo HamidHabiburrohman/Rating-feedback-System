@@ -11,7 +11,7 @@
     <meta name="keywords" content="AI agents,AI agent builder,AI SaaS template,PrebuiltUI,Next.js AI template,Tailwind CSS UI,AI workflow automation">
     
     <!-- Manifest & Icons -->
-    <link rel="manifest" href="{{ asset('landing_assets/manifest.json') }}">
+    <link rel="manifest" href="{{ asset('landing/manifest.json') }}">
     <link rel="icon" href="{{ asset('assets/images/logos/favicon.png') }}" sizes="48x48" type="image/x-icon">
     <link rel="icon" href="{{ asset('landing_assets/icon0.svg') }}" sizes="any" type="image/svg+xml">
     <link rel="icon" href="{{ asset('landing_assets/icon1.png') }}" sizes="96x96" type="image/png">

@@ -19,7 +19,7 @@ class UnitController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'type', 'sort', 'order', 'per_page', 'with_trashed', 'only_trashed']);
+        $filters = $request->only(['search', 'status', 'type', 'sort', 'order', 'per_page']);
         $units = $this->service->getPaginated($filters);
         $typeNames = $this->service->getTypeNames();
 

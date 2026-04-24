@@ -1,4 +1,4 @@
-@extends('layouts.errors')
+@extends('layouts.base.errors')
 @section('code', '419')
 @section('title', 'Sesi Berakhir')
 @section('message', 'Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.')

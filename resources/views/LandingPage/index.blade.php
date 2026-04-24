@@ -356,13 +356,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: grayscale(100%) contrast(1.05);
-            transition: transform 6s var(--ease-out);
         }
 
-        .hero:hover .hero-img {
-            transform: scale(1.03);
-        }
+        
 
         .image-overlay {
             position: absolute;
@@ -702,19 +698,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: grayscale(100%) contrast(1.08);
-            transition: transform 0.6s var(--ease-out), filter 0.4s;
-        }
-
-        .unit-card:hover .unit-img {
-            transform: scale(1.04);
-            filter: grayscale(80%) contrast(1.08);
-        }
-
-        .unit-img-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to right, transparent 60%, rgba(255, 255, 255, 0.08) 100%);
         }
 
         .unit-content-col {
@@ -1277,7 +1260,7 @@
                     your mark at ITENAS.
                 </p>
                 <div class="hero-actions">
-                    <a href="#explore" class="btn-primary">EXPLORE UNITS</a>
+                    <a href="{{ route('student.units.index') }}" class="btn-primary">EXPLORE UNITS</a>
                     <a href="#about" class="btn-outline">LEARN MORE</a>
                 </div>
                 <div class="hero-meta">
@@ -1300,7 +1283,7 @@
             <div class="hero-visual">
                 <div class="hero-image-wrap">
                     <div class="hero-image-frame">
-                        <img src="https://media.quipper.com/media/W1siZiIsIjIwMjAvMDYvMjIvMDUvNTcvMzQvODVlNzRiN2EtYjE0NC00ODZiLWFiM2YtNjNmZGFmM2Y1MWMyLyJdLFsicCIsInRodW1iIiwiMTIwMHhcdTAwM2UiXSxbInAiLCJjb252ZXJ0IiwiLWNvbG9yc3BhY2Ugc1JHQiAtc3RyaXAiLHsiZm9ybWF0IjoianBnIn1dXQ.PNG"
+                        <img src="{{ asset('assets/landing/Gedung-Itenas-Final.jpg') }}"
                             alt="ITENAS Campus" class="hero-img" loading="eager" />
                         <div class="image-overlay"></div>
                     </div>
@@ -1467,96 +1450,67 @@
         </section>
 
         <!-- ═══════════════════════ TOP UNITS ═══════════════════════ -->
-        <section class="top-units-section">
-            <div class="container">
-                <div class="section-header">
-                    <span class="section-tag">HIGHEST RATED</span>
-                    <h2 class="section-heading">TOP RATED<br /><span class="accent">UNITS.</span></h2>
-                </div>
-
-                <!-- Unit 001 -->
-                <div class="unit-card">
-                    <div class="unit-image-col">
-                        <div class="unit-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80"
-                                alt="Robotics Team" class="unit-img" loading="lazy" />
-                            <div class="unit-img-overlay"></div>
-                        </div>
+            <section class="top-units-section">
+                <div class="container">
+                    <div class="section-header">
+                        <span class="section-tag">HIGHEST RATED</span>
+                        <h2 class="section-heading">TOP RATED<br /><span class="accent">UNITS.</span></h2>
                     </div>
-                    <div class="unit-content-col">
-                        <div class="unit-inner">
-                            <span class="unit-label">UNIT 001</span>
-                            <h3 class="unit-name">ROBOTICS<br />TEAM</h3>
-                            <p class="unit-desc">ITENAS's flagship engineering unit. Build autonomous robots, compete at
-                                national level, and develop skills in hardware, software, and systems integration.</p>
-                            <div class="unit-meta">
-                                <div class="unit-rating">
-                                    <span class="stars">★★★★★</span>
-                                    <span class="rating-num">5.0</span>
-                                </div>
-                                <span class="unit-members">248 Members</span>
+
+                    @forelse($topRatedUnits as $index => $unit)
+                        @php
+                            $fullStars = floor($unit->avg_rating);
+                            $hasHalf = ($unit->avg_rating - $fullStars) >= 0.5;
+                            $emptyStars = 5 - $fullStars - ($hasHalf ? 1 : 0);
+                            $ratingDisplay = number_format($unit->avg_rating, 1);
+                        @endphp
+
+                        <div class="unit-card {{ $index % 2 == 1 ? 'unit-card--reverse' : '' }}">
+                            <div class="unit-image-col">
+                    <div class="unit-img-wrap">
+                        @if($unit->primaryPhoto && $unit->primaryPhoto->thumbnail_url)
+                            <img src="{{ $unit->primaryPhoto->thumbnail_url }}" alt="{{ $unit->name }}" class="unit-img" loading="lazy" />
+                        @elseif($unit->photos && $unit->photos->isNotEmpty())
+                            <img src="{{ $unit->photos->first()->thumbnail_url }}" alt="{{ $unit->name }}" class="unit-img" loading="lazy" />
+                        @else
+                            <img src="{{ asset('assets/images/UnitPlaceholder.png') }}" alt="{{ $unit->name }}" class="unit-img" loading="lazy" />
+                        @endif
+                        <div class="unit-img-overlay"></div>
+                    </div>
+                    </div>
+                <div class="unit-content-col">
+                    <div class="unit-inner">
+                        <span class="unit-label">
+                            UNIT {{ str_pad($index + 1, 3, '0', STR_PAD_LEFT) }}
+                            @if($unit->type_name)
+                                • {{ $unit->type_name }}
+                            @endif
+                        </span>
+                        <h3 class="unit-name">{{ $unit->name }}</h3>
+                        <p class="unit-desc">{{ Str::limit($unit->description ?? 'Unit aktif di Institut Teknologi Nasional Bandung.', 120) }}</p>
+                        <div class="unit-meta">
+                            <div class="unit-rating">
+                                <span class="stars">
+                                    @for($i = 1; $i <= $fullStars; $i++)★@endfor
+                                    @if($hasHalf)½@endif
+                                    @for($i = 1; $i <= $emptyStars; $i++)☆@endfor
+                                </span>
+                                <span class="rating-num">{{ $ratingDisplay }}</span>
                             </div>
-                            <a href="#" class="unit-link">VIEW UNIT →</a>
+                            <span class="unit-members">{{ number_format($unit->total_ratings) }} Reviews</span>
                         </div>
+                        <a href="{{ route('student.units.show', $unit->slug) }}" class="unit-link">VIEW UNIT →</a>
                     </div>
                 </div>
-
-                <!-- Unit 002 reversed -->
-                <div class="unit-card unit-card--reverse">
-                    <div class="unit-image-col">
-                        <div class="unit-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1495121553079-4c61bcce1894?w=600&q=80"
-                                alt="Photography Club" class="unit-img" loading="lazy" />
-                            <div class="unit-img-overlay"></div>
-                        </div>
-                    </div>
-                    <div class="unit-content-col">
-                        <div class="unit-inner">
-                            <span class="unit-label">UNIT 002</span>
-                            <h3 class="unit-name">PHOTOGRAPHY<br />CLUB</h3>
-                            <p class="unit-desc">Frame the world through your lens. From street photography to studio work,
-                                develop your visual storytelling with mentorship from professional photographers.</p>
-                            <div class="unit-meta">
-                                <div class="unit-rating">
-                                    <span class="stars">★★★★★</span>
-                                    <span class="rating-num">4.9</span>
-                                </div>
-                                <span class="unit-members">183 Members</span>
-                            </div>
-                            <a href="#" class="unit-link">VIEW UNIT →</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Unit 003 -->
-                <div class="unit-card">
-                    <div class="unit-image-col">
-                        <div class="unit-img-wrap">
-                            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80"
-                                alt="Coding Community" class="unit-img" loading="lazy" />
-                            <div class="unit-img-overlay"></div>
-                        </div>
-                    </div>
-                    <div class="unit-content-col">
-                        <div class="unit-inner">
-                            <span class="unit-label">UNIT 003</span>
-                            <h3 class="unit-name">CODING<br />COMMUNITY</h3>
-                            <p class="unit-desc">Ship real products. Join hackathons, build open-source tools, and
-                                collaborate with peers across faculties on projects that matter beyond the classroom.</p>
-                            <div class="unit-meta">
-                                <div class="unit-rating">
-                                    <span class="stars">★★★★★</span>
-                                    <span class="rating-num">4.8</span>
-                                </div>
-                                <span class="unit-members">312 Members</span>
-                            </div>
-                            <a href="#" class="unit-link">VIEW UNIT →</a>
-                        </div>
-                    </div>
-                </div>
-
             </div>
-        </section>
+        @empty
+            <div class="text-center py-12">
+                <p class="text-gray-500">Belum ada unit yang tersedia.</p>
+            </div>
+        @endforelse
+
+    </div>
+</section>
 
         <!-- ═══════════════════════ PROCESS ═══════════════════════ -->
         <section class="process-section">

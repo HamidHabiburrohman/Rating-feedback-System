@@ -36,6 +36,7 @@ class AuthService extends BaseStudentService
                 throw new \Exception('Password yang Anda masukkan salah');
             }
 
+            // Gunakan guard 'student' untuk login
             Auth::guard('student')->login($student);
 
             $this->createSession($student->id, $ip, $userAgent);
@@ -100,6 +101,12 @@ class AuthService extends BaseStudentService
 
     protected function createSession(int $studentId, ?string $ip, ?string $userAgent): void
     {
+        // Hapus session lama jika ada
+        $this->studentSession
+            ->where('student_id', $studentId)
+            ->delete();
+            
+        // Buat session baru
         $this->studentSession->create([
             'student_id' => $studentId,
             'session_token' => session()->getId(),

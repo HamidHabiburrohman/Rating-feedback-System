@@ -15,7 +15,7 @@ return new class extends Migration {
                 ->cascadeOnDelete();
 
             $table->foreignId('admin_id')
-                ->constrained('users')
+                ->constrained('admins')
                 ->cascadeOnDelete();
 
             $table->text('reply_message');

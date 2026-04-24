@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\AdminReply;
 use App\Models\Rating;
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AdminReplyFactory extends Factory
@@ -18,7 +18,7 @@ class AdminReplyFactory extends Factory
         
         return [
             'rating_id' => $rating->id,
-            'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+            'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
             'reply_message' => fake()->paragraphs(2, true),
             'replied_at' => $repliedAt,
             'created_at' => $repliedAt,
@@ -26,7 +26,7 @@ class AdminReplyFactory extends Factory
         ];
     }
 
-    public function byAdmin(User $admin): static
+    public function byAdmin(Admin $admin): static
     {
         return $this->state(fn (array $attributes) => [
             'admin_id' => $admin->id,

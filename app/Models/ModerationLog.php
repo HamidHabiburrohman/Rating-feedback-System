@@ -24,13 +24,11 @@ class ModerationLog extends Model
         'updated_at' => 'datetime'
     ];
 
-    // Relasi
     public function admin()
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
-    // Accessors
     public function getTargetAttribute()
     {
         if (!$this->target_type || !$this->target_id) {
@@ -45,7 +43,6 @@ class ModerationLog extends Model
         }
     }
 
-    // Scope
     public function scopeByAction($query, $action)
     {
         return $query->where('action', $action);
@@ -66,7 +63,6 @@ class ModerationLog extends Model
         return $query->whereDate('created_at', today());
     }
 
-    // Helper methods
     public static function log($adminId, $action, $target, $reason = null, $metadata = [])
     {
         return self::create([

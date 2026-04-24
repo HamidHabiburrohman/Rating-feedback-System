@@ -35,7 +35,6 @@ class Report extends Model
         'updated_at' => 'datetime'
     ];
 
-    // Accessor untuk mendapatkan URL attachment
     public function getAttachmentUrlAttribute()
     {
         if ($this->attachment_path) {
@@ -44,13 +43,11 @@ class Report extends Model
         return null;
     }
 
-    // Helper untuk cek apakah ada attachment
     public function hasAttachment(): bool
     {
         return !is_null($this->attachment_path);
     }
 
-    // Relasi
     public function rating()
     {
         return $this->belongsTo(Rating::class);
@@ -68,10 +65,9 @@ class Report extends Model
 
     public function admin()
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
-    // Accessors
     public function getPriorityLabelAttribute()
     {
         return match ($this->priority) {
@@ -120,7 +116,6 @@ class Report extends Model
         };
     }
 
-    // Scopes
     public function scopeNew($query)
     {
         return $query->where('status', 'new');
@@ -174,7 +169,6 @@ class Report extends Model
         });
     }
 
-    // Helper methods
     public function assignToAdmin($adminId)
     {
         $this->update([

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('exports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('admin_id')->nullable()->constrained('admins')->nullOnDelete();
             $table->string('export_type'); 
             $table->string('format'); 
             $table->string('file_name');

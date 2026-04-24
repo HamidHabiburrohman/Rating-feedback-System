@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Rating;
 use App\Models\Report;
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ReportFactory extends Factory
@@ -20,7 +20,7 @@ class ReportFactory extends Factory
         $tanggapanAdmin = null;
         
         if (!in_array($status, ['new'])) {
-            $adminDitugaskan = User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id;
+            $adminDitugaskan = Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id;
         }
         
         $waktuDibuat = fake()->dateTimeBetween('-3 months', 'now');
@@ -124,7 +124,7 @@ class ReportFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'in_progress',
-            'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+            'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
             'admin_response' => null,
         ]);
     }
@@ -136,7 +136,7 @@ class ReportFactory extends Factory
             
             return [
                 'status' => 'replied',
-                'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+                'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
                 'admin_response' => fake()->randomElement([
                     'Terima kasih atas laporannya. Tim kami akan segera menindaklanjuti.',
                     'Laporan Anda telah kami terima dan sedang dalam proses peninjauan.',
@@ -155,7 +155,7 @@ class ReportFactory extends Factory
             
             return [
                 'status' => 'resolved',
-                'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+                'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
                 'admin_response' => fake()->randomElement([
                     'Laporan telah ditindaklanjuti. Konten yang dilaporkan telah dihapus.',
                     'Setelah ditinjau, konten yang dilaporkan terbukti melanggar pedoman.',
@@ -175,7 +175,7 @@ class ReportFactory extends Factory
             
             return [
                 'status' => 'rejected',
-                'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+                'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
                 'admin_response' => fake()->randomElement([
                     'Setelah ditinjau, konten yang dilaporkan tidak melanggar pedoman komunitas.',
                     'Laporan tidak dapat diproses karena kurangnya bukti yang mendukung.',

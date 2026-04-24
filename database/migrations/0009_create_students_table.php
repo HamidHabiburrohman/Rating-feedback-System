@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->string('password')->nullable();
+            $table->timestamp('last_login_at')->nullable();
             $table->string('major', 100)->nullable();
             $table->string('class_year', 10)->nullable();
             $table->text('bio')->nullable();

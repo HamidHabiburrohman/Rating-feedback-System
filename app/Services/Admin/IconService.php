@@ -50,8 +50,60 @@ class IconService
             'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
         ],
         'parking' => [
-            'name' => 'Parking',
+            'name' => 'Parkir',
             'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 7v10"/><path d="M9 7h4a3 3 0 0 1 0 6H9"/></svg>'
+        ],
+        'air-conditioner' => [
+            'name' => 'AC',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M12 6v12"/><path d="M6 12h12"/></svg>'
+        ],
+        'wifi' => [
+            'name' => 'WiFi',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13.5a7.5 7.5 0 0 1 14 0"/><path d="M8 16.5a4.5 4.5 0 0 1 8 0"/><line x1="12" y1="20" x2="12" y2="20"/></svg>'
+        ],
+        'projector' => [
+            'name' => 'Proyektor',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="10" rx="2"/><path d="M8 18v2"/><path d="M16 18v2"/><line x1="12" y1="8" x2="12" y2="4"/><circle cx="12" cy="13" r="1.5"/></svg>'
+        ],
+        'whiteboard' => [
+            'name' => 'Whiteboard',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14"/><line x1="12" y1="5" x2="12" y2="19"/><path d="M3 12h18"/></svg>'
+        ],
+        'printer' => [
+            'name' => 'Printer',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="4" rx="1"/><rect x="4" y="8" width="16" height="12" rx="1"/><path d="M8 12h8"/><path d="M8 16h4"/><path d="M18 8v8"/><path d="M6 8v8"/></svg>'
+        ],
+        'mosque' => [
+            'name' => 'Musala',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.48 3.63a2 2 0 0 0-2.96 0L9.04 9.65c-1.17 1.29-.26 3.35 1.48 3.35h10.96c1.74 0 2.65-2.06 1.48-3.35l-5.48-6.03zM4 28V16c0-1.1.9-2 2-2h20c1.1 0 2 .9 2 2v12M12 28v-6c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v6"/><circle cx="16" cy="9" r="2" fill="currentColor"/></svg>'
+        ],
+        'toilet' => [
+            'name' => 'Toilet',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="2"/><path d="M12 12v6"/><path d="M8 8v2a4 4 0 0 0 8 0V8"/><path d="M6 4v4a6 6 0 0 0 12 0V4"/><rect x="5" y="18" width="14" height="2" rx="1"/></svg>'
+        ],
+        'cafe' => [
+            'name' => 'Kantin',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/><path d="M12 12v3"/><path d="M9 13.5l3 1.5 3-1.5"/></svg>'
+        ],
+        'wheelchair' => [
+            'name' => 'Akses Kursi Roda',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="2"/><path d="M9 8v6"/><path d="M9 14l-3 4"/><path d="M12 12h3l2 3"/><circle cx="16" cy="18" r="2"/><path d="M16 16v4"/><path d="M6 20h12"/></svg>'
+        ],
+        'waiting-room' => [
+            'name' => 'Ruang Tunggu',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/><circle cx="17" cy="13" r="1.5"/><line x1="7" y1="17" x2="17" y2="17"/></svg>'
+        ],
+        'water-dispenser' => [
+            'name' => 'Air Minum',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 6c-2.5 0-4.5 1.5-4.5 4s2 4 4.5 4 4.5-1.5 4.5-4-2-4-4.5-4z"/><path d="M12 14v8"/><path d="M9 22h6"/></svg>'
+        ],
+        'locker' => [
+            'name' => 'Loker',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/><path d="M9 3v18"/></svg>'
+        ],
+        'speaker' => [
+            'name' => 'Sound System',
+            'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M12 13v4"/><path d="M9 18h6"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="12" cy="17" r="1"/></svg>'
         ],
     ];
 
@@ -65,6 +117,7 @@ class IconService
         return $this->icons[$key] ?? null;
     }
 
+    // Di method getSvg(), pastikan class ditambahkan dengan benar
     public function getSvg(string $key, array $attributes = []): string
     {
         if (empty($key) || !isset($this->icons[$key])) {
@@ -73,21 +126,14 @@ class IconService
 
         $svg = $this->icons[$key]['svg'];
 
-        if (!empty($attributes['class'])) {
-            $svg = preg_replace('/<svg/', '<svg class="' . $attributes['class'] . '"', $svg);
+        // Default class jika tidak ada
+        if (empty($attributes['class'])) {
+            $attributes['class'] = 'w-6 h-6';
         }
 
-        if (!empty($attributes['style'])) {
-            $svg = preg_replace('/<svg/', '<svg style="' . $attributes['style'] . '"', $svg);
-        }
-
-        if (!empty($attributes['width'])) {
-            $svg = preg_replace('/<svg/', '<svg width="' . $attributes['width'] . '"', $svg);
-        }
-
-        if (!empty($attributes['height'])) {
-            $svg = preg_replace('/<svg/', '<svg height="' . $attributes['height'] . '"', $svg);
-        }
+        // Hapus class yang sudah ada di SVG dan ganti dengan yang baru
+        $svg = preg_replace('/class="[^"]*"/', '', $svg);
+        $svg = preg_replace('/<svg/', '<svg class="' . $attributes['class'] . '"', $svg);
 
         return $svg;
     }

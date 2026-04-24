@@ -39,7 +39,7 @@ return new class extends Migration {
 
             $table->foreignId('admin_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('admins')
                 ->nullOnDelete();
 
             $table->text('admin_response')->nullable();

@@ -20,7 +20,7 @@
             <div class="bg-white p-10 md:p-12 rounded-3xl shadow-xl text-center">
                 <div class="mx-auto relative group w-48 h-48">
                     <div
-                        class="absolute -inset-4 bg-linear-to-tr from-primary via-secondary-container to-transparent rounded-full blur-xl opacity-30 group-hover:opacity-50 transition duration-700">
+                        class="absolute -inset-4 bg-linear-to-tr from-primary via-secondary-container border to-transparent rounded-full blur-xl opacity-30 group-hover:opacity-50 transition duration-700">
                     </div>
 
                     <div class="relative w-48 h-48 rounded-full overflow-hidden border-8 border-white shadow-2xl">

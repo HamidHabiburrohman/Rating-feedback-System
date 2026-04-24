@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
+use App\Models\Admin;
 use App\Models\Rating;
 use App\Models\Report;
 use App\Models\Unit;
@@ -35,7 +35,7 @@ class ModerationLogFactory extends Factory
         $createdAt = fake()->dateTimeBetween('-2 months', 'now');
         
         return [
-            'admin_id' => User::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
+            'admin_id' => Admin::whereIn('role', ['admin', 'super_admin'])->inRandomOrder()->first()?->id ?? 1,
             'action' => $action,
             'target_type' => $targetType,
             'target_id' => $targetId,
@@ -72,7 +72,7 @@ class ModerationLogFactory extends Factory
         ]);
     }
 
-    public function byAdmin(User $admin): static
+    public function byAdmin(Admin $admin): static
     {
         return $this->state(fn (array $attributes) => [
             'admin_id' => $admin->id,

@@ -5,7 +5,6 @@ namespace App\Services\Student;
 use App\Models\Report;
 use App\Models\Rating;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ReportService extends BaseStudentService
 {
@@ -24,15 +23,19 @@ class ReportService extends BaseStudentService
             return false;
         }
 
-        if ($rating->status === 'archived') {
+        if ($rating->status !== 'active') {
             return false;
         }
 
-        if ($rating->activeReport()->exists()) {
+        $activeReport = $rating->activeReport()->first();
+        if ($activeReport && in_array($activeReport->status, ['new', 'processing', 'under_review'])) {
             return false;
         }
 
-        $lastReport = $rating->report()->where('status', 'resolved')->latest()->first();
+        $lastReport = $rating->reports()
+            ->where('status', 'resolved')
+            ->latest()
+            ->first();
 
         if ($lastReport && $lastReport->updated_at->addDays(7) > now()) {
             return false;
@@ -49,15 +52,19 @@ class ReportService extends BaseStudentService
             return 'Anda tidak memiliki akses ke rating ini';
         }
 
-        if ($rating->status === 'archived') {
-            return 'Rating ini telah diarsipkan';
+        if ($rating->status !== 'active') {
+            return 'Hanya rating aktif yang dapat dilaporkan';
         }
 
-        if ($rating->activeReport()->exists()) {
-            return 'Laporan untuk rating ini sedang diproses';
+        $activeReport = $rating->activeReport()->first();
+        if ($activeReport && in_array($activeReport->status, ['new', 'processing', 'under_review'])) {
+            return 'Laporan untuk rating ini sedang diproses oleh admin';
         }
 
-        $lastReport = $rating->report()->where('status', 'resolved')->latest()->first();
+        $lastReport = $rating->reports()
+            ->where('status', 'resolved')
+            ->latest()
+            ->first();
 
         if ($lastReport) {
             $daysPassed = now()->diffInDays($lastReport->updated_at);
@@ -76,7 +83,7 @@ class ReportService extends BaseStudentService
             $rating = Rating::with('unit')->findOrFail($data['rating_id']);
 
             if (!$this->canReport($rating)) {
-                throw new \Exception('Tidak dapat melaporkan rating ini');
+                throw new \Exception($this->getReportStatusMessage($rating));
             }
 
             $reportData = [
@@ -90,8 +97,7 @@ class ReportService extends BaseStudentService
                 'status' => 'new'
             ];
 
-            // Handle file upload
-            if (isset($data['attachment']) && $data['attachment']->isValid()) {
+            if (isset($data['attachment']) && $data['attachment'] && $data['attachment']->isValid()) {
                 $file = $data['attachment'];
                 $path = $file->store('reports/' . date('Y/m/d'), 'public');
 
@@ -112,7 +118,7 @@ class ReportService extends BaseStudentService
             ->firstOrFail();
     }
 
-    public function getUserReports(string $studentIdentifier, array $filters = []): array
+    public function getUserReports(string $studentIdentifier, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $query = $this->report->with(['unit'])
             ->where('student_identifier', $studentIdentifier);
@@ -130,8 +136,19 @@ class ReportService extends BaseStudentService
 
         $perPage = $filters['per_page'] ?? 10;
 
-        return $query->latest()
-            ->paginate($perPage)
-            ->toArray();
+        return $query->latest()->paginate($perPage);
+    }
+
+    public function getReportStats(string $studentIdentifier): array
+    {
+        $reports = $this->report->where('student_identifier', $studentIdentifier);
+
+        return [
+            'total' => $reports->count(),
+            'new' => $reports->where('status', 'new')->count(),
+            'processing' => $reports->where('status', 'processing')->count(),
+            'resolved' => $reports->where('status', 'resolved')->count(),
+            'rejected' => $reports->where('status', 'rejected')->count()
+        ];
     }
 }

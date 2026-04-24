@@ -56,11 +56,6 @@ function initEventListeners(routes) {
         loadTopUnits(currentFilter, routes);
     });
 
-    $('#table-search').on('input', debounce(function () {
-        const query = $(this).val().toLowerCase();
-        searchUnits(query);
-    }, 300));
-
     $(document).on('click', '.btn-page:not(.disabled)', function () {
         const page = $(this).data('page');
         if (page === 'prev') {
@@ -159,10 +154,10 @@ function initCharts() {
     charts.unitsMonthly.render();
 }
 
-function initVisitorsChart(data, categories) {
+function initStudentsChart(data, categories) {
     const options = {
         series: [{
-            name: 'Visitors',
+            name: 'Students',
             data: data
         }],
         chart: {
@@ -222,7 +217,7 @@ function initVisitorsChart(data, categories) {
             theme: 'light',
             y: {
                 formatter: function (val) {
-                    return val + ' visitors';
+                    return val + ' students';
                 }
             }
         },
@@ -235,12 +230,12 @@ function initVisitorsChart(data, categories) {
         }
     };
 
-    if (charts.visitors) {
-        charts.visitors.destroy();
+    if (charts.students) {
+        charts.students.destroy();
     }
 
-    charts.visitors = new ApexCharts(document.querySelector('#chart-visitors'), options);
-    charts.visitors.render();
+    charts.students = new ApexCharts(document.querySelector('#chart-students'), options);
+    charts.students.render();
 }
 
 function loadAllData(routes) {
@@ -283,14 +278,14 @@ function showLoadingStates() {
 }
 
 function updateStats(stats) {
-    animateValue('#visitors-today', stats.visitors?.today || 0);
+    animateValue('#students-today', stats.students?.today || 0);
     animateValue('#ratings-today', stats.ratings?.today || 0);
-    animateValue('#visitors-week', stats.visitors?.this_week || 0);
+    animateValue('#students-week', stats.students?.this_week || 0);
     animateValue('#active-units', stats.units?.active || 0);
 
-    updateTrendIndicator('.kpi-card:first-child .kpi-trend', stats.visitors?.trend?.daily);
+    updateTrendIndicator('.kpi-card:first-child .kpi-trend', stats.students?.trend?.daily);
     updateTrendIndicator('.kpi-card:nth-child(2) .kpi-trend', stats.ratings?.trend);
-    updateTrendIndicator('.kpi-card:nth-child(3) .kpi-trend', stats.visitors?.trend?.weekly);
+    updateTrendIndicator('.kpi-card:nth-child(3) .kpi-trend', stats.students?.trend?.weekly);
     updateTrendIndicator('.kpi-card:last-child .kpi-trend', stats.units?.trend);
 }
 
@@ -339,13 +334,13 @@ function calculateCumulative(data) {
 }
 
 function updateCharts(data) {
-    if (data.visitation_trend) {
-        const recent = data.visitation_trend.slice(-12);
+    if (data.student_login_trend) {
+        const recent = data.student_login_trend.slice(-12);
         const categories = recent.map(d => d.day);
-        const values = recent.map(d => d.visitors);
+        const values = recent.map(d => d.students);
 
-        $('#peak-visitors').text(Math.max(...values).toLocaleString());
-        initVisitorsChart(values, categories);
+        $('#peak-students').text(Math.max(...values).toLocaleString());
+        initStudentsChart(values, categories);
     }
 
     if (data.unit_growth) {
@@ -431,20 +426,6 @@ function loadTopUnits(filter, routes) {
         });
 }
 
-function searchUnits(query) {
-    if (!query) {
-        filteredUnits = [...allUnits];
-    } else {
-        filteredUnits = allUnits.filter(unit =>
-            unit.name?.toLowerCase().includes(query) ||
-            (unit.type_name && unit.type_name.toLowerCase().includes(query)) ||
-            unit.id?.toString().includes(query)
-        );
-    }
-    currentPage = 1;
-    renderTablePage();
-}
-
 function renderTablePage() {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -486,7 +467,6 @@ function renderTable(units) {
                         </div>
                         <div class="unit-info">
                             <div class="unit-name">${unit.name || 'Unknown Unit'}</div>
-                            <div class="unit-id">#${unit.id || '001'}</div>
                         </div>
                     </div>
                 </td>
