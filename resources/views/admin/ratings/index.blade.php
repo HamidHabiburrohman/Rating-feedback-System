@@ -23,8 +23,8 @@
                     <div class="dropdown">
                         <button class="dropdown-toggle-btn" type="button" data-bs-toggle="dropdown">
                             <span class="fw-medium">{{ request('per_page', 10) }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
@@ -46,13 +46,14 @@
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown" id="filterDropdown"
                             style="height:44px;background:white;border-color:#d1d5db;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                             </svg>
                             <span class="fw-medium" id="filterText">Filter</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
+                                style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
@@ -64,7 +65,8 @@
                                 <div class="d-flex flex-wrap gap-2" id="statusFilter">
                                     @php
                                         $activeStyle = 'background: #f8773c; border: none; color: white;';
-                                        $inactiveStyle = 'background: white; border: 1px solid #d1d5db; color: #6b7280;';
+                                        $inactiveStyle =
+                                            'background: white; border: 1px solid #d1d5db; color: #6b7280;';
                                         $currentStatus = request('status') ? [request('status')] : [];
                                     @endphp
 
@@ -111,13 +113,13 @@
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <input type="number" class="form-control rounded-3" id="minScoreFilter"
-                                            placeholder="Min" value="{{ request('min_score') }}" min="1" max="5" step="0.1"
-                                            style="border-color: #d1d5db;">
+                                            placeholder="Min" value="{{ request('min_score') }}" min="1"
+                                            max="5" step="0.1" style="border-color: #d1d5db;">
                                     </div>
                                     <div class="col-6">
                                         <input type="number" class="form-control rounded-3" id="maxScoreFilter"
-                                            placeholder="Max" value="{{ request('max_score') }}" min="1" max="5" step="0.1"
-                                            style="border-color: #d1d5db;">
+                                            placeholder="Max" value="{{ request('max_score') }}" min="1"
+                                            max="5" step="0.1" style="border-color: #d1d5db;">
                                     </div>
                                 </div>
                             </div>
@@ -138,22 +140,23 @@
                     </div>
 
                     <x-admin.sort-button :sortOptions="[
-            'created_at_desc' => 'Newest First',
-            'created_at_asc' => 'Oldest First',
-            'overall_score_desc' => 'Highest Score',
-            'overall_score_asc' => 'Lowest Score',
-        ]"
-                        defaultSort="created_at" defaultOrder="desc" />
+                        'created_at_desc' => 'Newest First',
+                        'created_at_asc' => 'Oldest First',
+                        'overall_score_desc' => 'Highest Score',
+                        'overall_score_asc' => 'Lowest Score',
+                    ]" defaultSort="created_at" defaultOrder="desc" />
 
                     <!-- Bulk Actions Button -->
-                    <button type="button" id="bulkActionsBtn" class="btn btn-primary btn-icon-left d-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                    <button type="button" id="bulkActionsBtn" class="btn btn-primary btn-icon-left d-none"
+                        style="background: #f8773c; border: none; border-radius: 30px; padding: 0.6rem 1.5rem; 
+                       box-shadow: 0 4px 12px rgba(248,119,60,0.3); transition: all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                         Bulk Actions
-                        <span class="badge bg-white text-dark rounded-pill ms-1">0</span>
+                        <span class="badge bg-white text-dark rounded-pill ms-1" style="font-weight: 600;">0</span>
                     </button>
                 </div>
             </div>
@@ -162,8 +165,8 @@
 
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" class="me-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" class="me-2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
@@ -174,8 +177,8 @@
 
         @if (session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" class="me-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" class="me-2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -216,23 +219,28 @@
 
         <div class="modal fade" id="bulkActionModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Bulk Action</h5>
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                    <div class="modal-header border-0" style="background: #fff; border-radius: 16px 16px 0 0;">
+                        <h5 class="modal-title fw-bold" style="color: #1e293b;">Bulk Action</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body">
-                        <p class="mb-3">Apply action to <span id="selectedCount" class="fw-bold text-primary">0</span>
-                            selected ratings</p>
-                        <select class="form-select mb-3" id="bulkActionSelect">
+                    <div class="modal-body" style="color: #475569;">
+                        <p class="mb-3">Apply action to <span id="selectedCount" class="fw-bold"
+                                style="color: #f8773c;">0</span> selected ratings</p>
+                        <select class="form-select mb-3" id="bulkActionSelect"
+                            style="border-radius: 8px; border-color: #d1d5db;">
                             <option value="">Select Action</option>
                             <option value="archive">Archive</option>
                             <option value="restore">Restore</option>
                             <option value="delete">Delete</option>
                         </select>
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="applyBulkAction">Apply</button>
+                            <button type="button" class="btn btn-outline-secondary rounded-pill"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn rounded-pill" id="applyBulkAction"
+                                style="background: #f8773c; color: white; border: none; padding: 0.5rem 1.5rem;">
+                                Apply
+                            </button>
                         </div>
                     </div>
                 </div>

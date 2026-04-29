@@ -26,10 +26,6 @@ class AdminProfileService
 
     public function updatePassword(Admin $admin, array $data): void
     {
-        if (!Hash::check($data['current_password'], $admin->password)) {
-            throw new \Exception('Password saat ini tidak cocok');
-        }
-
         $admin->update([
             'password' => Hash::make($data['new_password'])
         ]);
@@ -50,7 +46,7 @@ class AdminProfileService
         try {
             // Cek apakah disk public ada
             Log::info('Storage disk public exists: ' . (Storage::disk('public')->exists('.') ? 'YES' : 'NO'));
-            
+
             // Pastikan folder admins ada
             if (!Storage::disk('public')->exists('admins')) {
                 Log::info('Folder admins tidak ada, mencoba membuat...');
@@ -72,10 +68,10 @@ class AdminProfileService
             // Simpan foto baru
             $filename = 'admin_' . $admin->id . '_' . time() . '.' . $photo->getClientOriginalExtension();
             Log::info('New filename: ' . $filename);
-            
+
             $path = $photo->storeAs('admins', $filename, 'public');
             Log::info('StoreAs result path: ' . $path);
-            
+
             // Cek apakah file benar-benar tersimpan
             $fullPath = storage_path('app/public/' . $path);
             Log::info('Full path: ' . $fullPath);
@@ -85,14 +81,13 @@ class AdminProfileService
             // Update database
             $admin->update(['photo' => $path]);
             Log::info('Database updated with path: ' . $path);
-            
+
             // Cek setelah update
             $fresh = $admin->fresh();
             Log::info('After update - photo field: ' . $fresh->photo);
             Log::info('After update - photo_url: ' . $fresh->photo_url);
-            
+
             Log::info('=== UPLOAD PHOTO SUCCESS ===');
-            
         } catch (\Exception $e) {
             Log::error('=== UPLOAD PHOTO FAILED ===');
             Log::error('Error message: ' . $e->getMessage());
@@ -107,7 +102,7 @@ class AdminProfileService
         Log::info('=== REMOVE PHOTO ===');
         Log::info('Admin ID: ' . $admin->id);
         Log::info('Current photo: ' . $admin->photo);
-        
+
         if ($admin->photo) {
             $deleted = Storage::disk('public')->delete($admin->photo);
             Log::info('Photo deleted from storage: ' . ($deleted ? 'YES' : 'NO'));

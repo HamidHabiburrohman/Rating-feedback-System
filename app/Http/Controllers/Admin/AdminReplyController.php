@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminReply\StoreAdminReplyRequest;
+use App\Models\Admin;
 use App\Services\Admin\AdminReplyService;
 use App\Models\Rating;
 use App\Models\User;
@@ -26,7 +27,7 @@ class AdminReplyController extends Controller
         $filters = $request->only(['search', 'admin_id', 'unit_id', 'date', 'sort', 'order', 'per_page']);
         $replies = $this->service->getPaginatedReplies($filters);
         $stats = $this->service->getReplyStats();
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = Admin::whereIn('role', ['admin', 'super_admin'])->get();
         $units = Unit::all();
 
         return view('admin.admin-replies.index', compact('replies', 'stats', 'admins', 'units'));

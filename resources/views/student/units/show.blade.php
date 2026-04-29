@@ -170,6 +170,72 @@
 
     </div>
 
+    {{-- Modal Terima Kasih --}}
+    @if (session('show_thanks_modal'))
+        <div x-data="{ showModal: true }" x-init="setTimeout(() => showModal = true, 100)" x-show="showModal" x-transition.opacity.duration.300ms x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            @click.outside="showModal = false">
+
+            <div class="relative max-w-sm w-full bg-white rounded-3xl shadow-2xl overflow-hidden"
+                x-transition.scale.origin.center.duration.300ms>
+
+                {{-- Tombol Close --}}
+                <button @click="showModal = false"
+                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+
+                {{-- Content --}}
+                <div class="text-center px-8 pt-12 pb-8">
+                    {{-- Icon --}}
+                    <div
+                        class="w-20 h-20 mx-auto bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl flex items-center justify-center mb-5">
+                        <span class="material-symbols-outlined text-5xl text-emerald-500"
+                            style="font-variation-settings: 'FILL' 1;">
+                            check_circle
+                        </span>
+                    </div>
+
+                    {{-- Title --}}
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">
+                        Terima Kasih!
+                    </h3>
+
+                    {{-- Message --}}
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6">
+                        Rating Anda telah kami terima. Masukan Anda sangat berharga untuk meningkatkan kualitas layanan
+                        kami.
+                    </p>
+
+                    {{-- Button --}}
+                    <button @click="showModal = false"
+                        class="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition-colors duration-200">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <style>
+        [x-cloak] {
+            display: none;
+        }
+    </style>
+
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+
+    {{-- Style untuk x-cloak (jika belum ada) --}}
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {

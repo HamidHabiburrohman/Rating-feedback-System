@@ -16,7 +16,8 @@ use App\Http\Controllers\Admin\ModerationLogController;
 use App\Http\Controllers\Admin\AdminReplyController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\AdminProfileController;
-
+use App\Http\Controllers\Admin\Auth\ForgotPasswordController as AuthForgotPasswordController;
+use App\Http\Controllers\Admin\Auth\ResetPasswordController as AuthResetPasswordController;
 use App\Http\Controllers\Student\Auth\AuthController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\ProfileController as StudentProfileController;
@@ -24,7 +25,8 @@ use App\Http\Controllers\Student\RatingController as StudentRatingController;
 use App\Http\Controllers\Student\ReportController as StudentReportController;
 use App\Http\Controllers\Student\UnitController as StudentUnitController;
 use App\Http\Controllers\Student\ActivityController;
-
+use App\Http\Controllers\Student\Auth\ForgotPasswordController;
+use App\Http\Controllers\Student\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -105,6 +107,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {
         Route::get('/login', [AuthAdminController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [AuthAdminController::class, 'login'])->name('login.submit');
+
+        // Forgot Password
+        Route::get('/forgot-password', [AuthForgotPasswordController::class, 'showLinkRequestForm'])
+            ->name('password.request');
+        Route::post('/forgot-password', [AuthForgotPasswordController::class, 'sendResetLinkEmail'])
+            ->name('password.email');
+
+        // Reset Password
+        Route::get('/reset-password', [AuthResetPasswordController::class, 'showResetForm'])
+            ->name('password.reset');
+        Route::post('/reset-password', [AuthResetPasswordController::class, 'reset'])
+            ->name('password.update');
     });
 
     /*
@@ -323,23 +337,29 @@ Route::prefix('admin')->name('admin.')->group(function () {
         | Settings Management
         |----------------------------------------------------------------------
         */
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [SettingController::class, 'index'])->name('index');
-            Route::get('/create', [SettingController::class, 'create'])->name('create');
-            Route::post('/', [SettingController::class, 'store'])->name('store');
-            Route::get('/group/{group}', [SettingController::class, 'getByGroup'])->name('group');
-            Route::get('/public/all', [SettingController::class, 'getPublic'])->name('public');
-            Route::get('/value/{key}', [SettingController::class, 'getValue'])->name('value');
-            Route::get('/stats/data', [SettingController::class, 'stats'])->name('stats');
-            Route::get('/export/data', [SettingController::class, 'export'])->name('export');
-            Route::get('/{setting}', [SettingController::class, 'show'])->name('show');
-            Route::get('/{setting}/edit', [SettingController::class, 'edit'])->name('edit');
-            Route::put('/{setting}', [SettingController::class, 'update'])->name('update');
-            Route::delete('/{setting}', [SettingController::class, 'destroy'])->name('destroy');
-            Route::post('/bulk-update', [SettingController::class, 'bulkUpdate'])->name('bulk-update');
-            Route::post('/reset/{key}', [SettingController::class, 'resetToDefault'])->name('reset');
-            Route::post('/import', [SettingController::class, 'import'])->name('import');
-        });
+        // Route::prefix('settings')->name('settings.')->group(function () {
+        //     Route::get('/', [SettingController::class, 'index'])->name('index');
+        //     Route::get('/create', [SettingController::class, 'create'])->name('create');
+        //     Route::post('/', [SettingController::class, 'store'])->name('store');
+        //     Route::get('/group/{group}', [SettingController::class, 'getByGroup'])->name('group');
+        //     Route::get('/public/all', [SettingController::class, 'getPublic'])->name('public');
+        //     Route::get('/value/{key}', [SettingController::class, 'getValue'])->name('value');
+        //     Route::get('/stats/data', [SettingController::class, 'stats'])->name('stats');
+        //     Route::get('/export/data', [SettingController::class, 'export'])->name('export');
+        //     Route::get('/{setting}', [SettingController::class, 'show'])->name('show');
+        //     Route::get('/{setting}/edit', [SettingController::class, 'edit'])->name('edit');
+        //     Route::put('/{setting}', [SettingController::class, 'update'])->name('update');
+        //     Route::delete('/{setting}', [SettingController::class, 'destroy'])->name('destroy');
+        //     Route::post('/bulk-update', [SettingController::class, 'bulkUpdate'])->name('bulk-update');
+        //     Route::post('/reset/{key}', [SettingController::class, 'resetToDefault'])->name('reset');
+        //     Route::post('/import', [SettingController::class, 'import'])->name('import');
+
+        //     Route::get('/group/{group}/show', [SettingController::class, 'index'])->name('group.show');
+        //     Route::put('/group/{group}/update', [SettingController::class, 'updateGroup'])->name('group.update');
+        //     Route::post('/group/{group}/reset', [SettingController::class, 'resetGroup'])->name('group.reset');
+
+        //     Route::post('/refresh-cache', [SettingController::class, 'refreshCache'])->name('refresh.cache');
+        // });
 
         /*
         |----------------------------------------------------------------------
@@ -386,6 +406,16 @@ Route::prefix('student')->name('student.')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
         Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
         Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+        Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
+            ->name('password.request');
+        Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+            ->name('password.email');
+
+        // Reset Password
+        Route::get('/reset-password', [ResetPasswordController::class, 'showResetForm'])
+            ->name('password.reset');
+        Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
+            ->name('password.update');
     });
 
     /*

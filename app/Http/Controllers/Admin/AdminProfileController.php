@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Profile\UpdateProfileRequest;
 use App\Http\Requests\Admin\Profile\UpdatePasswordRequest;
@@ -35,9 +34,14 @@ class AdminProfileController extends Controller
 
     public function update(UpdateProfileRequest $request)
     {
+        
         try {
             $admin = Auth::guard('admin')->user();
             $this->service->updateProfile($admin, $request->validated());
+
+            if ($request->has('profile_banner')) {
+                $admin->setPreference('profile_banner', $request->profile_banner);
+            }
 
             return redirect()->route('admin.profile.show')
                 ->with('success', 'Profil berhasil diperbarui');

@@ -21,14 +21,14 @@
             </div>
 
             {{-- Error Alert --}}
-            @if($errors->any())
+            @if ($errors->any())
                 <div class="mb-6 p-4 rounded-lg bg-error/10 border border-error/20">
                     <div class="flex items-start gap-3">
                         <span class="material-symbols-outlined text-error">error</span>
                         <div class="flex-1">
                             <p class="font-bold text-error text-sm">Please fix the following errors:</p>
                             <ul class="list-disc list-inside text-sm text-error/80 mt-1">
-                                @foreach($errors->all() as $error)
+                                @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>
                                 @endforeach
                             </ul>
@@ -37,7 +37,7 @@
                 </div>
             @endif
 
-            @if(session('error'))
+            @if (session('error'))
                 <div class="mb-6 p-4 rounded-lg bg-error/10 border border-error/20">
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-error">error</span>
@@ -46,7 +46,7 @@
                 </div>
             @endif
 
-            @if(session('success'))
+            @if (session('success'))
                 <div class="mb-6 p-4 rounded-lg bg-green-100 border border-green-200">
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-green-600">check_circle</span>
@@ -59,14 +59,14 @@
             {{-- Form Card --}}
             <div
                 class="bg-surface-container-lowest rounded-lg p-8 md:p-12 shadow-[0_40px_80px_rgba(173,43,0,0.06)] border border-outline-variant/10">
-                <form method="POST" action="{{ route('student.ratings.store') }}" class="space-y-12" x-data="ratingForm()"
-                    id="ratingForm">
+                <form method="POST" action="{{ route('student.ratings.store') }}" class="space-y-12"
+                    x-data="ratingForm()" id="ratingForm">
                     @csrf
                     <input type="hidden" name="unit_id" value="{{ $unit->id }}">
 
                     {{-- Rating Categories Grid --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        @foreach($categories as $category)
+                        @foreach ($categories as $category)
                             <div class="space-y-4">
                                 <div class="flex items-center gap-3">
                                     <span class="font-bold text-on-surface tracking-tight">{{ $category['name'] }}</span>
@@ -77,10 +77,13 @@
                                     <template x-for="star in 5" :key="star">
                                         <button type="button" @click="setRating({{ $category['id'] }}, star)"
                                             @mouseenter="hoveredRating[{{ $category['id'] }}] = star"
-                                            @mouseleave="hoveredRating[{{ $category['id'] }}] = 0" class="focus:outline-none">
+                                            @mouseleave="hoveredRating[{{ $category['id'] }}] = 0"
+                                            class="focus:outline-none">
                                             <span class="material-symbols-outlined text-3xl transition-all duration-150"
-                                                :class="getStarClass({{ $category['id'] }}, star) ? 'text-primary' : 'text-slate-300'"
-                                                :style="getStarClass({{ $category['id'] }}, star) ? 'font-variation-settings: &quot;FILL&quot; 1' : ''">
+                                                :class="getStarClass({{ $category['id'] }}, star) ? 'text-primary' :
+                                                    'text-slate-300'"
+                                                :style="getStarClass({{ $category['id'] }}, star) ?
+                                                    'font-variation-settings: &quot;FILL&quot; 1' : ''">
                                                 star
                                             </span>
                                         </button>
@@ -142,7 +145,47 @@
             </div>
 
         </div>
+
+        {{-- Modal Terima Kasih --}}
+        @if (session('show_thanks_modal'))
+            <div x-data="{ showModal: true }" x-init="setTimeout(() => { showModal = true }, 100)" x-show="showModal" x-cloak
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-all"
+                style="display: none;">
+                <div class="relative max-w-md w-full bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden"
+                    @click.outside="showModal = false">
+
+                    {{-- Header / Ilustrasi --}}
+                    <div class="relative pt-12 pb-6 text-center bg-linear-to-b from-primary/5 to-transparent">
+                        <span class="material-symbols-outlined text-6xl text-primary"
+                            style="font-variation-settings: 'FILL' 1;">
+                            sentiment_satisfied
+                        </span>
+                        <h3 class="mt-4 text-2xl font-extrabold text-on-surface">Terima Kasih!</h3>
+                        <p class="mt-2 text-on-surface-variant px-6">
+                            Rating Anda telah kami terima. Masukan Anda sangat berharga untuk meningkatkan kualitas layanan
+                            unit kami.
+                        </p>
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="p-6 text-center border-t border-outline-variant/20">
+                        <p class="text-sm text-on-surface-variant">
+                            {{ session('success') ?? 'Sukses mengirim rating.' }}
+                        </p>
+                        <button @click="showModal = false"
+                            class="mt-6 w-full py-3 rounded-full bg-primary text-on-primary font-bold shadow-md hover:bg-primary/90 transition">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
     </main>
+
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 @endsection
 
 @push('scripts')
@@ -170,7 +213,7 @@
         });
 
         // Debug form submission
-        document.getElementById('ratingForm')?.addEventListener('submit', function (e) {
+        document.getElementById('ratingForm')?.addEventListener('submit', function(e) {
             console.log('Form submitted');
             console.log('Form data:', new FormData(this));
         });
