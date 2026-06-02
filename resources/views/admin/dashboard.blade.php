@@ -9,7 +9,7 @@
             --primary-light: #fff5f0;
             --primary-dark: #e56a2e;
             --primary-hover: #f0692d;
-            --bg-main: #ffffff;
+            --bg-main: #FBFBFB;
             --bg-surface: #ffffff;
             --bg-elevated: #ffffff;
             --surface: #f3f4f6;
@@ -48,7 +48,7 @@
         }
 
         .dashboard-container {
-            background-color: var(--bg-main);
+            /* background-color: var(--bg-main); */
             font-family: var(--font-family);
             color: var(--text-primary);
             padding: var(--space-6);

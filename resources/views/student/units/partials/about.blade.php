@@ -1,17 +1,10 @@
 @php
-    // HAPUS INI:
-    // use App\Services\Student\RatingService;
-    // $ratingService = app(RatingService::class);
-    // $stats = $ratingService->getRatingStats($unit->id);
-    
-    // GANTI DENGAN INI - gunakan $stats yang dikirim dari controller
     $categoryAverages = $stats['by_category'] ?? [];
     $totalRatings = $stats['total'] ?? 0;
     $avgOverall = $stats['average'] ?? 0;
     $avgRounded = round($avgOverall);
     $emptyStars = 5 - $avgRounded;
-    
-    // Untuk categories, tetap panggil service
+
     $ratingService = app(\App\Services\Student\RatingService::class);
     $categories = $ratingService->getActiveCategories();
 @endphp

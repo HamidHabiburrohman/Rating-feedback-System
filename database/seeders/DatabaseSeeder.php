@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
             UnitDepartmentSeeder::class,
             RatingCategorySeeder::class,
             FacilitySeeder::class,
-            SettingSeeder::class,
 
             UnitSeeder::class,
             StudentSessionSeeder::class,

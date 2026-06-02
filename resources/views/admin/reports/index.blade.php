@@ -195,7 +195,7 @@
             </div>
         @endif
 
-        <div class="card border rounded-4 mt-4">
+        <div class="card border rounded-5 mt-4">
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="bg-transparent">

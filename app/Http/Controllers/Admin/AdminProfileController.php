@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Profile\UpdateProfileRequest;
 use App\Http\Requests\Admin\Profile\UpdatePasswordRequest;
+use App\Http\Requests\Admin\Profile\UpdatePreferencesRequest;
 use App\Models\Admin;
 use App\Services\Admin\AdminProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class AdminProfileController extends Controller
 {
@@ -60,25 +59,44 @@ class AdminProfileController extends Controller
         }
     }
 
+    public function updatePreferences(UpdatePreferencesRequest $request)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+
+            $preferences = $request->only([
+                'theme',
+                'language',
+                'notifications',
+                'compact_sidebar',
+                'show_activity',
+                'login_notifications'
+            ]);
+
+            $preferences = array_filter($preferences, function ($value) {
+                return !is_null($value);
+            });
+
+            $this->service->updatePreferences($admin, ['preferences' => $preferences]);
+
+            return redirect()->route('admin.profile.show')
+                ->with('success', 'Preferensi berhasil diperbarui');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memperbarui preferensi: ' . $e->getMessage());
+        }
+    }
+
     public function updatePhoto(Request $request)
     {
-        Log::info('=== CONTROLLER: updatePhoto called ===');
-        Log::info('Request method: ' . $request->method());
-        Log::info('Has file: ' . ($request->hasFile('photo') ? 'YES' : 'NO'));
-        Log::info('Content type: ' . $request->header('Content-Type'));
-
         $request->validate([
             'photo' => 'required|image|max:2048'
         ]);
 
         try {
             $admin = Auth::guard('admin')->user();
-            Log::info('Admin from auth: ' . $admin->email);
-
             $this->service->updatePhoto($admin, $request->file('photo'));
 
             $fresh = Admin::find($admin->id);
-            Log::info('Controller - photo_url: ' . $fresh->photo_url);
 
             return response()->json([
                 'success' => true,
@@ -86,7 +104,6 @@ class AdminProfileController extends Controller
                 'photo_url' => $fresh->photo_url
             ]);
         } catch (\Exception $e) {
-            Log::error('Controller - Upload failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()

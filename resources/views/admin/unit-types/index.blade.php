@@ -6,7 +6,7 @@
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h1 fw-semibold mb-0" style="color: #2d2d2d !important;">Unit Types Management</h1>
+                <h1 class="h2 fw-semibold mb-0" style="color: #2d2d2d !important;">Unit Types Management</h1>
             </div>
         </div>
 
@@ -21,13 +21,14 @@
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown" id="filterDropdown"
                             style="height:44px;background:white;border-color:#d1d5db;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                             </svg>
                             <span class="fw-medium" id="filterText">Filter</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
+                                style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
@@ -39,12 +40,11 @@
                     </div>
 
                     <x-admin.sort-button :sortOptions="[
-            'name_asc' => 'Name A-Z',
-            'name_desc' => 'Name Z-A',
-            'created_at_desc' => 'Newest First',
-            'created_at_asc' => 'Oldest First',
-        ]" defaultSort="name"
-                        defaultOrder="asc" />
+                        'name_asc' => 'Name A-Z',
+                        'name_desc' => 'Name Z-A',
+                        'created_at_desc' => 'Newest First',
+                        'created_at_asc' => 'Oldest First',
+                    ]" defaultSort="name" defaultOrder="asc" />
 
                     <x-admin.button-create url="{{ route('admin.unit-types.create') }}">
                         Add Type
@@ -54,7 +54,8 @@
         </div>
 
         @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center"
+                role="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" class="me-2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -66,7 +67,8 @@
         @endif
 
         @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center"
+                role="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" class="me-2">
                     <circle cx="12" cy="12" r="10" />
@@ -78,9 +80,9 @@
             </div>
         @endif
 
-        <div class="card border rounded-4 mt-4">
+        <div class="card border rounded-5 mt-4">
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 mt-2">
                     <thead class="bg-transparent">
                         <tr class="text-muted text-uppercase" style="font-size: .75rem;">
                             <th class="ps-4 py-3 fw-semibold">Name</th>
@@ -95,7 +97,7 @@
                 </table>
             </div>
 
-            <div class="px-4 py-3">
+            <div class="px-3 py-3">
                 @include('admin.unit-types.partials.pagination', ['paginator' => $unitTypes])
             </div>
         </div>

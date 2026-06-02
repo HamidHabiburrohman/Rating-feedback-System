@@ -31,14 +31,14 @@
     }
 
     body.admin-layout {
-        background-color: #ffffff;
+        background-color: #FBFBFB !important;
         overflow-x: hidden;
     }
 
     .page-wrapper {
         display: flex;
         min-height: 100vh;
-        background-color: #ffffff;
+        background-color: #FBFBFB !important;
     }
 
     /* Left Sidebar */
@@ -59,14 +59,14 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        background-color: #ffffff;
+        background-color: #FBFBFB !important;
         min-height: 100vh;
     }
 
     /* Navbar */
     .app-header {
-        background-color: #ffffff;
-        border-bottom: 1px solid #e6e6e6;
+        background-color: #FFFFFF !important;
+        border: 2px solid #e6e6e6;
         height: 70px;
         display: flex;
         align-items: center;
@@ -81,14 +81,14 @@
     .main-content {
         flex: 1;
         padding: 30px;
-        background-color: #ffffff;
+        background-color: #FBFBFB !important;
     }
 
     /* Footer */
     .footer {
         padding: 20px 30px;
         border-top: 1px solid #edf2f7;
-        background-color: #ffffff;
+        background-color: #FBFBFB !important;
     }
 
     /* Sidebar Collapsed State */

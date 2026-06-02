@@ -3,7 +3,7 @@
 
 <head>
     @include('layouts.student.partials.head')
-    @vite(['resources/css/app.css']) {{-- jika pakai Vite, opsional --}}
+    @vite(['resources/css/app.css'])
 </head>
 
 <body class="font-body bg-surface text-on-surface antialiased">
@@ -15,6 +15,9 @@
     </main>
 
     @include('layouts.student.partials.footer')
+
+    <x-student.auth-modal />
+    
     @include('layouts.student.partials.scripts')
 
     @stack('scripts')

@@ -1,8 +1,8 @@
 <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-[0_20px_40px_rgba(173,43,0,0.04)]">
     <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
-            <a href="{{ route('student.units.index') }}"
-                class="text-2xl font-bold tracking-tighter text-slate-900">Itenas Portal</a>
+            <a href="{{ route('student.units.index') }}" class="text-2xl font-bold tracking-tighter text-slate-900">Itenas
+                Portal</a>
             <div class="hidden md:flex gap-6 font-manrope text-sm font-semibold tracking-tight">
                 <a href="{{ route('student.units.index') }}"
                     class="{{ request()->routeIs('student.units.*') ? 'text-primary font-bold border-b-2 border-primary' : 'text-slate-600 hover:text-primary hover:bg-orange-50 transition-all duration-300' }}">Units</a>
@@ -22,7 +22,10 @@
                 <div class="relative" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open"
                         class="flex items-center gap-2 text-slate-700 font-semibold hover:text-primary transition-colors px-3 py-2 rounded-full hover:bg-orange-50">
-                        @if($photoUrl && $photoUrl !== 'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=ad2b00&color=fff&size=256')
+                        @if (
+                            $photoUrl &&
+                                $photoUrl !==
+                                    'https://ui-avatars.com/api/?name=' . urlencode($student->name) . '&background=ad2b00&color=fff&size=256')
                             <img src="{{ $photoUrl }}" alt="{{ $student->name }}"
                                 class="w-8 h-8 rounded-full object-cover border border-primary/20">
                         @else
@@ -73,12 +76,8 @@
                 </div>
             @else
                 <a href="{{ route('student.login') }}"
-                    class="text-primary font-bold text-sm px-4 py-2 rounded-full hover:bg-orange-50 transition-all">
+                    class="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm transition-transform">
                     Login
-                </a>
-                <a href="{{ route('student.register') }}"
-                    class="bg-linear-to-r from-primary to-primary-container text-white px-6 py-2 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-transform">
-                    Register
                 </a>
             @endauth
         </div>

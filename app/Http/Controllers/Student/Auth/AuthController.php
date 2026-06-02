@@ -25,11 +25,11 @@ class AuthController extends Controller
 
         if (Auth::guard('student')->attempt($credentials, $request->boolean('remember'))) {
             $student = Auth::guard('student')->user();
-            
+
             Student::where('id', $student->id)->update(['last_login_at' => Carbon::now()]);
-            
+
             $request->session()->regenerate();
-            
+
             return redirect()->intended(route('student.units.index'));
         }
 
@@ -48,14 +48,17 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'student_identifier' => 'required|string|unique:students,student_identifier',
-            'email' => 'required|email|unique:students,email',
             'password' => 'required|string|min:6|confirmed',
+            'terms' => 'required|accepted',
+            [
+                'terms.required' => 'Anda harus menyetujui Syarat & Ketentuan.',
+                'terms.accepted' => 'Anda harus menyetujui Syarat & Ketentuan.',
+            ]
         ]);
 
         $student = Student::create([
             'name' => $validated['name'],
             'student_identifier' => $validated['student_identifier'],
-            'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
 

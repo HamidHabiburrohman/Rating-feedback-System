@@ -14,9 +14,10 @@
             <h1 class="auth-heading">Selamat datang kembali.</h1>
             <p class="auth-subheading">Masukkan identitas mahasiswa Anda untuk melanjutkan.</p>
 
-            @if(session('error'))
+            @if (session('error'))
                 <div class="alert alert-error">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        stroke-width="2.5">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -25,9 +26,10 @@
                 </div>
             @endif
 
-            @if(session('success'))
+            @if (session('success'))
                 <div class="alert alert-success">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     {{ session('success') }}
@@ -45,13 +47,29 @@
                             placeholder="Masukkan NIM Anda" value="{{ old('student_identifier') }}" autocomplete="username"
                             required>
                     </div>
+                    @error('student_identifier')
+                        <p class="field-error">
+                            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </div>
 
+                <div class="form-field">
                     <label class="form-label" for="password">Password</label>
-                    <div class="form-input-wrap">
+                    <div class="form-input-wrap" style="position: relative;">
                         <input id="password" type="password" name="password"
                             class="form-input {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                            placeholder="Masukkan Password Anda" value="{{ old('password') }}"
-                            autocomplete="current-password" required>
+                            placeholder="Masukkan Password Anda" autocomplete="current-password" required>
+                        <button type="button" class="toggle-password" data-target="password"
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; color: var(--c-ink-muted); display: flex; align-items: center; justify-content: center;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">visibility_off</span>
+                        </button>
                     </div>
                     @error('password')
                         <p class="field-error">
@@ -67,9 +85,9 @@
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; margin: -8px 0 18px;">
-                    <a href=""
+                    <a href="{{ route('student.password.request') }}"
                         style="font-size:12.5px; color:var(--c-ink-muted); text-decoration:none; font-weight:500; transition:color .15s;">
-                        Lupa identitas?
+                        Lupa password?
                     </a>
                 </div>
 
@@ -108,13 +126,37 @@
 
 @section('scripts')
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function () {
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = this.querySelector('.material-symbols-outlined');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.textContent = 'visibility';
+                } else {
+                    input.type = 'password';
+                    icon.textContent = 'visibility_off';
+                }
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function() {
             const btn = document.getElementById('loginBtn');
             const text = document.getElementById('btnText');
             const spin = document.getElementById('btnSpinner');
             btn.disabled = true;
             text.style.display = 'none';
             spin.style.display = 'block';
+        });
+
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const err = this.closest('.form-field').querySelector('.field-error');
+                if (err) err.remove();
+            });
         });
 
         setTimeout(() => {

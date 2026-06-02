@@ -19,11 +19,17 @@ class Admin extends Authenticatable
         'role',
         'photo',
         'phone',
-        'position',
-        'bio',
         'location',
+        'employee_id',
+        'position',
+        'department',
+        'bio',
+        'timezone',
+        'is_active',
+        'two_factor_enabled',
         'permissions',
         'preferences',
+        'login_count',
         'last_login_at',
         'last_login_ip',
         'email_verified_at'
@@ -42,6 +48,9 @@ class Admin extends Authenticatable
         'deleted_at' => 'datetime',
         'permissions' => 'array',
         'preferences' => 'array',
+        'is_active' => 'boolean',
+        'two_factor_enabled' => 'boolean',
+        'login_count' => 'integer',
     ];
 
     public function unitPhotos()
@@ -159,18 +168,26 @@ class Admin extends Authenticatable
         $this->updateQuietly([
             'last_login_at' => now(),
             'last_login_ip' => $ip ?? request()->ip(),
+            'login_count' => $this->login_count + 1,
         ]);
     }
 
     public function getPreference(string $key, mixed $default = null): mixed
     {
-        return data_get($this->preferences, $key, $default);
+        $preferences = $this->preferences ?? [];
+        return data_get($preferences, $key, $default);
     }
 
     public function setPreference(string $key, mixed $value): void
     {
         $preferences = $this->preferences ?? [];
         data_set($preferences, $key, $value);
+        $this->update(['preferences' => $preferences]);
+    }
+
+    public function mergePreferences(array $values): void
+    {
+        $preferences = array_merge($this->preferences ?? [], $values);
         $this->update(['preferences' => $preferences]);
     }
 }

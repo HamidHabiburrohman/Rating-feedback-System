@@ -37,23 +37,36 @@ class RatingController extends Controller
         ]);
     }
 
+    // Di app/Http/Controllers/Student/RatingController.php
     public function store(StoreRatingRequest $request)
-    {
-        try {
-            $studentIdentifier = auth('student')->user()->student_identifier;
+{
+    $unit = Unit::findOrFail($request->input('unit_id'));
+    try {
+        $studentIdentifier = auth('student')->user()->student_identifier;
 
-            $rating = $this->service->submitRating(
-                $request->validated(),
-                $studentIdentifier
-            );
+        $rating = $this->service->submitRating(
+            $request->validated(),
+            $studentIdentifier
+        );
 
-            return redirect()->route('student.units.show', $rating->unit->slug)
-                ->with('success', 'Rating berhasil dikirim');
-        } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Gagal mengirim rating: ' . $e->getMessage());
-        }
+        // DEBUG: Pastikan kode ini dieksekusi
+        Log::info('=== STORE SUCCESS ===');
+        Log::info('Unit slug: ' . $unit->slug);
+        Log::info('Rating ID: ' . ($rating->id ?? 'null'));
+
+        return redirect()->route('student.units.show', $unit->slug)
+                         ->with('success', 'Rating berhasil dikirim')
+                         ->with('show_thanks_modal', true);
+                         
+    } catch (\Exception $e) {
+        // DEBUG: Cek error
+        Log::error('=== STORE ERROR ===');
+        Log::error('Error: ' . $e->getMessage());
+        
+        return back()->withInput()
+                     ->with('error', 'Gagal mengirim rating: ' . $e->getMessage());
     }
+}
 
     public function show($trackingCode)
     {

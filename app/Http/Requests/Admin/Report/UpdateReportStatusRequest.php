@@ -15,7 +15,7 @@ class UpdateReportStatusRequest extends FormRequest
     {
         return [
             'status' => 'required|string|in:in_progress,replied,resolved,rejected',
-            'admin_response' => 'required_if:status,replied,resolved|nullable|string|max:2000',
+            'admin_response' => 'required_if:status,replied|nullable|string|max:2000',
             'priority' => 'sometimes|string|in:low,medium,high,critical',
         ];
     }
