@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -11,13 +11,24 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Define settings permission
-        Gate::define('update-settings', function ($user) {
-            return $user->isAdmin(); // Pake method yang udah ada di User model
-        });
+        $this->registerPolicies();
 
-        Gate::define('view-settings', function ($user) {
-            return $user->isAdmin();
-        });
+        config([
+            'auth.guards' => [
+                'admin' => [
+                    'driver' => 'session',
+                    'provider' => 'admins',
+                ],
+                'employee' => [
+                    'driver' => 'session',
+                    'provider' => 'employees',
+                ],
+                'student' => [
+                    'driver' => 'session',
+                    'provider' => 'students',
+                ],
+            ],
+            'auth.defaults.guard' => 'admin',
+        ]);
     }
 }

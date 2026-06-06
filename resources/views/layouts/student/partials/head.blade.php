@@ -1,5 +1,5 @@
 <meta charset="UTF-8">
-<link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}" />
+<link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'Itenas Portal')</title>
@@ -76,8 +76,7 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
 <style>
     .material-symbols-outlined {
@@ -104,25 +103,11 @@
     }
 
     @keyframes heartbeat {
-        0% {
-            transform: scale(1);
-        }
-
-        25% {
-            transform: scale(1.3);
-        }
-
-        50% {
-            transform: scale(1.1);
-        }
-
-        75% {
-            transform: scale(1.2);
-        }
-
-        100% {
-            transform: scale(1);
-        }
+        0% { transform: scale(1); }
+        25% { transform: scale(1.3); }
+        50% { transform: scale(1.1); }
+        75% { transform: scale(1.2); }
+        100% { transform: scale(1); }
     }
 
     .animate-heartbeat {
@@ -130,23 +115,13 @@
     }
 
     @keyframes modalOverlayIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     @keyframes modalOverlayOut {
-        from {
-            opacity: 1;
-        }
-
-        to {
-            opacity: 0;
-        }
+        from { opacity: 1; }
+        to { opacity: 0; }
     }
 
     @keyframes modalCardIn {
@@ -154,7 +129,6 @@
             opacity: 0;
             transform: translateY(60px) scale(0.9);
         }
-
         to {
             opacity: 1;
             transform: translateY(0) scale(1);
@@ -166,7 +140,6 @@
             opacity: 1;
             transform: translateY(0) scale(1);
         }
-
         to {
             opacity: 0;
             transform: translateY(40px) scale(0.92);

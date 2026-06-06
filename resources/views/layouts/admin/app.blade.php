@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,52 +10,49 @@
     @stack('styles')
 </head>
 
-<body >
-
-    <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-        data-sidebar-position="fixed" data-header-position="fixed">
-        
+<body class="admin-layout" data-sidebartype="full">
+    <div class="page-wrapper">
         @include('layouts.admin.partials.sidebar')
 
         <div class="body-wrapper">
-                <div class="container-fluid">
+            <header class="app-header">
+                @include('layouts.admin.partials.navbar')
+            </header>
 
-                    @include('components.admin.alert')
+            <main id="main-content">
+                @include('components.shared.alert')
+                @include('components.admin.alert')
 
-                    <header class="app-header rounded-pill">
-                        @include('layouts.admin.partials.navbar')
-                    </header>
+                @yield('admin-content')
+            </main>
 
-                    <div id="main-content">
-                        @yield('admin-content')
-                    </div>
-
-                    @include('layouts.admin.partials.footer')
-
-                </div>
-            </div>
+            <footer class="footer">
+                @include('layouts.admin.partials.footer')
+            </footer>
         </div>
     </div>
 
-    <x-admin.logout-modal />
+    @include('components.admin.delete-modal')
 
-    {{-- SEMUA SCRIPT DI SATUKAN DI SINI DENGAN URUTAN YANG BENAR --}}
     <script defer src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
     <script defer src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
-    
-    {{-- Script yang butuh jQuery --}}
     <script defer src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
     <script defer src="{{ asset('assets/admin/js/app.min.js') }}"></script>
     <script defer src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
     <script defer src="{{ asset('assets/components/components.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    {{-- Hapus @include('layouts.admin.partials.scripts') karena kita pindahin ke sini --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('sidebarType');
+            if (saved === 'mini') {
+                document.body.setAttribute('data-sidebartype', 'mini');
+            }
+        });
+    </script>
 
     @stack('admin-scripts')
     @stack('scripts')
-
 </body>
-
 </html>

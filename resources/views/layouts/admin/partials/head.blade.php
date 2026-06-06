@@ -4,23 +4,17 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
-    rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}">
 
 <title>@yield('title', 'Itenas Unit - Admin Panel')</title>
 
-<!-- Bootstrap CSS -->
 <link rel="stylesheet" href="{{ asset('assets/admin/css/styles.min.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/css/icons/tabler-icons/tabler-icons.css') }}">
-
-<!-- Admin CSS -->
 <link rel="stylesheet" href="{{ asset('assets/admin/css/admin.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/components/css/modals.css') }}">
-<!-- Vite CSS -->
+
 @vite('resources/css/app.css')
 
 <style>
@@ -30,70 +24,82 @@
         box-sizing: border-box;
     }
 
+    html, body {
+        height: 100%;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+        background-color: #f8fafc;
+    }
+
     body.admin-layout {
-        background-color: #FBFBFB !important;
+        background-color: #f8fafc;
         overflow-x: hidden;
     }
 
     .page-wrapper {
         display: flex;
         min-height: 100vh;
-        background-color: #FBFBFB !important;
-    }
-
-    /* Left Sidebar */
-    .left-sidebar {
-        width: 280px;
-        background: white;
-        border-right: 1px solid #edf2f7;
-        height: 100vh;
-        position: sticky;
-        top: 0 !important;
-        flex-shrink: 0;
-        transition: all 0.2s ease;
-    }
-
-    /* Body Wrapper - Main Content Area */
-    .body-wrapper {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        background-color: #FBFBFB !important;
-        min-height: 100vh;
-    }
-
-    /* Navbar */
-    .app-header {
-        background-color: #FFFFFF !important;
-        border: 2px solid #e6e6e6;
-        height: 70px;
-        display: flex;
-        align-items: center;
-        padding: 0 30px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
         width: 100%;
     }
 
-    /* Main Content */
-    .main-content {
-        flex: 1;
-        padding: 30px;
-        background-color: #FBFBFB !important;
+    .left-sidebar {
+        width: 270px;
+        background: white;
+        border-right: 1px solid #edf2f7;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        transition: width 0.2s ease;
     }
 
-    /* Footer */
-    .footer {
-        padding: 20px 30px;
-        border-top: 1px solid #edf2f7;
-        background-color: #FBFBFB !important;
-    }
-
-    /* Sidebar Collapsed State */
     body[data-sidebartype="mini"] .left-sidebar {
         width: 80px;
+    }
+
+    .body-wrapper {
+        margin-left: 270px;
+        width: calc(100% - 270px);
+        display: flex;
+        flex-direction: column;
+        background-color: #f8fafc;
+        min-height: 100vh;
+        transition: margin-left 0.2s ease, width 0.2s ease;
+    }
+
+    body[data-sidebartype="mini"] .body-wrapper {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+    }
+
+    .app-header {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        height: 70px;
+        background: #ffffff;
+        border-bottom: 1px solid #edf2f7;
+        z-index: 99;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+    }
+
+    #main-content {
+        flex: 1;
+        padding: 24px;
+        background-color: #f8fafc;
+        overflow-y: auto;
+    }
+
+    .footer {
+        padding: 20px 24px;
+        border-top: 1px solid #edf2f7;
+        background-color: #ffffff;
     }
 
     body[data-sidebartype="mini"] .settings-nav-label,
@@ -101,41 +107,79 @@
         display: none;
     }
 
-    body[data-sidebartype="mini"] .brand-logo img {
-        width: 40px;
-        height: auto;
+    body[data-sidebartype="mini"] .brand-logo {
+        justify-content: center;
+        padding: 16px 0;
     }
 
-    /* Responsive */
+    body[data-sidebartype="mini"] .close-btn {
+        display: none;
+    }
+
     @media (max-width: 1199.98px) {
         .left-sidebar {
             position: fixed;
-            left: -280px;
+            left: -270px;
             z-index: 1050;
             transition: left 0.2s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
         }
 
         .left-sidebar.show {
             left: 0;
         }
 
+        .body-wrapper {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        body[data-sidebartype="mini"] .left-sidebar {
+            left: -80px;
+        }
+
         .app-header {
-            left: 0 !important;
-            width: 100% !important;
+            width: 100%;
         }
     }
 
     @media (max-width: 768px) {
-        .app-header {
-            padding: 0 20px;
-        }
-
-        .main-content {
-            padding: 20px;
+        #main-content {
+            padding: 16px;
         }
 
         .footer {
-            padding: 20px;
+            padding: 16px;
         }
+
+        .app-header {
+            padding: 0;
+        }
+
+        .left-sidebar {
+            width: 270px;
+        }
+
+        body[data-sidebartype="mini"] .left-sidebar {
+            width: 270px;
+        }
+    }
+
+    .sidebar-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 24px;
+        background-color: #f8fafc;
     }
 </style>

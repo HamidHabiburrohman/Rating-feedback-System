@@ -4,57 +4,90 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\URL;
+use App\Models\Authentication\Employee;
+use App\Models\Authentication\Student;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->registerBladeComponents();
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
+        $this->registerBladeDirectives();
+        $this->registerViewComposers();
     }
 
     public function register(): void
     {
-        $this->registerSharedServices();
-        $this->registerAdminServices();
-        $this->registerStudentServices();
+        $this->bindExportServices();
         $this->loadSettingsHelpers();
     }
 
-    protected function registerBladeComponents(): void
+    protected function registerBladeDirectives(): void
     {
-    
+        Blade::if('admin', function () {
+            return auth('admin')->check();
+        });
+
+        Blade::if('employee', function () {
+            return auth('employee')->check();
+        });
+
+        Blade::if('student', function () {
+            return auth('student')->check();
+        });
+
+        Blade::if('superadmin', function () {
+            $user = auth('admin')->user();
+            return $user && $user->role === 'super_admin';
+        });
     }
 
-    protected function registerSharedServices(): void
+    protected function registerViewComposers(): void
     {
-        $this->app->singleton(\App\Services\Shared\BaseService::class);
+        view()->composer('*', function ($view) {
+            $view->with('appName', config('app.name'));
+        });
+
+        view()->composer('layouts.admin', function ($view) {
+            $admin = auth('admin')->user();
+            $view->with('currentAdmin', $admin);
+        });
+
+        view()->composer('layouts.employee', function ($view) {
+            $employee = auth('employee')->user();
+            $unreadCount = 0;
+
+            if ($employee && method_exists($employee, 'notifications')) {
+                $unreadCount = $employee->notifications()->whereNull('read_at')->count();
+            }
+
+            $view->with('currentEmployee', $employee)
+                ->with('unreadNotifications', $unreadCount);
+        });
+
+        view()->composer('layouts.student', function ($view) {
+            $student = auth('student')->user();
+            $unreadCount = 0;
+
+            if ($student && method_exists($student, 'notifications')) {
+                $unreadCount = $student->notifications()->whereNull('read_at')->count();
+            }
+
+            $view->with('currentStudent', $student)
+                ->with('unreadNotifications', $unreadCount);
+        });
     }
 
-    protected function registerAdminServices(): void
+    protected function bindExportServices(): void
     {
-        $this->app->singleton(\App\Services\Admin\BaseAdminService::class);
-        $this->app->singleton(\App\Services\Admin\AdminProfileService::class);
-        $this->app->singleton(\App\Services\Admin\DashboardService::class);
-        $this->app->singleton(\App\Services\Admin\UnitService::class);
-        $this->app->singleton(\App\Services\Admin\UnitTypeService::class);
-        $this->app->singleton(\App\Services\Admin\UnitDepartmentService::class);
-        $this->app->singleton(\App\Services\Admin\FacilityService::class);
-        $this->app->singleton(\App\Services\Admin\UnitPhotoService::class);
-        $this->app->singleton(\App\Services\Admin\RatingManagementService::class);
-        $this->app->singleton(\App\Services\Admin\RatingCategoryService::class);
-        $this->app->singleton(\App\Services\Admin\AdminReplyService::class);
-        $this->app->singleton(\App\Services\Admin\ReportManagementService::class);
-        $this->app->singleton(\App\Services\Admin\ModerationLogService::class);
-        $this->app->singleton(\App\Services\Admin\SettingService::class);
-        $this->app->singleton(\App\Services\Admin\ExportDataService::class);
-    }
-
-    protected function registerStudentServices(): void
-    {
-        $this->app->singleton(\App\Services\Student\DashboardService::class);
-        $this->app->singleton(\App\Services\Student\RatingService::class);
-        $this->app->singleton(\App\Services\Student\ReportService::class);
-        $this->app->singleton(\App\Services\Student\ProfileService::class);
+        $this->app->bind(
+            \App\Services\Export\Contracts\ExportInterface::class,
+            \App\Services\Export\ExportManager::class
+        );
     }
 
     protected function loadSettingsHelpers(): void

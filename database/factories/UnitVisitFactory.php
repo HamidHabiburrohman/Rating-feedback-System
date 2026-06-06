@@ -2,9 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Unit;
-use App\Models\StudentSession;
-use App\Models\UnitVisit;
+use App\Models\Feedback\UnitVisit;
+use App\Models\Units\Unit;
+use App\Models\Authentication\Student;
+use App\Models\Units\QrCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UnitVisitFactory extends Factory
@@ -13,57 +14,62 @@ class UnitVisitFactory extends Factory
 
     public function definition(): array
     {
-        $tanggal = fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d');
-        $waktuMasuk = fake()->dateTimeBetween($tanggal . ' 07:00:00', $tanggal . ' 21:00:00');
-        $durasiMenit = fake()->numberBetween(5, 180);
-        $waktuKeluar = (clone $waktuMasuk)->modify("+{$durasiMenit} minutes");
-        
-        $shouldHaveExit = fake()->boolean(90);
-        
-        $session = StudentSession::inRandomOrder()->first();
-        
+        $visitedAt = $this->faker->dateTimeBetween('-3 months', 'now');
+
         return [
-            'unit_id' => Unit::inRandomOrder()->first()?->id ?? Unit::factory(),
-            'session_id' => $session ? $session->session_token : StudentSession::factory()->create()->session_token,
-            'tanggal' => $tanggal,
-            'waktu_masuk' => $waktuMasuk,
-            'waktu_keluar' => $shouldHaveExit ? $waktuKeluar : null,
-            'durasi_detik' => $shouldHaveExit ? $durasiMenit * 60 : null,
+            'unit_id' => Unit::factory(),
+            'student_id' => Student::factory(),
+            'qr_code_id' => QrCode::factory(),
+            'visited_at' => $visitedAt,
+            'is_gps_validated' => $this->faker->boolean(80),
+            'latitude' => $this->faker->optional(0.8)->latitude(),
+            'longitude' => $this->faker->optional(0.8)->longitude(),
+            'validation_radius_meters' => 100,
             'metadata' => json_encode([
-                'source' => fake()->randomElement(['qr_scan', 'manual', 'nfc']),
-                'device' => fake()->randomElement(['mobile', 'tablet', 'desktop']),
+                'source' => $this->faker->randomElement(['qr_scan', 'manual']),
+                'device' => $this->faker->randomElement(['mobile', 'tablet']),
             ]),
-            'created_at' => $waktuMasuk,
-            'updated_at' => $waktuKeluar ?? $waktuMasuk,
+            'created_at' => $visitedAt,
+            'updated_at' => $visitedAt,
         ];
     }
 
-    public function active(): static
+    public function forUnit(Unit $unit): static
     {
-        return $this->state(fn (array $attributes) => [
-            'waktu_keluar' => null,
-            'durasi_detik' => null,
+        return $this->state(fn(array $attributes) => [
+            'unit_id' => $unit->id,
         ]);
     }
 
-    public function completed(): static
+    public function byStudent(Student $student): static
     {
-        return $this->state(function (array $attributes) {
-            $waktuMasuk = $attributes['waktu_masuk'] ?? fake()->dateTimeBetween('-2 days', '-1 hour');
-            $durasiMenit = fake()->numberBetween(5, 180);
-            $waktuKeluar = (clone $waktuMasuk)->modify("+{$durasiMenit} minutes");
-            
-            return [
-                'waktu_keluar' => $waktuKeluar,
-                'durasi_detik' => $durasiMenit * 60,
-            ];
-        });
+        return $this->state(fn(array $attributes) => [
+            'student_id' => $student->id,
+        ]);
     }
 
-    public function forDate(string $date): static
+    public function withQrCode(QrCode $qrCode): static
     {
-        return $this->state(fn (array $attributes) => [
-            'tanggal' => $date,
+        return $this->state(fn(array $attributes) => [
+            'qr_code_id' => $qrCode->id,
+        ]);
+    }
+
+    public function gpsValidated(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_gps_validated' => true,
+            'latitude' => $this->faker->latitude(),
+            'longitude' => $this->faker->longitude(),
+        ]);
+    }
+
+    public function gpsNotValidated(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_gps_validated' => false,
+            'latitude' => null,
+            'longitude' => null,
         ]);
     }
 }

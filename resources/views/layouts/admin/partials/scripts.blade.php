@@ -4,7 +4,6 @@
 <script defer src="{{ asset('assets/components/components.js') }}"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-{{-- Inline JS ini harus tetep jalan, gak perlu diubah --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const elements = [
@@ -32,7 +31,7 @@
         function toggleSidebar() {
             if (window.innerWidth < 1200) {
                 leftSidebar.classList.toggle('show');
-                sidebarOverlay.classList.toggle('show');
+                if (sidebarOverlay) sidebarOverlay.classList.toggle('show');
             } else {
                 document.body.classList.toggle('sidebar-collapsed');
                 localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
@@ -46,7 +45,7 @@
         if (sidebarClose) {
             sidebarClose.addEventListener('click', function () {
                 leftSidebar.classList.remove('show');
-                sidebarOverlay.classList.remove('show');
+                if (sidebarOverlay) sidebarOverlay.classList.remove('show');
             });
         }
 
@@ -63,6 +62,56 @@
                 document.body.classList.add('sidebar-collapsed');
             }
         }
+
+        const searchModal = document.getElementById('searchModal');
+        const globalSearch = document.getElementById('globalSearch');
+        const searchClose = document.querySelector('.search-close');
+        const searchBackdrop = document.querySelector('.search-backdrop');
+
+        if (globalSearch) {
+            globalSearch.addEventListener('focus', function() {
+                if (searchModal) {
+                    searchModal.classList.add('show');
+                    document.body.classList.add('search-modal-open');
+                }
+            });
+        }
+
+        if (searchClose) {
+            searchClose.addEventListener('click', function() {
+                if (searchModal) {
+                    searchModal.classList.remove('show');
+                    document.body.classList.remove('search-modal-open');
+                }
+            });
+        }
+
+        if (searchBackdrop) {
+            searchBackdrop.addEventListener('click', function() {
+                if (searchModal) {
+                    searchModal.classList.remove('show');
+                    document.body.classList.remove('search-modal-open');
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (searchModal) {
+                    searchModal.classList.toggle('show');
+                    document.body.classList.toggle('search-modal-open');
+                    if (searchModal.classList.contains('show')) {
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput) setTimeout(() => searchInput.focus(), 100);
+                    }
+                }
+            }
+            if (e.key === 'Escape' && searchModal && searchModal.classList.contains('show')) {
+                searchModal.classList.remove('show');
+                document.body.classList.remove('search-modal-open');
+            }
+        });
     });
 
     function getAuthToken() {

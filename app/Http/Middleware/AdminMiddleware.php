@@ -10,16 +10,22 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check()) {
+        if (!Auth::guard('admin')->check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
             return redirect()->route('admin.login');
         }
 
-        $user = Auth::user();
+        $admin = Auth::guard('admin')->user();
         
-        if (!in_array($user->role, ['admin', 'super_admin', 'unit'])) {
-            Auth::logout();
-            return redirect()->route('admin.login')
-                ->with('error', 'You do not have permission to access admin area.');
+        if (!$admin->is_active) {
+            Auth::guard('admin')->logout();
+            
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Account is disabled'], 403);
+            }
+            return redirect()->route('admin.login')->with('error', 'Akun Anda dinonaktifkan');
         }
 
         return $next($request);

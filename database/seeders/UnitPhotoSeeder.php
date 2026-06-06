@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Unit;
-use App\Models\Admin;
-use App\Models\UnitPhoto;
+use App\Models\Units\Unit;
+use App\Models\Units\UnitPhoto;
+use App\Models\Authentication\Admin;
 use Illuminate\Database\Seeder;
 
 class UnitPhotoSeeder extends Seeder
@@ -12,22 +12,23 @@ class UnitPhotoSeeder extends Seeder
     public function run(): void
     {
         $units = Unit::all();
-        $adminIds = Admin::whereIn('role', ['admin', 'super_admin'])->pluck('id')->toArray();
-        
-        $placeholderPath = public_path('assets/images/UnitPlaceholder.png');
+        $admin = Admin::first();
 
         foreach ($units as $index => $unit) {
             $photoCount = rand(1, 3);
-            
+
             for ($i = 0; $i < $photoCount; $i++) {
                 UnitPhoto::create([
                     'unit_id' => $unit->id,
-                    'uploaded_by_admin_id' => $adminIds[array_rand($adminIds)],
-                    'original_path' => $placeholderPath,
-                    'thumbnail_path' => $placeholderPath,
-                    'file_name' => "placeholder-{$unit->id}-{$i}.png",
-                    'mime_type' => 'image/png',
-                    'file_size' => file_exists($placeholderPath) ? filesize($placeholderPath) : 5000,
+                    'uploaded_by_admin_id' => $admin?->id,
+                    'disk' => 'public',
+                    'original_path' => 'photos/placeholder.jpg',
+                    'thumbnail_path' => 'photos/thumb/placeholder.jpg',
+                    'medium_path' => 'photos/medium/placeholder.jpg',
+                    'large_path' => 'photos/large/placeholder.jpg',
+                    'file_name' => "placeholder-{$unit->id}-{$i}.jpg",
+                    'mime_type' => 'image/jpeg',
+                    'file_size' => 50000,
                     'sort_order' => $i,
                     'is_primary' => $i === 0,
                 ]);

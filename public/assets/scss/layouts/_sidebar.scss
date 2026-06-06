@@ -5,7 +5,8 @@
   transition: .2s ease-in;
   box-shadow: $card-box-shadow;
   height: 100%;
-  z-index: 11;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 
   .scroll-sidebar {
     overflow-y: auto;

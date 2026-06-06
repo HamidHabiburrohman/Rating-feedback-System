@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ModerationLog\ModerationLogFilterRequest;
+use App\Http\Requests\Admin\ModerationLog\FilterModerationLogRequest;
 use App\Http\Requests\Admin\ModerationLog\ExportLogsRequest;
 use App\Services\Admin\ModerationLogService;
 use App\Models\ModerationLog;
@@ -18,7 +18,7 @@ class ModerationLogController extends Controller
         $this->service = $service;
     }
 
-    public function index(ModerationLogFilterRequest $request)
+    public function index(FilterModerationLogRequest $request)
     {
         $filters = $request->validated();
         $logs = $this->service->getPaginatedLogs($filters);

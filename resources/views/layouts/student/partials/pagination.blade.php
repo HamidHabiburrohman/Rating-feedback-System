@@ -2,13 +2,11 @@
     <div class="flex justify-center mt-12">
         <nav class="flex items-center gap-2" aria-label="Pagination">
             @if($paginator->onFirstPage())
-                <span
-                    class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center cursor-not-allowed">
+                <span class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center cursor-not-allowed">
                     <span class="material-symbols-outlined text-base">chevron_left</span>
                 </span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}"
-                    class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">
+                <a href="{{ $paginator->previousPageUrl() }}" class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">
                     <span class="material-symbols-outlined text-base">chevron_left</span>
                 </a>
             @endif
@@ -48,13 +46,11 @@
             </div>
 
             @if($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}"
-                    class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">
+                <a href="{{ $paginator->nextPageUrl() }}" class="w-10 h-10 rounded-full bg-surface-container-lowest text-on-surface-variant flex items-center justify-center hover:bg-primary-fixed hover:text-on-primary-fixed transition-all duration-300">
                     <span class="material-symbols-outlined text-base">chevron_right</span>
                 </a>
             @else
-                <span
-                    class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center cursor-not-allowed">
+                <span class="w-10 h-10 rounded-full bg-surface-container-high text-outline-variant flex items-center justify-center cursor-not-allowed">
                     <span class="material-symbols-outlined text-base">chevron_right</span>
                 </span>
             @endif

@@ -2,28 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Models\Unit;
-use App\Models\Facility;
+use App\Models\Units\Unit;
+use App\Models\Units\Facility;
+use App\Models\Units\UnitFacility;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UnitFacilitySeeder extends Seeder
 {
     public function run(): void
     {
         $units = Unit::all();
-        $facilityIds = Facility::pluck('id')->toArray();
+        $facilities = Facility::all();
 
         foreach ($units as $unit) {
-            // Each unit gets 3-7 random facilities
-            $selectedFacilities = array_rand(array_flip($facilityIds), rand(3, 7));
-            
-            foreach ($selectedFacilities as $facilityId) {
-                DB::table('unit_facilities')->insert([
+            $randomFacilities = $facilities->random(rand(3, 8));
+
+            foreach ($randomFacilities as $facility) {
+                UnitFacility::create([
                     'unit_id' => $unit->id,
-                    'facility_id' => $facilityId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'facility_id' => $facility->id,
                 ]);
             }
         }

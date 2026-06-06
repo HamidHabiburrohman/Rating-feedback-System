@@ -113,6 +113,6 @@ class LandingPageController extends Controller
             'avg_rating_overall' => $avgRatingOverall,
         ];
 
-        return view('landingpage.index', compact('topRatedUnits', 'recentUnits', 'statistics'));
+        return view('landing.index', compact('topRatedUnits', 'recentUnits', 'statistics'));
     }
 }
