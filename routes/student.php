@@ -1,91 +1,73 @@
 <?php
 
-use App\Http\Controllers\Student\Auth\LoginController as StudentLoginController;
-use App\Http\Controllers\Student\Auth\RegisterController as StudentRegisterController;
-use App\Http\Controllers\Student\Auth\ForgotPasswordController as StudentForgotPasswordController;
-use App\Http\Controllers\Student\Auth\ResetPasswordController as StudentResetPasswordController;
-use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
-use App\Http\Controllers\Student\ProfileController as StudentProfileController;
-use App\Http\Controllers\Student\UnitController as StudentUnitController;
-use App\Http\Controllers\Student\RatingController as StudentRatingController;
-use App\Http\Controllers\Student\ReportController as StudentReportController;
-use App\Http\Controllers\Student\QrCodeController as StudentQrCodeController;
-use App\Http\Controllers\Student\NotificationController as StudentNotificationController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Student\Auth\LoginController;
+use App\Http\Controllers\Student\Auth\RegisterController;
+use App\Http\Controllers\Student\Auth\ForgotPasswordController;
+use App\Http\Controllers\Student\Auth\ResetPasswordController;
+use App\Http\Controllers\Student\DashboardController;
+use App\Http\Controllers\Student\ProfileController;
+use App\Http\Controllers\Student\NotificationController;
+use App\Http\Controllers\Student\UnitController;
+use App\Http\Controllers\Student\QrCodeController;
+use App\Http\Controllers\Student\RatingController;
+use App\Http\Controllers\Student\ReportController;
 
-Route::prefix('student')->name('student.')->group(function () {
-    Route::prefix('units')->name('units.')->group(function () {
-        Route::get('/', [StudentUnitController::class, 'index'])->name('index');
-        Route::get('/{unit:slug}', [StudentUnitController::class, 'show'])->name('show');
-        Route::post('/{unitId}/favorite', [StudentUnitController::class, 'toggleFavorite'])->name('favorite');
-    });
-
-    Route::middleware('guest:student')->group(function () {
-        Route::get('/login', [StudentLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [StudentLoginController::class, 'login'])->name('login.submit');
-        Route::get('/register', [StudentRegisterController::class, 'showRegistrationForm'])->name('register');
-        Route::post('/register', [StudentRegisterController::class, 'register'])->name('register.submit');
-        Route::get('/forgot-password', [StudentForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-        Route::post('/forgot-password', [StudentForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-        Route::get('/reset-password', [StudentResetPasswordController::class, 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [StudentResetPasswordController::class, 'reset'])->name('password.update');
-    });
-
-    Route::middleware('auth:student')->group(function () {
-        Route::post('/auth/logout', [StudentLoginController::class, 'logout'])->name('auth.logout');
-        Route::get('/auth/check', [StudentLoginController::class, 'check'])->name('auth.check');
-
-        Route::prefix('dashboard')->name('dashboard.')->group(function () {
-            Route::get('/', [StudentDashboardController::class, 'index'])->name('index');
-        });
-
-        Route::prefix('profile')->name('profile.')->group(function () {
-            Route::get('/', [StudentProfileController::class, 'show'])->name('show');
-            Route::get('/edit', [StudentProfileController::class, 'edit'])->name('edit');
-            Route::put('/', [StudentProfileController::class, 'update'])->name('update');
-            Route::put('/password', [StudentProfileController::class, 'updatePassword'])->name('password.update');
-            Route::get('/sessions', [StudentProfileController::class, 'sessions'])->name('sessions');
-            Route::delete('/sessions/{sessionId}', [StudentProfileController::class, 'terminateSession'])->name('terminate-session');
-            Route::delete('/sessions/all/terminate', [StudentProfileController::class, 'terminateAllSessions'])->name('terminate-all');
-            Route::post('/favorite-unit/{unitId}', [StudentProfileController::class, 'toggleFavorite'])->name('toggle-favorite');
-        });
-
-        Route::prefix('qr')->name('qr.')->group(function () {
-            Route::get('/scan', [StudentQrCodeController::class, 'scanForm'])->name('scan');
-            Route::get('/result', [StudentQrCodeController::class, 'scanResult'])->name('result');
-            Route::post('/validate', [StudentQrCodeController::class, 'validateQr'])->name('validate');
-            Route::get('/unit/{unitId}/status', [StudentQrCodeController::class, 'checkStatus'])->name('status');
-        });
-
-        Route::prefix('ratings')->name('ratings.')->group(function () {
-            Route::get('/history', [StudentRatingController::class, 'history'])->name('history');
-            Route::get('/categories', [StudentRatingController::class, 'categories'])->name('categories');
-            Route::get('/create/{unit:slug}', [StudentRatingController::class, 'create'])->name('create');
-            Route::post('/', [StudentRatingController::class, 'store'])->name('store');
-            Route::get('/unit/{unit:slug}/ratings', [StudentRatingController::class, 'unitRatings'])->name('unit');
-            Route::get('/{trackingCode}', [StudentRatingController::class, 'show'])->name('show');
-            Route::get('/{trackingCode}/edit', [StudentRatingController::class, 'edit'])->name('edit');
-            Route::put('/{trackingCode}', [StudentRatingController::class, 'update'])->name('update');
-            Route::delete('/{trackingCode}', [StudentRatingController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/history', [StudentReportController::class, 'history'])->name('history');
-            Route::get('/check/{rating}/can-report', [StudentReportController::class, 'checkCanReport'])->name('check-can-report');
-            Route::get('/create/{rating}', [StudentReportController::class, 'create'])->name('create');
-            Route::post('/', [StudentReportController::class, 'store'])->name('store');
-            Route::get('/{trackingCode}', [StudentReportController::class, 'show'])->name('show');
-            Route::get('/{trackingCode}/edit', [StudentReportController::class, 'edit'])->name('edit');
-            Route::put('/{trackingCode}', [StudentReportController::class, 'update'])->name('update');
-            Route::delete('/{trackingCode}', [StudentReportController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::prefix('notifications')->name('notifications.')->group(function () {
-            Route::get('/', [StudentNotificationController::class, 'index'])->name('index');
-            Route::put('/{id}/read', [StudentNotificationController::class, 'markAsRead'])->name('mark-read');
-            Route::put('/mark-all-read', [StudentNotificationController::class, 'markAllAsRead'])->name('mark-all-read');
-            Route::delete('/{id}', [StudentNotificationController::class, 'destroy'])->name('destroy');
-            Route::get('/unread-count', [StudentNotificationController::class, 'unreadCount'])->name('unread-count');
-        });
-    });
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
+    
+    Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    
+    Route::get('reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
+
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('check-auth', [LoginController::class, 'check'])->name('auth.check');
+
+Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+Route::get('dashboard/activity-chart', [DashboardController::class, 'activityChart'])->name('dashboard.activity-chart');
+Route::get('dashboard/recommended-units', [DashboardController::class, 'recommendedUnits'])->name('dashboard.recommended-units');
+
+Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::put('profile/update', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+Route::get('profile/sessions', [ProfileController::class, 'sessions'])->name('profile.sessions');
+Route::post('profile/sessions/{sessionId}/terminate', [ProfileController::class, 'terminateSession'])->name('profile.sessions.terminate');
+Route::post('profile/sessions/terminate-all', [ProfileController::class, 'terminateAllSessions'])->name('profile.sessions.terminate-all');
+
+Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+
+Route::get('units', [UnitController::class, 'index'])->name('units.index');
+Route::get('units/{slug}', [UnitController::class, 'show'])->name('units.show');
+
+Route::get('qr/scan', [QrCodeController::class, 'scanForm'])->name('qr.scan');
+Route::get('qr/result', [QrCodeController::class, 'scanResult'])->name('qr.result');
+Route::post('qr/validate', [QrCodeController::class, 'validateQr'])->name('qr.validate');
+Route::get('qr/check-status/{unitId}', [QrCodeController::class, 'checkStatus'])->name('qr.check-status');
+
+Route::get('units/{unit}/rate', [RatingController::class, 'create'])->name('ratings.create');
+Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store');
+Route::get('ratings/{trackingCode}', [RatingController::class, 'show'])->name('ratings.show');
+Route::get('ratings/{trackingCode}/edit', [RatingController::class, 'edit'])->name('ratings.edit');
+Route::put('ratings/{trackingCode}', [RatingController::class, 'update'])->name('ratings.update');
+Route::get('ratings/history', [RatingController::class, 'history'])->name('ratings.history');
+Route::get('units/{unit}/ratings', [RatingController::class, 'unitRatings'])->name('ratings.unit');
+
+Route::get('ratings/{rating}/report', [ReportController::class, 'create'])->name('reports.create');
+Route::post('reports', [ReportController::class, 'store'])->name('reports.store');
+Route::get('reports/{trackingCode}', [ReportController::class, 'show'])->name('reports.show');
+Route::put('reports/{trackingCode}', [ReportController::class, 'update'])->name('reports.update');
+Route::get('reports/history', [ReportController::class, 'history'])->name('reports.history');
+Route::get('ratings/{rating}/can-report', [ReportController::class, 'checkCanReport'])->name('reports.check-can-report');

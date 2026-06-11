@@ -3,10 +3,10 @@
 namespace Database\Factories;
 
 use App\Models\Feedback\Rating;
-use App\Models\Units\Unit;
+use App\Models\Unit\Unit;
 use App\Models\Authentication\Student;
 use App\Models\Feedback\UnitVisit;
-use App\Models\Units\QrCode;
+use App\Models\Unit\QrCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class RatingFactory extends Factory

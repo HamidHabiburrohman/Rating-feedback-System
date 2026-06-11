@@ -2,61 +2,83 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Reports\ReportCategory;
-use Illuminate\Database\Eloquent\Collection;
+use App\Models\Report\ReportCategory;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-class ReportCategoryService
+class ReportCategoryService extends BaseAdminService
 {
-    public function getAll(): Collection
+    public function getAll(array $filters = [])
     {
-        return ReportCategory::all();
-    }
+        $query = ReportCategory::withCount('reports');
 
-    public function getActive(): Collection
-    {
-        return ReportCategory::where('is_active', true)->get();
-    }
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', "%{$filters['search']}%");
+        }
 
-    public function findById(int $id): ?ReportCategory
-    {
-        return ReportCategory::find($id);
-    }
+        if (isset($filters['status'])) {
+            $query->where('is_active', $filters['status'] === 'active');
+        }
 
-    public function findBySlug(string $slug): ?ReportCategory
-    {
-        return ReportCategory::where('slug', $slug)->first();
+        return $query->orderBy('name')->get();
     }
 
     public function create(array $data): ReportCategory
     {
-        return ReportCategory::create($data);
+        return DB::transaction(function () use ($data) {
+            $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
+            $data['is_active'] = $data['is_active'] ?? true;
+
+            $category = ReportCategory::create($data);
+
+            Cache::tags(['reports', 'dropdown'])->flush();
+
+            return $category;
+        });
     }
 
-    public function update(int $id, array $data): bool
+    public function update(int $id, array $data): ReportCategory
     {
-        $category = $this->findById($id);
-        if (!$category) {
-            return false;
-        }
-        return $category->update($data);
+        return DB::transaction(function () use ($id, $data) {
+            $category = ReportCategory::findOrFail($id);
+
+            if (isset($data['name']) && !isset($data['slug'])) {
+                $data['slug'] = Str::slug($data['name']);
+            }
+
+            $category->update($data);
+
+            Cache::tags(['reports', 'dropdown'])->flush();
+
+            return $category->fresh();
+        });
     }
 
     public function delete(int $id): bool
     {
-        $category = $this->findById($id);
-        if (!$category) {
-            return false;
-        }
-        return $category->delete();
+        return DB::transaction(function () use ($id) {
+            $category = ReportCategory::findOrFail($id);
+
+            if ($category->reports()->count() > 0) {
+                throw new \Exception('Kategori tidak dapat dihapus karena masih digunakan oleh laporan');
+            }
+
+            $category->delete();
+            Cache::tags(['reports', 'dropdown'])->flush();
+            return true;
+        });
     }
 
-    public function toggleActive(int $id): bool
+    public function toggleActive(int $id): ReportCategory
     {
-        $category = $this->findById($id);
-        if (!$category) {
-            return false;
-        }
-        $category->is_active = !$category->is_active;
-        return $category->save();
+        return DB::transaction(function () use ($id) {
+            $category = ReportCategory::findOrFail($id);
+            $category->update(['is_active' => !$category->is_active]);
+
+            Cache::tags(['reports', 'dropdown'])->flush();
+
+            return $category->fresh();
+        });
     }
 }

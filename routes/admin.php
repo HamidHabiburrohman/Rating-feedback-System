@@ -1,191 +1,142 @@
 <?php
 
-use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
-use App\Http\Controllers\Admin\Auth\ForgotPasswordController as AdminForgotPasswordController;
-use App\Http\Controllers\Admin\Auth\ResetPasswordController as AdminResetPasswordController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
-use App\Http\Controllers\Admin\UnitController as AdminUnitController;
-use App\Http\Controllers\Admin\UnitTypeController as AdminUnitTypeController;
-use App\Http\Controllers\Admin\UnitDepartmentController as AdminUnitDepartmentController;
-use App\Http\Controllers\Admin\UnitPhotoController as AdminUnitPhotoController;
-use App\Http\Controllers\Admin\RatingController as AdminRatingController;
-use App\Http\Controllers\Admin\RatingCategoryController as AdminRatingCategoryController;
-use App\Http\Controllers\Admin\ReportController as AdminReportController;
-use App\Http\Controllers\Admin\FacilityController as AdminFacilityController;
-use App\Http\Controllers\Admin\ExportController as AdminExportController;
-use App\Http\Controllers\Admin\ModerationLogController as AdminModerationLogController;
-use App\Http\Controllers\Admin\EmployeeController as AdminEmployeeController;
-use App\Http\Controllers\Admin\QrCodeController as AdminQrCodeController;
-use App\Http\Controllers\Admin\ReportCategoryController as AdminReportCategoryController;
-use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Auth\LoginController;
+use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
+use App\Http\Controllers\Admin\Auth\ResetPasswordController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\UnitTypeController;
+use App\Http\Controllers\Admin\UnitDepartmentController;
+use App\Http\Controllers\Admin\UnitPhotoController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\QrCodeController;
+use App\Http\Controllers\Admin\RatingCategoryController;
+use App\Http\Controllers\Admin\RatingController;
+use App\Http\Controllers\Admin\ReportCategoryController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ModerationLogController;
+use App\Http\Controllers\Admin\ExportController;
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::middleware('guest:admin')->group(function () {
-        Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [AdminLoginController::class, 'login'])->name('login.submit');
-        Route::get('/forgot-password', [AdminForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-        Route::post('/forgot-password', [AdminForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-        Route::get('/reset-password', [AdminResetPasswordController::class, 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [AdminResetPasswordController::class, 'reset'])->name('password.update');
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    
+    Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    
+    Route::get('reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+});
+
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('check-auth', [LoginController::class, 'check'])->name('auth.check');
+
+Route::middleware('role:super_admin,admin')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+    Route::get('dashboard/charts', [DashboardController::class, 'charts'])->name('dashboard.charts');
+    Route::get('dashboard/overview', [DashboardController::class, 'overview'])->name('dashboard.overview');
+    Route::get('dashboard/audit-logs', [DashboardController::class, 'auditLogs'])->name('dashboard.audit-logs');
+    Route::get('dashboard/recent-rated', [DashboardController::class, 'recentRated'])->name('dashboard.recent-rated');
+    Route::get('dashboard/top-units/{type?}', [DashboardController::class, 'topUnits'])->name('dashboard.top-units');
+    Route::get('dashboard/attention-units', [DashboardController::class, 'attentionUnits'])->name('dashboard.attention-units');
+    
+    Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::post('profile/update-photo', [ProfileController::class, 'updatePhoto'])->name('profile.update-photo');
+    Route::delete('profile/remove-photo', [ProfileController::class, 'removePhoto'])->name('profile.remove-photo');
+    Route::put('profile/update-preferences', [ProfileController::class, 'updatePreferences'])->name('profile.update-preferences');
+    
+    Route::resource('units', UnitController::class);
+    Route::get('units/trashed', [UnitController::class, 'trashed'])->name('units.trashed');
+    Route::post('units/{id}/restore', [UnitController::class, 'restore'])->name('units.restore');
+    Route::delete('units/{id}/force-delete', [UnitController::class, 'forceDelete'])->name('units.force-delete');
+    Route::post('units/{id}/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
+    Route::post('units/{id}/sync-facilities', [UnitController::class, 'syncFacilities'])->name('units.sync-facilities');
+    Route::post('units/bulk-delete', [UnitController::class, 'bulkDelete'])->name('units.bulk-delete');
+    Route::post('units/bulk-restore', [UnitController::class, 'bulkRestore'])->name('units.bulk-restore');
+    Route::post('units/bulk-force-delete', [UnitController::class, 'bulkForceDelete'])->name('units.bulk-force-delete');
+    Route::post('units/bulk-activate', [UnitController::class, 'bulkActivate'])->name('units.bulk-activate');
+    
+    Route::resource('unit-types', UnitTypeController::class);
+    Route::post('unit-types/reorder', [UnitTypeController::class, 'reorder'])->name('unit-types.reorder');
+    
+    Route::resource('unit-departments', UnitDepartmentController::class);
+    Route::post('unit-departments/{id}/toggle-status', [UnitDepartmentController::class, 'toggleStatus'])->name('unit-departments.toggle-status');
+    Route::get('unit-departments/stats', [UnitDepartmentController::class, 'stats'])->name('unit-departments.stats');
+    
+    Route::prefix('units/{unit}')->group(function () {
+        Route::get('photos', [UnitPhotoController::class, 'index'])->name('units.photos.index');
+        Route::post('photos/upload', [UnitPhotoController::class, 'upload'])->name('units.photos.upload');
+        Route::post('photos/{photo}/set-primary', [UnitPhotoController::class, 'setPrimary'])->name('units.photos.set-primary');
+        Route::post('photos/reorder', [UnitPhotoController::class, 'reorder'])->name('units.photos.reorder');
+        Route::delete('photos/{photo}', [UnitPhotoController::class, 'destroy'])->name('units.photos.destroy');
+        
+        Route::get('qr-codes', [QrCodeController::class, 'index'])->name('units.qr-codes.index');
+        Route::post('qr-codes/generate', [QrCodeController::class, 'generate'])->name('units.qr-codes.generate');
     });
-
-    Route::post('/logout', [AdminLoginController::class, 'logout'])->middleware('auth:admin')->name('logout');
-    Route::get('/auth/check', [AdminLoginController::class, 'check'])->middleware('auth:admin')->name('auth.check');
-
-    Route::middleware(['auth:admin'])->group(function () {
-        Route::prefix('profile')->name('profile.')->group(function () {
-            Route::get('/', [AdminProfileController::class, 'show'])->name('show');
-            Route::get('/edit', [AdminProfileController::class, 'edit'])->name('edit');
-            Route::put('/update', [AdminProfileController::class, 'update'])->name('update');
-            Route::put('/password', [AdminProfileController::class, 'updatePassword'])->name('password.update');
-            Route::post('/photo', [AdminProfileController::class, 'updatePhoto'])->name('photo.update');
-            Route::delete('/photo', [AdminProfileController::class, 'removePhoto'])->name('photo.remove');
-            Route::put('/preferences', [AdminProfileController::class, 'updatePreferences'])->name('preferences');
-        });
-
-        Route::prefix('dashboard')->name('dashboard.')->group(function () {
-            Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
-            Route::get('/stats', [AdminDashboardController::class, 'stats'])->name('stats');
-            Route::get('/charts', [AdminDashboardController::class, 'charts'])->name('charts');
-            Route::get('/overview', [AdminDashboardController::class, 'overview'])->name('overview');
-            Route::get('/audit-logs', [AdminDashboardController::class, 'auditLogs'])->name('audit-logs');
-            Route::get('/recent-rated', [AdminDashboardController::class, 'recentRated'])->name('recent-rated');
-            Route::get('/top-units/{type?}', [AdminDashboardController::class, 'topUnits'])->name('top-units');
-            Route::get('/attention-units', [AdminDashboardController::class, 'attentionUnits'])->name('attention-units');
-            Route::get('/filter/{filter}', [AdminDashboardController::class, 'getUnitsByFilter'])->name('units.filter');
-        });
-
-        Route::resource('unit-types', AdminUnitTypeController::class);
-        Route::post('/unit-types/reorder', [AdminUnitTypeController::class, 'reorder'])->name('unit-types.reorder');
-        Route::get('/unit-types/icons/list', [AdminUnitTypeController::class, 'getIcons'])->name('unit-types.icons');
-        Route::get('/unit-types/stats/data', [AdminUnitTypeController::class, 'stats'])->name('unit-types.stats');
-        Route::patch('/unit-types/{unitType}/toggle-status', [AdminUnitTypeController::class, 'toggleStatus'])->name('unit-types.toggle-status');
-
-        Route::resource('unit-departments', AdminUnitDepartmentController::class);
-        Route::patch('/unit-departments/{department}/toggle-status', [AdminUnitDepartmentController::class, 'toggleStatus'])->name('unit-departments.toggle-status');
-        Route::get('/unit-departments/stats/data', [AdminUnitDepartmentController::class, 'stats'])->name('unit-departments.stats');
-
-        Route::resource('facilities', AdminFacilityController::class);
-        Route::get('/facilities/icons/list', [AdminFacilityController::class, 'getIcons'])->name('facilities.icons');
-        Route::get('/facilities/stats/data', [AdminFacilityController::class, 'stats'])->name('facilities.stats');
-        Route::get('/facilities/{facility}/units', [AdminFacilityController::class, 'units'])->name('facilities.units');
-        Route::get('/facilities/export/data', [AdminFacilityController::class, 'export'])->name('facilities.export');
-
-        Route::prefix('units')->name('units.')->group(function () {
-            Route::get('/', [AdminUnitController::class, 'index'])->name('index');
-            Route::get('/create', [AdminUnitController::class, 'create'])->name('create');
-            Route::post('/', [AdminUnitController::class, 'store'])->name('store');
-            Route::get('/trash', [AdminUnitController::class, 'trashed'])->name('trash');
-            Route::get('/{unit}', [AdminUnitController::class, 'show'])->name('show');
-            Route::get('/{unit}/edit', [AdminUnitController::class, 'edit'])->name('edit');
-            Route::put('/{unit}', [AdminUnitController::class, 'update'])->name('update');
-            Route::delete('/{unit}', [AdminUnitController::class, 'destroy'])->name('destroy');
-            Route::post('/{unit}/restore', [AdminUnitController::class, 'restore'])->name('restore');
-            Route::delete('/{unit}/force-delete', [AdminUnitController::class, 'forceDelete'])->name('force-delete');
-            Route::post('/bulk/delete', [AdminUnitController::class, 'bulkDelete'])->name('bulk-delete');
-            Route::post('/bulk/activate', [AdminUnitController::class, 'bulkActivate'])->name('bulk-activate');
-            Route::post('/bulk/restore', [AdminUnitController::class, 'bulkRestore'])->name('bulk-restore');
-            Route::post('/bulk/force-delete', [AdminUnitController::class, 'bulkForceDelete'])->name('bulk-force-delete');
-            Route::patch('/{unit}/toggle-status', [AdminUnitController::class, 'toggleStatus'])->name('toggle-status');
-
-            Route::prefix('{unit}/photos')->name('photos.')->group(function () {
-                Route::get('/', [AdminUnitPhotoController::class, 'index'])->name('index');
-                Route::post('/upload', [AdminUnitPhotoController::class, 'upload'])->name('upload');
-                Route::delete('/{photo}', [AdminUnitPhotoController::class, 'destroy'])->name('destroy');
-                Route::post('/{photo}/primary', [AdminUnitPhotoController::class, 'setPrimary'])->name('set-primary');
-                Route::post('/reorder', [AdminUnitPhotoController::class, 'reorder'])->name('reorder');
-            });
-
-            Route::post('/{unit}/facilities/sync', [AdminUnitController::class, 'syncFacilities'])->name('sync-facilities');
-        });
-
-        Route::resource('rating-categories', AdminRatingCategoryController::class);
-        Route::patch('/rating-categories/{category}/toggle-active', [AdminRatingCategoryController::class, 'toggleActive'])->name('rating-categories.toggle-active');
-        Route::post('/rating-categories/reorder', [AdminRatingCategoryController::class, 'reorder'])->name('rating-categories.reorder');
-        Route::get('/rating-categories/active/list', [AdminRatingCategoryController::class, 'getActive'])->name('rating-categories.active');
-        Route::get('/rating-categories/stats/data', [AdminRatingCategoryController::class, 'stats'])->name('rating-categories.stats');
-        Route::post('/rating-categories/seed-defaults', [AdminRatingCategoryController::class, 'seedDefaults'])->name('rating-categories.seed-defaults');
-        Route::post('/rating-categories/validate-for-rating', [AdminRatingCategoryController::class, 'validateForRating'])->name('rating-categories.validate');
-        Route::get('/rating-categories/export/data', [AdminRatingCategoryController::class, 'export'])->name('rating-categories.export');
-
-        Route::prefix('ratings')->name('ratings.')->group(function () {
-            Route::get('/', [AdminRatingController::class, 'index'])->name('index');
-            Route::get('/stats/overview', [AdminRatingController::class, 'stats'])->name('stats');
-            Route::get('/unit/{unitId}/stats', [AdminRatingController::class, 'unitStats'])->name('unit-stats');
-            Route::get('/export/data', [AdminRatingController::class, 'export'])->name('export');
-            Route::get('/{rating}', [AdminRatingController::class, 'show'])->name('show');
-            Route::patch('/{rating}/status', [AdminRatingController::class, 'updateStatus'])->name('update-status');
-            Route::post('/{rating}/moderate', [AdminRatingController::class, 'moderate'])->name('moderate');
-            Route::post('/bulk-action', [AdminRatingController::class, 'bulkAction'])->name('bulk-action');
-            Route::delete('/{rating}', [AdminRatingController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::resource('report-categories', AdminReportCategoryController::class);
-        Route::patch('/report-categories/{category}/toggle-status', [AdminReportCategoryController::class, 'toggleStatus'])->name('report-categories.toggle-status');
-
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [AdminReportController::class, 'index'])->name('index');
-            Route::get('/stats/overview', [AdminReportController::class, 'stats'])->name('stats');
-            Route::get('/unit/{unitId}/stats', [AdminReportController::class, 'unitStats'])->name('unit-stats');
-            Route::get('/export/data', [AdminReportController::class, 'export'])->name('export');
-            Route::get('/{report}', [AdminReportController::class, 'show'])->name('show');
-            Route::get('/{report}/edit', [AdminReportController::class, 'edit'])->name('edit');
-            Route::put('/{report}', [AdminReportController::class, 'update'])->name('update');
-            Route::put('/{report}/status', [AdminReportController::class, 'updateStatus'])->name('update-status');
-            Route::post('/{report}/reply', [AdminReportController::class, 'reply'])->name('reply');
-            Route::post('/bulk-action', [AdminReportController::class, 'bulkAction'])->name('bulk-action');
-            Route::delete('/{report}', [AdminReportController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::prefix('employees')->name('employees.')->group(function () {
-            Route::get('/', [AdminEmployeeController::class, 'index'])->name('index');
-            Route::get('/create', [AdminEmployeeController::class, 'create'])->name('create');
-            Route::post('/', [AdminEmployeeController::class, 'store'])->name('store');
-            Route::get('/{id}', [AdminEmployeeController::class, 'show'])->name('show');
-            Route::get('/{id}/edit', [AdminEmployeeController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [AdminEmployeeController::class, 'update'])->name('update');
-            Route::delete('/{id}', [AdminEmployeeController::class, 'destroy'])->name('destroy');
-            Route::post('/{id}/restore', [AdminEmployeeController::class, 'restore'])->name('restore');
-            Route::post('/assign', [AdminEmployeeController::class, 'assignToUnit'])->name('assign');
-            Route::delete('/{employeeId}/unit/{unitId}', [AdminEmployeeController::class, 'removeFromUnit'])->name('remove-unit');
-        });
-
-        Route::prefix('qr-codes')->name('qr-codes.')->group(function () {
-            Route::get('/', [AdminQrCodeController::class, 'index'])->name('index');
-            Route::get('/unit/{unitId}', [AdminQrCodeController::class, 'show'])->name('show');
-            Route::post('/generate', [AdminQrCodeController::class, 'generate'])->name('generate');
-            Route::put('/{id}/regenerate', [AdminQrCodeController::class, 'regenerate'])->name('regenerate');
-            Route::put('/{id}/toggle', [AdminQrCodeController::class, 'toggleActive'])->name('toggle');
-            Route::delete('/{id}', [AdminQrCodeController::class, 'destroy'])->name('destroy');
-        });
-
-        Route::prefix('moderation-logs')->name('moderation-logs.')->group(function () {
-            Route::get('/', [AdminModerationLogController::class, 'index'])->name('index');
-            Route::get('/stats/overview', [AdminModerationLogController::class, 'stats'])->name('stats');
-            Route::get('/by-target/{targetType}/{targetId}', [AdminModerationLogController::class, 'byTarget'])->name('by-target');
-            Route::get('/by-admin/{adminId}', [AdminModerationLogController::class, 'byAdmin'])->name('by-admin');
-            Route::get('/summary', [AdminModerationLogController::class, 'summary'])->name('summary');
-            Route::get('/export/data', [AdminModerationLogController::class, 'export'])->name('export');
-            Route::get('/{log}', [AdminModerationLogController::class, 'show'])->name('show');
-            Route::post('/cleanup', [AdminModerationLogController::class, 'cleanup'])->name('cleanup');
-            Route::delete('/{log}', [AdminModerationLogController::class, 'destroy'])->name('destroy');
-            Route::post('/bulk-destroy', [AdminModerationLogController::class, 'bulkDestroy'])->name('bulk-destroy');
-        });
-
-        Route::prefix('exports')->name('exports.')->group(function () {
-            Route::get('/', [AdminExportController::class, 'index'])->name('index');
-            Route::post('/reports', [AdminExportController::class, 'exportReports'])->name('reports');
-            Route::post('/ratings', [AdminExportController::class, 'exportRatings'])->name('ratings');
-            Route::post('/units', [AdminExportController::class, 'exportUnits'])->name('units');
-            Route::post('/unit-types', [AdminExportController::class, 'exportUnitTypes'])->name('unit-types');
-            Route::get('/download/{id}', [AdminExportController::class, 'downloadExport'])->name('download');
-        });
-
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-            Route::put('/', [AdminSettingController::class, 'update'])->name('update');
-        });
+    
+    Route::prefix('qr-codes')->group(function () {
+        Route::post('{id}/regenerate', [QrCodeController::class, 'regenerate'])->name('qr-codes.regenerate');
+        Route::post('{id}/toggle-active', [QrCodeController::class, 'toggleActive'])->name('qr-codes.toggle-active');
+        Route::delete('{id}', [QrCodeController::class, 'destroy'])->name('qr-codes.destroy');
     });
+    
+    Route::resource('facilities', FacilityController::class);
+    Route::get('facilities/popular', [FacilityController::class, 'popular'])->name('facilities.popular');
+    
+    Route::resource('employees', EmployeeController::class);
+    Route::post('employees/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+    Route::post('employees/{id}/assign-to-unit', [EmployeeController::class, 'assignToUnit'])->name('employees.assign-to-unit');
+    Route::post('employees/{id}/remove-from-unit', [EmployeeController::class, 'removeFromUnit'])->name('employees.remove-from-unit');
+    Route::get('employees/{id}/assigned-units', [EmployeeController::class, 'getAssignedUnits'])->name('employees.assigned-units');
+    
+    Route::resource('rating-categories', RatingCategoryController::class)->except(['create', 'show', 'edit']);
+    Route::post('rating-categories/{id}/toggle-active', [RatingCategoryController::class, 'toggleActive'])->name('rating-categories.toggle-active');
+    Route::post('rating-categories/reorder', [RatingCategoryController::class, 'reorder'])->name('rating-categories.reorder');
+    Route::get('rating-categories/active', [RatingCategoryController::class, 'active'])->name('rating-categories.active');
+    
+    Route::get('ratings', [RatingController::class, 'index'])->name('ratings.index');
+    Route::get('ratings/{id}', [RatingController::class, 'show'])->name('ratings.show');
+    Route::post('ratings/{id}/moderate', [RatingController::class, 'moderate'])->name('ratings.moderate');
+    Route::post('ratings/{id}/update-status', [RatingController::class, 'updateStatus'])->name('ratings.update-status');
+    Route::post('ratings/bulk-action', [RatingController::class, 'bulkAction'])->name('ratings.bulk-action');
+    Route::get('ratings/export', [RatingController::class, 'export'])->name('ratings.export');
+    Route::get('ratings/stats', [RatingController::class, 'stats'])->name('ratings.stats');
+    
+    Route::resource('report-categories', ReportCategoryController::class)->except(['create', 'show', 'edit']);
+    Route::post('report-categories/{id}/toggle-active', [ReportCategoryController::class, 'toggleActive'])->name('report-categories.toggle-active');
+    
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/{id}', [ReportController::class, 'show'])->name('reports.show');
+    Route::post('reports/{id}/update-status', [ReportController::class, 'updateStatus'])->name('reports.update-status');
+    Route::post('reports/{id}/reply', [ReportController::class, 'reply'])->name('reports.reply');
+    Route::post('reports/bulk-update-status', [ReportController::class, 'bulkUpdateStatus'])->name('reports.bulk-update-status');
+    Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+    
+    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    
+    Route::get('moderation-logs', [ModerationLogController::class, 'index'])->name('moderation-logs.index');
+    Route::get('moderation-logs/{id}', [ModerationLogController::class, 'show'])->name('moderation-logs.show');
+    Route::get('moderation-logs/stats', [ModerationLogController::class, 'stats'])->name('moderation-logs.stats');
+    Route::get('moderation-logs/by-target/{targetType}/{targetId}', [ModerationLogController::class, 'byTarget'])->name('moderation-logs.by-target');
+    Route::get('moderation-logs/export', [ModerationLogController::class, 'export'])->name('moderation-logs.export');
+    Route::post('moderation-logs/cleanup', [ModerationLogController::class, 'cleanup'])->name('moderation-logs.cleanup');
+    Route::get('moderation-logs/summary', [ModerationLogController::class, 'summary'])->name('moderation-logs.summary');
+    Route::get('moderation-logs/by-admin/{adminId}', [ModerationLogController::class, 'byAdmin'])->name('moderation-logs.by-admin');
+    Route::delete('moderation-logs/{log}', [ModerationLogController::class, 'destroy'])->name('moderation-logs.destroy');
+    Route::post('moderation-logs/bulk-destroy', [ModerationLogController::class, 'bulkDestroy'])->name('moderation-logs.bulk-destroy');
+    
+    Route::get('exports', [ExportController::class, 'index'])->name('exports.index');
+    Route::post('exports/reports', [ExportController::class, 'exportReports'])->name('exports.reports');
+    Route::post('exports/ratings', [ExportController::class, 'exportRatings'])->name('exports.ratings');
+    Route::post('exports/units', [ExportController::class, 'exportUnits'])->name('exports.units');
+    Route::post('exports/unit-types', [ExportController::class, 'exportUnitTypes'])->name('exports.unit-types');
+    Route::get('exports/{id}/download', [ExportController::class, 'downloadExport'])->name('exports.download');
 });

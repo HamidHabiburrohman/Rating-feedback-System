@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ModerationLog\FilterModerationLogRequest;
-use App\Http\Requests\Admin\ModerationLog\ExportLogsRequest;
 use App\Services\Admin\ModerationLogService;
-use App\Models\ModerationLog;
+use App\Models\System\ModerationLog;
 use Illuminate\Http\Request;
 
 class ModerationLogController extends Controller
@@ -18,110 +16,199 @@ class ModerationLogController extends Controller
         $this->service = $service;
     }
 
-    public function index(FilterModerationLogRequest $request)
+    public function index(Request $request)
     {
-        $filters = $request->validated();
-        $logs = $this->service->getPaginatedLogs($filters);
-        $filterData = $this->service->getFilterData();
-        $stats = $this->service->getStats();
-
-        return view('admin.moderation-logs.index', compact('logs', 'filterData', 'stats'));
-    }
-
-    public function show($id)
-    {
+        $this->authorize('viewAny', ModerationLog::class);
+        
         try {
-            return view('admin.moderation-logs.show', ['log' => $this->service->getLogDetail($id)]);
-        } catch (\Exception $e) {
-            return redirect()->route('admin.moderation-logs.index')->with('error', 'Log tidak ditemukan');
-        }
-    }
-
-    public function stats(Request $request)
-    {
-        try {
+            $filters = $request->only([
+                'search', 'action', 'target_type', 'admin_id',
+                'date_from', 'date_to', 'per_page', 'sort'
+            ]);
+            
+            $logs = $this->service->getFilteredLogs($filters);
             $stats = $this->service->getStats();
-            return $request->wantsJson()
-                ? response()->json(['success' => true, 'data' => $stats])
-                : view('admin.moderation-logs.stats', compact('stats'));
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'html' => view('admin.moderation-logs.partials.rows', compact('logs'))->render(),
+                    'pagination' => view('admin.moderation-logs.partials.pagination', ['paginator' => $logs])->render()
+                ]);
+            }
+            
+            return view('admin.moderation-logs.index', compact('logs', 'stats'));
         } catch (\Exception $e) {
-            $message = 'Gagal mengambil statistik';
-            return $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => $message], 500)
-                : back()->with('error', $message);
+            return redirect()->route('admin.moderation-logs.index')
+                ->with('error', 'Gagal memuat log moderasi');
         }
     }
 
-    public function byTarget(Request $request, string $targetType, int $targetId)
+    public function show(int $id)
     {
         try {
-            return response()->json(['success' => true, 'data' => $this->service->getLogsByTarget($targetType, $targetId)]);
+            $log = $this->service->getDetail($id);
+            $this->authorize('view', $log);
+            return view('admin.moderation-logs.show', compact('log'));
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil log: ' . $e->getMessage()], 500);
+            return redirect()->route('admin.moderation-logs.index')
+                ->with('error', 'Log tidak ditemukan');
         }
     }
 
-    public function export(ExportLogsRequest $request)
+    public function stats()
     {
+        $this->authorize('viewAny', ModerationLog::class);
+        
         try {
-            return $this->service->export($request->validated());
+            return response()->json([
+                'success' => true,
+                'data' => $this->service->getStats()
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat statistik'
+            ], 500);
+        }
+    }
+
+    public function byTarget(string $targetType, int $targetId)
+    {
+        $this->authorize('viewAny', ModerationLog::class);
+        
+        try {
+            $logs = $this->service->getByTarget($targetType, $targetId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $logs
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat log'
+            ], 500);
+        }
+    }
+
+    public function byAdmin(int $adminId)
+    {
+        $this->authorize('viewAny', ModerationLog::class);
+        
+        try {
+            $logs = $this->service->getByAdmin($adminId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $logs
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat log admin'
+            ], 500);
+        }
+    }
+
+    public function summary()
+    {
+        $this->authorize('viewAny', ModerationLog::class);
+        
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => $this->service->getSummary()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat ringkasan'
+            ], 500);
+        }
+    }
+
+    public function export(Request $request)
+    {
+        $this->authorize('export', ModerationLog::class);
+        
+        try {
+            return $this->service->export($request->all());
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mengekspor log: ' . $e->getMessage());
         }
     }
 
     public function cleanup(Request $request)
     {
+        $this->authorize('cleanup', ModerationLog::class);
+        
+        $request->validate([
+            'days' => 'required|integer|min:30|max:365',
+        ]);
+        
         try {
-            $count = $this->service->cleanupOldLogs($request->get('days', 90));
-            return response()->json(['success' => true, 'message' => "{$count} log lama telah dibersihkan", 'count' => $count]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal membersihkan log: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function summary(Request $request)
-    {
-        try {
+            $count = $this->service->cleanup($request->days);
+            
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getSummaryByDateRange(
-                    $request->get('start_date', now()->subDays(30)->format('Y-m-d')),
-                    $request->get('end_date', now()->format('Y-m-d'))
-                )
+                'message' => "{$count} log lama berhasil dihapus"
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil ringkasan log'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal cleanup: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    public function byAdmin(Request $request, $adminId)
+    public function destroy(Request $request, ModerationLog $log)
     {
+        $this->authorize('delete', $log);
+        
         try {
-            return response()->json(['success' => true, 'data' => $this->service->getActionsByAdmin($adminId, $request->get('limit', 50))]);
+            $this->service->delete($log->id);
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Log berhasil dihapus'
+                ]);
+            }
+            
+            return back()->with('success', 'Log berhasil dihapus');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil log admin'], 500);
-        }
-    }
-
-    public function destroy(ModerationLog $log)
-    {
-        try {
-            $log->delete();
-            return redirect()->route('admin.moderation-logs.index')->with('success', 'Log berhasil dihapus');
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus log: ' . $e->getMessage()], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus log: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal menghapus log: ' . $e->getMessage());
         }
     }
 
     public function bulkDestroy(Request $request)
     {
+        $this->authorize('delete', ModerationLog::class);
+        
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:moderation_logs,id',
+        ]);
+        
         try {
-            $request->validate(['log_ids' => 'required|array', 'log_ids.*' => 'exists:moderation_logs,id']);
-            $count = ModerationLog::whereIn('id', $request->log_ids)->delete();
-            return redirect()->route('admin.moderation-logs.index')->with('success', "{$count} log berhasil dihapus");
+            $count = $this->service->bulkDelete($request->ids);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} log berhasil dihapus"
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus log: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus massal: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

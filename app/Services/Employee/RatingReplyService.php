@@ -2,91 +2,90 @@
 
 namespace App\Services\Employee;
 
-use App\Models\Authentication\Employee;
 use App\Models\Feedback\Rating;
 use App\Models\Feedback\RatingReply;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
-class RatingReplyService
+class RatingReplyService extends BaseEmployeeService
 {
-    protected Employee $employee;
-
-    public function setEmployee(Employee $employee): self
+    public function reply(int $ratingId, string $reply, int $employeeId): RatingReply
     {
-        $this->employee = $employee;
-        return $this;
+        return DB::transaction(function () use ($ratingId, $reply, $employeeId) {
+            $rating = Rating::findOrFail($ratingId);
+
+            if (!$this->isAssignedToUnit($rating->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk membalas rating unit ini.');
+            }
+
+            $ratingReply = RatingReply::create([
+                'rating_id' => $ratingId,
+                'employee_id' => $employeeId,
+                'admin_id' => null,
+                'reply' => $reply,
+                'is_public' => true,
+            ]);
+
+            $rating->update(['last_replied_at' => now()]);
+
+            Cache::tags(['ratings', "rating_{$ratingId}", "unit_{$rating->unit_id}", 'dashboard'])->flush();
+
+            return $ratingReply->fresh(['employee']);
+        });
     }
 
-    public function getRepliesForRating(int $ratingId): array
+    public function updateReply(int $replyId, string $reply, int $employeeId): RatingReply
     {
-        $rating = Rating::where('id', $ratingId)
-            ->whereHas('unit', function ($query) {
-                $query->whereHas('employeeAssignments', function ($q) {
-                    $q->where('employee_id', $this->employee->id)
-                        ->where('is_active', true);
-                });
-            })
-            ->first();
+        return DB::transaction(function () use ($replyId, $reply, $employeeId) {
+            $ratingReply = RatingReply::where('id', $replyId)
+                ->where('employee_id', $employeeId)
+                ->firstOrFail();
 
-        if (!$rating) {
-            return [];
-        }
+            $rating = $ratingReply->rating;
+            if (!$this->isAssignedToUnit($rating->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk mengubah balasan ini.');
+            }
 
-        return $rating->replies()->with('employee')->get()->toArray();
+            $ratingReply->update(['reply' => $reply]);
+
+            Cache::tags(['ratings', "rating_{$rating->id}", "unit_{$rating->unit_id}"])->flush();
+
+            return $ratingReply;
+        });
     }
 
-    public function create(int $ratingId, string $reply, bool $isPublic = true): ?RatingReply
+    public function deleteReply(int $replyId, int $employeeId): bool
     {
-        $rating = Rating::where('id', $ratingId)
-            ->whereHas('unit', function ($query) {
-                $query->whereHas('employeeAssignments', function ($q) {
-                    $q->where('employee_id', $this->employee->id)
-                        ->where('is_active', true);
-                });
-            })
-            ->first();
+        return DB::transaction(function () use ($replyId, $employeeId) {
+            $ratingReply = RatingReply::where('id', $replyId)
+                ->where('employee_id', $employeeId)
+                ->firstOrFail();
 
-        if (!$rating) {
-            return null;
-        }
+            $rating = $ratingReply->rating;
+            if (!$this->isAssignedToUnit($rating->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk menghapus balasan ini.');
+            }
 
-        $replyModel = RatingReply::create([
-            'rating_id' => $ratingId,
-            'employee_id' => $this->employee->id,
-            'reply' => $reply,
-            'is_public' => $isPublic,
-        ]);
+            $ratingReply->delete();
 
-        $rating->update(['last_replied_at' => now()]);
+            Cache::tags(['ratings', "rating_{$rating->id}", "unit_{$rating->unit_id}"])->flush();
 
-        return $replyModel;
+            return true;
+        });
     }
 
-    public function update(int $replyId, string $reply): ?RatingReply
+    public function getReplies(int $ratingId): array
     {
-        $replyModel = RatingReply::where('id', $replyId)
-            ->where('employee_id', $this->employee->id)
-            ->first();
-
-        if (!$replyModel) {
-            return null;
+        $rating = Rating::findOrFail($ratingId);
+        
+        if (!$this->isAssignedToUnit($rating->unit_id)) {
+            throw new \Exception('Anda tidak memiliki akses ke rating ini.');
         }
 
-        $replyModel->reply = $reply;
-        $replyModel->save();
-
-        return $replyModel;
-    }
-
-    public function delete(int $replyId): bool
-    {
-        $replyModel = RatingReply::where('id', $replyId)
-            ->where('employee_id', $this->employee->id)
-            ->first();
-
-        if (!$replyModel) {
-            return false;
-        }
-
-        return $replyModel->delete();
+        return $rating->replies()
+            ->with(['employee', 'admin'])
+            ->latest()
+            ->get()
+            ->toArray();
     }
 }

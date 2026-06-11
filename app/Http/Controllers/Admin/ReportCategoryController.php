@@ -3,70 +3,124 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ReportCategory\StoreReportCategoryRequest;
-use App\Http\Requests\Admin\ReportCategory\UpdateReportCategoryRequest;
 use App\Services\Admin\ReportCategoryService;
+use App\Models\Report\ReportCategory;
 use Illuminate\Http\Request;
 
 class ReportCategoryController extends Controller
 {
-    protected ReportCategoryService $reportCategoryService;
+    protected ReportCategoryService $service;
 
-    public function __construct(ReportCategoryService $reportCategoryService)
+    public function __construct(ReportCategoryService $service)
     {
-        $this->reportCategoryService = $reportCategoryService;
+        $this->service = $service;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $categories = $this->reportCategoryService->getAll();
-        return view('admin.report-categories.index', compact('categories'));
-    }
-
-    public function create()
-    {
-        return view('admin.report-categories.create');
-    }
-
-    public function store(StoreReportCategoryRequest $request)
-    {
-        $category = $this->reportCategoryService->create($request->validated());
-        return redirect()->route('admin.report-categories.index')->with('success', 'Category created successfully');
-    }
-
-    public function edit($id)
-    {
-        $category = $this->reportCategoryService->findById($id);
-        if (!$category) {
-            return redirect()->route('admin.report-categories.index')->with('error', 'Category not found');
+        $this->authorize('viewAny', ReportCategory::class);
+        
+        try {
+            $categories = $this->service->getAll($request->all());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'html' => view('admin.report-categories.partials.rows', ['categories' => $categories])->render()
+                ]);
+            }
+            
+            return view('admin.report-categories.index', compact('categories'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.report-categories.index')->with('error', 'Gagal memuat data');
         }
-        return view('admin.report-categories.edit', compact('category'));
     }
 
-    public function update(UpdateReportCategoryRequest $request, $id)
+    public function store(Request $request)
     {
-        $updated = $this->reportCategoryService->update($id, $request->validated());
-        if (!$updated) {
-            return redirect()->back()->with('error', 'Category not found');
+        $this->authorize('create', ReportCategory::class);
+        
+        $request->validate([
+            'name' => 'required|string|max:255|unique:report_categories,name',
+            'slug' => 'nullable|string|max:255|unique:report_categories,slug',
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
+        ]);
+        
+        try {
+            $category = $this->service->create($request->all());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil ditambahkan', 'data' => $category]);
+            }
+            
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil ditambahkan');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menambahkan: ' . $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
-        return redirect()->route('admin.report-categories.index')->with('success', 'Category updated successfully');
     }
 
-    public function destroy($id)
+    public function update(Request $request, int $id)
     {
-        $deleted = $this->reportCategoryService->delete($id);
-        if (!$deleted) {
-            return response()->json(['success' => false, 'message' => 'Category not found'], 404);
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('update', $category);
+        
+        $request->validate([
+            'name' => 'required|string|max:255|unique:report_categories,name,' . $id,
+            'slug' => 'nullable|string|max:255|unique:report_categories,slug,' . $id,
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
+        ]);
+        
+        try {
+            $this->service->update($id, $request->all());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil diperbarui']);
+            }
+            
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil diperbarui');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal memperbarui: ' . $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }
-        return response()->json(['success' => true, 'message' => 'Category deleted successfully']);
     }
 
-    public function toggleActive($id)
+    public function destroy(Request $request, int $id)
     {
-        $updated = $this->reportCategoryService->toggleActive($id);
-        if (!$updated) {
-            return response()->json(['success' => false, 'message' => 'Category not found'], 404);
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('delete', $category);
+        
+        try {
+            $this->service->delete($id);
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus']);
+            }
+            
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil dihapus');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
-        return response()->json(['success' => true, 'message' => 'Category status updated']);
+    }
+
+    public function toggleActive(Request $request, int $id)
+    {
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('update', $category);
+        
+        try {
+            $this->service->toggleActive($id);
+            return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
+        }
     }
 }

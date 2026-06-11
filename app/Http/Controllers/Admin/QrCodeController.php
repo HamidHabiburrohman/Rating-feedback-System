@@ -3,75 +3,100 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\QrCode\GenerateQrCodeRequest;
-use App\Http\Requests\Admin\QrCode\RegenerateQrCodeRequest;
 use App\Services\Admin\QrCodeService;
-use App\Services\Admin\UnitService;
+use App\Models\Unit\Unit;
+use App\Models\Unit\QrCode;
 use Illuminate\Http\Request;
 
 class QrCodeController extends Controller
 {
-    protected QrCodeService $qrCodeService;
-    protected UnitService $unitService;
+    protected QrCodeService $service;
 
-    public function __construct(QrCodeService $qrCodeService, UnitService $unitService)
+    public function __construct(QrCodeService $service)
     {
-        $this->qrCodeService = $qrCodeService;
-        $this->unitService = $unitService;
+        $this->service = $service;
     }
 
-    public function index()
+    public function index(int $unitId)
     {
-        $units = $this->unitService->getActive();
-        return view('admin.qr_codes.index', compact('units'));
-    }
-
-    public function show($unitId)
-    {
-        $unit = $this->unitService->findById($unitId);
-        if (!$unit) {
-            return redirect()->route('admin.qr-codes.index')->with('error', 'Unit not found');
+        $unit = Unit::findOrFail($unitId);
+        $this->authorize('view', $unit);
+        
+        try {
+            $qrCodes = $this->service->getByUnit($unitId);
+            return view('admin.units.qr-codes.index', compact('unit', 'qrCodes'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.units.show', $unitId)->with('error', 'Gagal memuat QR Code');
         }
-        $qrCodes = $this->qrCodeService->getByUnit($unitId);
-        return view('admin.qr_codes.show', compact('unit', 'qrCodes'));
     }
 
-    public function generate(GenerateQrCodeRequest $request)
+    public function generate(Request $request, int $unitId)
     {
-        $unitId = $request->unit_id;
-        $unit = $this->unitService->findById($unitId);
-        if (!$unit) {
-            return response()->json(['success' => false, 'message' => 'Unit not found'], 404);
+        $unit = Unit::findOrFail($unitId);
+        $this->authorize('update', $unit);
+        
+        try {
+            $qrCode = $this->service->generate($unitId, auth('admin')->id());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'QR Code berhasil digenerate',
+                'data' => $qrCode
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal generate: ' . $e->getMessage()], 500);
         }
-
-        $qrCode = $this->qrCodeService->generateForUnit($unit, auth('admin')->id());
-        return response()->json(['success' => true, 'data' => $qrCode]);
     }
 
-    public function regenerate(RegenerateQrCodeRequest $request, $id)
+    public function regenerate(Request $request, int $id)
     {
-        $qrCode = $this->qrCodeService->regenerate($id, auth('admin')->id());
-        if (!$qrCode) {
-            return response()->json(['success' => false, 'message' => 'QR Code not found'], 404);
+        $qrCode = QrCode::findOrFail($id);
+        $this->authorize('update', $qrCode->unit);
+        
+        try {
+            $newQrCode = $this->service->regenerate($id, auth('admin')->id());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'QR Code berhasil digenerate ulang',
+                'data' => $newQrCode
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal regenerate: ' . $e->getMessage()], 500);
         }
-        return response()->json(['success' => true, 'data' => $qrCode]);
     }
 
-    public function toggleActive($id)
+    public function toggleActive(Request $request, int $id)
     {
-        $updated = $this->qrCodeService->toggleActive($id);
-        if (!$updated) {
-            return response()->json(['success' => false, 'message' => 'QR Code not found'], 404);
+        $qrCode = QrCode::findOrFail($id);
+        $this->authorize('update', $qrCode->unit);
+        
+        try {
+            $this->service->toggleActive($id);
+            return response()->json(['success' => true, 'message' => 'Status QR Code berhasil diubah']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
         }
-        return response()->json(['success' => true, 'message' => 'QR Code status updated']);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, int $id)
     {
-        $deleted = $this->qrCodeService->delete($id);
-        if (!$deleted) {
-            return response()->json(['success' => false, 'message' => 'QR Code not found'], 404);
+        $qrCode = QrCode::findOrFail($id);
+        $this->authorize('delete', $qrCode->unit);
+        
+        try {
+            $this->service->delete($id);
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'QR Code berhasil dihapus']);
+            }
+            
+            return back()->with('success', 'QR Code berhasil dihapus');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
-        return response()->json(['success' => true, 'message' => 'QR Code deleted successfully']);
     }
 }

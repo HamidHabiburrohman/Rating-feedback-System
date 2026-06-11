@@ -15,8 +15,9 @@ class Admin extends Authenticatable
 
     protected $fillable = [
         'nama', 'email', 'password', 'role', 'photo', 'phone', 'location',
-        'employee_id', 'position', 'department', 'bio', 'timezone', 'is_active',
-        'two_factor_enabled', 'preferences', 'login_count', 'last_login_at', 'last_login_ip'
+        'employee_id', 'position', 'department', 'bio', 'timezone',
+        'is_active', 'two_factor_enabled', 'preferences',
+        'login_count', 'last_login_at', 'last_login_ip'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -39,6 +40,22 @@ class Admin extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function updateLastLogin(?string $ip = null): void
+    {
+        $this->forceFill([
+            'login_count' => ($this->login_count ?? 0) + 1,
+            'last_login_at' => now(),
+            'last_login_ip' => $ip,
+        ])->save();
+    }
+
+    public function mergePreferences(array $preferences): void
+    {
+        $current = $this->preferences ?? [];
+        $this->preferences = array_merge($current, $preferences);
+        $this->save();
     }
 
     protected static function newFactory()

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Reports\Report;
-use App\Models\Reports\ReportStatusHistory;
+use App\Models\Report\Report;
+use App\Models\Report\ReportStatusHistory;
 use Illuminate\Database\Seeder;
 
 class ReportStatusHistorySeeder extends Seeder

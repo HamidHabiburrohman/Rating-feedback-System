@@ -2,196 +2,150 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Admin;
-use App\Models\ModerationLog;
-use App\Models\User;
-use App\Services\Admin\BaseAdminService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
+use App\Models\System\ModerationLog;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ModerationLogService extends BaseAdminService
 {
-    protected array $searchableColumns = ['reason', 'action'];
-    protected array $filterableColumns = ['action', 'admin_id', 'target_type'];
-
-    public function __construct(ModerationLog $moderationLog)
+    public function getFilteredLogs(array $filters = [])
     {
-        $this->model = $moderationLog;
-    }
+        $query = ModerationLog::with(['admin']);
 
-    public function getPaginatedLogs(array $filters = []): LengthAwarePaginator
-    {
-        try {
-            $query = $this->getBaseQuery($filters, ['admin']);
-
-            if (!empty($filters['target_type'])) {
-                $query->where('target_type', $filters['target_type']);
-            }
-
-            return $this->executePaginate($query, $filters);
-        } catch (\Exception $e) {
-            Log::error('ModerationLogService::getPaginatedLogs error', [
-                'message' => $e->getMessage(),
-                'filters' => $filters,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return new LengthAwarePaginator(
-                collect([]),
-                0,
-                $filters['per_page'] ?? 10,
-                1,
-                ['path' => request()->url()]
-            );
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'like', "%{$search}%")
+                  ->orWhere('reason', 'like', "%{$search}%")
+                  ->orWhereHas('admin', fn($a) => $a->where('nama', 'like', "%{$search}%"));
+            });
         }
+
+        if (!empty($filters['action'])) $query->where('action', $filters['action']);
+        if (!empty($filters['target_type'])) $query->where('target_type', $filters['target_type']);
+        if (!empty($filters['admin_id'])) $query->where('admin_id', $filters['admin_id']);
+        
+        if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        $sort = $filters['sort'] ?? 'latest';
+        if ($sort === 'oldest') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
+        return $query->paginate($filters['per_page'] ?? 15);
     }
 
-    public function getLogDetail(int $id): ModerationLog
+    public function getDetail(int $id): ModerationLog
     {
-        return $this->model->with(['admin'])->findOrFail($id);
-    }
-
-    public function getFilterData(): array
-    {
-        return [
-            'actions' => $this->model->distinct()->pluck('action')->filter()->values(),
-            'target_types' => $this->model->distinct()->pluck('target_type')->filter()->values(),
-            'admins' => Admin::whereIn('role', ['admin', 'super_admin'])->orderBy('nama')->get(['id', 'nama'])
-        ];
+        return ModerationLog::with(['admin'])->findOrFail($id);
     }
 
     public function getStats(): array
     {
-        return [
-            'total' => $this->model->count(),
-            'today' => $this->model->whereDate('created_at', today())->count(),
-            'this_week' => $this->model->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'this_month' => $this->model->whereMonth('created_at', now()->month)->count(),
-            'by_action' => $this->model->selectRaw('action, count(*) as total')
-                ->groupBy('action')
-                ->orderByDesc('total')
-                ->limit(10)
-                ->get(),
-            'by_admin' => $this->model->selectRaw('admin_id, count(*) as total')
-                ->with('admin:id,nama')
+        return Cache::tags(['moderation_logs'])->remember('moderation_log_stats', 300, function () {
+            return [
+                'total' => ModerationLog::count(),
+                'today' => ModerationLog::whereDate('created_at', today())->count(),
+                'this_week' => ModerationLog::where('created_at', '>=', now()->startOfWeek())->count(),
+                'by_action' => ModerationLog::selectRaw('action, COUNT(*) as count')->groupBy('action')->pluck('count', 'action')->toArray(),
+            ];
+        });
+    }
+
+    public function getByTarget(string $targetType, int $targetId)
+    {
+        return ModerationLog::with(['admin'])
+            ->where('target_type', $targetType)
+            ->where('target_id', $targetId)
+            ->latest()
+            ->get();
+    }
+
+    public function getByAdmin(int $adminId)
+    {
+        return ModerationLog::with(['admin'])
+            ->where('admin_id', $adminId)
+            ->latest()
+            ->paginate(15);
+    }
+
+    public function getSummary(): array
+    {
+        return Cache::tags(['moderation_logs'])->remember('moderation_log_summary', 300, function () {
+            $topAdmins = ModerationLog::select('admin_id', DB::raw('COUNT(*) as total'))
                 ->groupBy('admin_id')
                 ->orderByDesc('total')
                 ->limit(5)
+                ->with('admin:id,nama')
                 ->get()
-                ->map(fn($item) => [
-                    'admin' => $item->admin?->nama ?? 'System',
-                    'total' => $item->total
-                ])
-        ];
-    }
+                ->toArray();
 
-    public function getLogsByTarget(string $targetType, int $targetId, int $limit = 50): array
-    {
-        return $this->model->where('target_type', $targetType)
-            ->where('target_id', $targetId)
-            ->with('admin')
-            ->latest()
-            ->limit($limit)
-            ->get()
-            ->toArray();
-    }
-
-    public function getActionsByAdmin(int $adminId, int $limit = 50): array
-    {
-        return $this->model->where('admin_id', $adminId)
-            ->with('admin')
-            ->latest()
-            ->limit($limit)
-            ->get()
-            ->toArray();
-    }
-
-    public function getSummaryByDateRange(string $startDate, string $endDate): array
-    {
-        return $this->model->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('DATE(created_at) as date, action, count(*) as total')
-            ->groupBy('date', 'action')
-            ->orderBy('date')
-            ->get()
-            ->groupBy('date')
-            ->map(fn($items) => $items->pluck('total', 'action'))
-            ->toArray();
-    }
-
-    public function cleanupOldLogs(int $days = 90): int
-    {
-        $cutoffDate = now()->subDays($days);
-        
-        $count = $this->model->where('created_at', '<', $cutoffDate)->delete();
-
-        $this->logAdminAction('cleanup_logs', (object)['count' => $count, 'days' => $days]);
-
-        return $count;
+            return [
+                'top_admins' => $topAdmins,
+                'recent_actions' => ModerationLog::with(['admin'])->latest()->limit(10)->get()->toArray(),
+            ];
+        });
     }
 
     public function export(array $filters = [])
     {
-        $query = $this->model->with('admin');
+        $query = ModerationLog::with(['admin']);
 
-        if (!empty($filters['action'])) {
-            $query->where('action', $filters['action']);
-        }
+        if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
+        if (!empty($filters['action'])) $query->where('action', $filters['action']);
 
-        if (!empty($filters['admin_id'])) {
-            $query->where('admin_id', $filters['admin_id']);
-        }
+        $logs = $query->get();
 
-        if (!empty($filters['target_type'])) {
-            $query->where('target_type', $filters['target_type']);
-        }
+        $rows = $logs->map(function ($log) {
+            return [
+                'ID' => $log->id,
+                'Admin' => $log->admin?->nama ?? '-',
+                'Action' => $log->action,
+                'Target Type' => class_basename($log->target_type),
+                'Target ID' => $log->target_id,
+                'Old Value' => $log->old_value,
+                'New Value' => $log->new_value,
+                'Reason' => $log->reason ?? '-',
+                'IP Address' => $log->ip_address,
+                'Created At' => $log->created_at?->format('Y-m-d H:i:s'),
+            ];
+        })->toArray();
 
-        if (!empty($filters['date_from'])) {
-            $query->whereDate('created_at', '>=', $filters['date_from']);
-        }
+        $headers = array_keys($rows[0] ?? []);
+        $filename = 'moderation_logs_' . now()->format('Y-m-d_His');
 
-        if (!empty($filters['date_to'])) {
-            $query->whereDate('created_at', '<=', $filters['date_to']);
-        }
-
-        $logs = $query->orderBy('created_at', 'desc')->get();
-
-        $format = $filters['format'] ?? 'csv';
-
-        if ($format === 'csv') {
-            return $this->exportCsv($logs);
-        }
-
-        return $this->exportCsv($logs);
+        $exportManager = app(\App\Services\Export\ExportManager::class);
+        return $exportManager->getExcelService()->export($rows, $headers, 'Moderation Log Export', $filename);
     }
 
-    protected function exportCsv($logs)
+    public function cleanup(int $days): int
     {
-        $filename = 'moderation-logs-' . date('Y-m-d') . '.csv';
-        
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        return DB::transaction(function () use ($days) {
+            $count = ModerationLog::where('created_at', '<', now()->subDays($days))->delete();
+            Cache::tags(['moderation_logs'])->flush();
+            return $count;
+        });
+    }
 
-        $callback = function() use ($logs) {
-            $file = fopen('php://output', 'w');
-            
-            fputcsv($file, ['Admin', 'Aksi', 'Tipe Target', 'ID Target', 'Alasan', 'Waktu']);
+    public function delete(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            ModerationLog::findOrFail($id)->delete();
+            Cache::tags(['moderation_logs'])->flush();
+            return true;
+        });
+    }
 
-            foreach ($logs as $log) {
-                fputcsv($file, [
-                    $log->admin?->name ?? 'System',
-                    $log->action,
-                    $log->target_type,
-                    $log->target_id,
-                    $log->reason ?? '-',
-                    $log->created_at->format('Y-m-d H:i')
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+    public function bulkDelete(array $ids): int
+    {
+        return DB::transaction(function () use ($ids) {
+            $count = ModerationLog::whereIn('id', $ids)->delete();
+            Cache::tags(['moderation_logs'])->flush();
+            return $count;
+        });
     }
 }

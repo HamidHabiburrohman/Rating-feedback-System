@@ -2,222 +2,34 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Rating;
-use App\Models\Unit;
-use App\Models\Student;
-use App\Services\Admin\BaseAdminService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
+use App\Models\Feedback\Rating;
+use App\Models\System\ModerationLog;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class RatingManagementService extends BaseAdminService
 {
-    protected array $searchableColumns = ['tracking_code', 'comment'];
-    protected array $filterableColumns = ['unit_id', 'student_id', 'status'];
-
-    public function __construct(Rating $rating)
+    public function getFilteredRatings(array $filters = [])
     {
-        $this->model = $rating;
-        parent::__construct();
-    }
+        $query = Rating::with(['student', 'unit', 'scores.category']);
 
-    public function getPaginatedRatings(array $filters = []): LengthAwarePaginator
-    {
-        try {
-            $query = $this->getBaseQuery($filters, ['unit', 'student', 'scores.category', 'adminReply']);
-
-            if (!empty($filters['min_score'])) {
-                $query->where('overall_score', '>=', $filters['min_score']);
-            }
-
-            if (!empty($filters['max_score'])) {
-                $query->where('overall_score', '<=', $filters['max_score']);
-            }
-
-            if (isset($filters['has_reports'])) {
-                if ($filters['has_reports']) {
-                    $query->whereHas('activeReport');
-                } else {
-                    $query->whereDoesntHave('activeReport');
-                }
-            }
-
-            return $this->executePaginate($query, $filters);
-        } catch (\Exception $e) {
-            Log::error('RatingManagementService::getPaginatedRatings error', [
-                'message' => $e->getMessage(),
-                'filters' => $filters,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return new LengthAwarePaginator(
-                collect([]),
-                0,
-                $filters['per_page'] ?? 10,
-                1,
-                ['path' => request()->url()]
-            );
-        }
-    }
-
-    public function moderate(int $ratingId, string $action, ?string $reason = null): bool
-    {
-        $rating = $this->find($ratingId);
-        
-        switch ($action) {
-            case 'censor':
-                $rating->is_comment_censored = true;
-                $rating->save();
-                $this->logAdminAction('censor_comment', $rating, $reason);
-                break;
-            case 'archive':
-                $rating->status = 'archived';
-                $rating->save();
-                $this->logAdminAction('archive_rating', $rating, $reason);
-                break;
-            case 'restore':
-                $rating->status = 'active';
-                $rating->save();
-                $this->logAdminAction('restore_rating', $rating, $reason);
-                break;
-            default:
-                throw new \Exception('Tindakan tidak valid');
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('comment', 'like', "%{$search}%")
+                  ->orWhere('tracking_code', 'like', "%{$search}%")
+                  ->orWhereHas('student', fn($s) => $s->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('unit', fn($u) => $u->where('name', 'like', "%{$search}%"));
+            });
         }
 
-        return true;
-    }
-
-    public function getFilterData(): array
-    {
-        return [
-            'units' => Unit::orderBy('name')->pluck('name', 'id'),
-            'students' => Student::orderBy('name')->pluck('name', 'id'),
-            'statuses' => [
-                '' => 'Semua Status',
-                'active' => 'Aktif',
-                'edited' => 'Diedit',
-                'archived' => 'Diarsipkan'
-            ]
-        ];
-    }
-
-    public function getRatingDetail(int $id): Rating
-    {
-        return $this->model->with([
-            'unit', 
-            'student', 
-            'scores.category', 
-            'adminReply.admin', 
-            'report'
-        ])->findOrFail($id);
-    }
-
-    public function getRatingStats(?int $unitId = null): array
-    {
-        $query = $this->model->query();
-
-        if ($unitId) {
-            $query->where('unit_id', $unitId);
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
         }
 
-        return [
-            'total' => $query->count(),
-            'average' => round($query->avg('overall_score') ?? 0, 2),
-            'active' => (clone $query)->where('status', 'active')->count(),
-            'edited' => (clone $query)->where('status', 'edited')->count(),
-            'archived' => (clone $query)->where('status', 'archived')->count(),
-            'censored' => (clone $query)->where('is_comment_censored', true)->count(),
-            'with_replies' => (clone $query)->has('adminReply')->count(),
-            'with_reports' => (clone $query)->has('activeReport')->count()
-        ];
-    }
-
-    public function getMonthlyStats(): array
-    {
-        $stats = [];
-
-        for ($i = 11; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $month = $date->format('M Y');
-            
-            $stats[] = [
-                'month' => $month,
-                'total' => $this->model
-                    ->whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->count(),
-                'active' => $this->model
-                    ->whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->where('status', 'active')
-                    ->count()
-            ];
+        if (!empty($filters['unit_id'])) {
+            $query->where('unit_id', $filters['unit_id']);
         }
-
-        return $stats;
-    }
-
-    public function getUnitRanking(int $limit = 10): array
-    {
-        return Unit::where('total_ratings', '>', 0)
-            ->orderByDesc('avg_rating')
-            ->limit($limit)
-            ->get(['id', 'name', 'avg_rating', 'total_ratings'])
-            ->toArray();
-    }
-
-    public function updateRating(int $id, array $data): Rating
-    {
-        return $this->update($id, $data);
-    }
-
-    public function bulkAction(array $ratingIds, string $action): int
-    {
-        $count = 0;
-
-        foreach ($ratingIds as $id) {
-            try {
-                switch ($action) {
-                    case 'archive':
-                        $this->update($id, ['status' => 'archived']);
-                        $count++;
-                        break;
-                    case 'restore':
-                        $this->update($id, ['status' => 'active']);
-                        $count++;
-                        break;
-                    case 'delete':
-                        $this->delete($id);
-                        $count++;
-                        break;
-                }
-            } catch (\Exception $e) {
-                continue;
-            }
-        }
-
-        $this->logAdminAction('bulk_' . $action, (object)[
-            'count' => $count, 
-            'ids' => $ratingIds
-        ]);
-
-        return $count;
-    }
-
-    public function getAllRatings(array $filters = [])
-    {
-        return $this->getBaseQuery($filters);
-    }
-
-    public function deleteRating(int $id): bool
-    {
-        $rating = $this->find($id);
-        
-        return $this->delete($id);
-    }
-
-    public function export(array $filters = [])
-    {
-        $query = $this->getBaseQuery($filters, ['unit', 'student']);
 
         if (!empty($filters['min_score'])) {
             $query->where('overall_score', '>=', $filters['min_score']);
@@ -227,43 +39,190 @@ class RatingManagementService extends BaseAdminService
             $query->where('overall_score', '<=', $filters['max_score']);
         }
 
-        $ratings = $query->get();
+        $sort = $filters['sort'] ?? 'latest';
+        switch ($sort) {
+            case 'highest':
+                $query->orderByDesc('overall_score');
+                break;
+            case 'lowest':
+                $query->orderBy('overall_score');
+                break;
+            case 'oldest':
+                $query->oldest();
+                break;
+            default:
+                $query->latest();
+        }
 
-        $filename = 'ratings-export-' . date('Y-m-d') . '.csv';
-        
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        return $query->paginate($filters['per_page'] ?? 15);
+    }
 
-        $callback = function() use ($ratings) {
-            $file = fopen('php://output', 'w');
-            
-            fputcsv($file, [
-                'Tracking Code',
-                'Unit',
-                'Student',
-                'Overall Score',
-                'Status',
-                'Has Reports',
-                'Created At'
-            ]);
+    public function getDetail(int $id): array
+    {
+        $cacheKey = "admin_rating_detail_{$id}";
 
-            foreach ($ratings as $rating) {
-                fputcsv($file, [
-                    $rating->tracking_code,
-                    $rating->unit->name ?? '-',
-                    $rating->student->name ?? '-',
-                    $rating->overall_score,
-                    $rating->status,
-                    $rating->reports()->exists() ? 'Yes' : 'No',
-                    $rating->created_at->format('Y-m-d H:i')
-                ]);
+        return Cache::tags(['ratings', "rating_{$id}"])->remember($cacheKey, 300, function () use ($id) {
+            $rating = Rating::with([
+                'student',
+                'unit',
+                'scores.category',
+                'reports.student',
+                'replies.employee',
+                'visit',
+            ])->findOrFail($id);
+
+            return [
+                'rating' => $rating,
+                'moderation_logs' => ModerationLog::where('target_type', Rating::class)
+                    ->where('target_id', $id)
+                    ->with('admin')
+                    ->latest()
+                    ->get(),
+            ];
+        });
+    }
+
+    public function moderate(int $id, string $action, ?string $reason, int $adminId): bool
+    {
+        return DB::transaction(function () use ($id, $action, $reason, $adminId) {
+            $rating = Rating::findOrFail($id);
+            $oldStatus = $rating->status;
+
+            switch ($action) {
+                case 'approve':
+                    $rating->update(['status' => 'active']);
+                    break;
+                case 'reject':
+                case 'archive':
+                    $rating->update(['status' => 'archived']);
+                    break;
+                case 'censor_comment':
+                    $rating->update([
+                        'comment' => '[Komentar telah disensor oleh admin]',
+                        'is_comment_censored' => true,
+                    ]);
+                    break;
+                default:
+                    throw new \Exception("Action '{$action}' tidak valid");
             }
 
-            fclose($file);
-        };
+            $this->logModeration($rating, $action, $oldStatus, $reason, $adminId);
 
-        return response()->stream($callback, 200, $headers);
+            Cache::tags(['ratings', "rating_{$id}", "unit_{$rating->unit_id}", 'landing', 'dashboard'])->flush();
+
+            return true;
+        });
+    }
+
+    public function updateStatus(int $id, string $status): bool
+    {
+        return DB::transaction(function () use ($id, $status) {
+            $rating = Rating::findOrFail($id);
+            $rating->update(['status' => $status]);
+
+            Cache::tags(['ratings', "rating_{$id}", "unit_{$rating->unit_id}", 'landing', 'dashboard'])->flush();
+
+            return true;
+        });
+    }
+
+    public function bulkAction(array $ids, string $action, ?string $reason, int $adminId): int
+    {
+        return DB::transaction(function () use ($ids, $action, $reason, $adminId) {
+            $count = 0;
+            $ratings = Rating::whereIn('id', $ids)->get();
+
+            foreach ($ratings as $rating) {
+                try {
+                    $this->moderate($rating->id, $action, $reason, $adminId);
+                    $count++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            return $count;
+        });
+    }
+
+    public function export(array $filters = [])
+    {
+        $query = Rating::with(['student', 'unit', 'scores.category']);
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $ratings = $query->get();
+
+        $rows = $ratings->map(function ($rating) {
+            return [
+                'ID' => $rating->id,
+                'Tracking Code' => $rating->tracking_code,
+                'Unit' => $rating->unit?->name ?? '-',
+                'Student' => $rating->student?->name ?? '-',
+                'Score' => $rating->overall_score,
+                'Comment' => $rating->is_comment_censored ? '[Censored]' : ($rating->comment ?? '-'),
+                'Status' => $rating->status,
+                'Created At' => $rating->created_at?->format('Y-m-d H:i:s'),
+            ];
+        })->toArray();
+
+        $headers = array_keys($rows[0] ?? []);
+        $filename = 'ratings_' . now()->format('Y-m-d_His');
+
+        $exportManager = app(\App\Services\Export\ExportManager::class);
+        return $exportManager->getExcelService()->export($rows, $headers, 'Rating Export', $filename);
+    }
+
+    public function getStats(): array
+    {
+        return Cache::tags(['ratings', 'dashboard'])->remember('admin_rating_stats', 300, function () {
+            $total = Rating::count();
+            $active = Rating::where('status', 'active')->count();
+            $edited = Rating::where('status', 'edited')->count();
+            $archived = Rating::where('status', 'archived')->count();
+            $censored = Rating::where('is_comment_censored', true)->count();
+            $avgScore = round(Rating::avg('overall_score') ?? 0, 2);
+
+            return [
+                'total' => $total,
+                'active' => $active,
+                'edited' => $edited,
+                'archived' => $archived,
+                'censored' => $censored,
+                'avg_score' => $avgScore,
+                'distribution' => [
+                    '5' => Rating::where('overall_score', '>=', 4.5)->count(),
+                    '4' => Rating::whereBetween('overall_score', [3.5, 4.49])->count(),
+                    '3' => Rating::whereBetween('overall_score', [2.5, 3.49])->count(),
+                    '2' => Rating::whereBetween('overall_score', [1.5, 2.49])->count(),
+                    '1' => Rating::where('overall_score', '<', 1.5)->count(),
+                ],
+            ];
+        });
+    }
+
+    protected function logModeration(Rating $rating, string $action, string $oldStatus, ?string $reason, int $adminId): void
+    {
+        ModerationLog::create([
+            'admin_id' => $adminId,
+            'target_type' => Rating::class,
+            'target_id' => $rating->id,
+            'action' => $action,
+            'old_value' => json_encode(['status' => $oldStatus, 'comment' => $rating->getOriginal('comment')]),
+            'new_value' => json_encode(['status' => $rating->status, 'comment' => $rating->comment]),
+            'reason' => $reason,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
     }
 }

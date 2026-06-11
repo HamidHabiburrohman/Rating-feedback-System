@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Units\Unit;
-use App\Models\Units\UnitType;
-use App\Models\Units\UnitDepartment;
+use App\Models\Unit\Unit;
+use App\Models\Unit\UnitType;
+use App\Models\Unit\UnitDepartment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

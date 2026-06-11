@@ -3,120 +3,154 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Profile\UpdateProfileRequest;
-use App\Http\Requests\Admin\Profile\UpdatePasswordRequest;
-use App\Http\Requests\Admin\Profile\UpdatePreferencesRequest;
-use App\Models\Admin;
-use App\Services\Admin\AdminProfileService;
+use App\Models\Authentication\Admin;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    protected AdminProfileService $service;
-
-    public function __construct(AdminProfileService $service)
-    {
-        $this->service = $service;
-    }
-
-    public function show()
-    {
-        $admin = Auth::guard('admin')->user();
-        return view('admin.profile.show', compact('admin'));
-    }
-
     public function edit()
     {
-        $admin = Auth::guard('admin')->user();
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
         return view('admin.profile.edit', compact('admin'));
     }
 
-    public function update(UpdateProfileRequest $request)
+    public function updateProfile(Request $request)
     {
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'bio' => 'nullable|string|max:1000',
+            'timezone' => 'nullable|string|max:50',
+        ]);
+        
         try {
-            $admin = Auth::guard('admin')->user();
-            $this->service->updateProfile($admin, $request->validated());
-
-            return redirect()->route('admin.profile.show')
-                ->with('success', 'Profil berhasil diperbarui');
+            $admin->update($request->only(['nama', 'phone', 'bio', 'timezone']));
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profil berhasil diperbarui'
+                ]);
+            }
+            
+            return back()->with('success', 'Profil berhasil diperbarui');
         } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui profil: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
         }
     }
 
-    public function updatePassword(UpdatePasswordRequest $request)
+    public function updatePassword(Request $request)
     {
-        try {
-            $admin = Auth::guard('admin')->user();
-            $this->service->updatePassword($admin, $request->validated());
-
-            return redirect()->route('admin.profile.show')
-                ->with('success', 'Password berhasil diubah');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengubah password: ' . $e->getMessage());
-        }
-    }
-
-    public function updatePreferences(UpdatePreferencesRequest $request)
-    {
-        try {
-            $admin = Auth::guard('admin')->user();
-
-            $preferences = $request->only([
-                'theme',
-                'language',
-                'notifications',
-                'compact_sidebar',
-                'show_activity',
-                'login_notifications'
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+        
+        if (!Hash::check($request->current_password, $admin->password)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password saat ini salah'
+                ], 422);
+            }
+            
+            return back()->withErrors([
+                'current_password' => 'Password saat ini salah'
             ]);
-
-            $preferences = array_filter($preferences, function ($value) {
-                return !is_null($value);
-            });
-
-            $this->service->updatePreferences($admin, ['preferences' => $preferences]);
-
-            return redirect()->route('admin.profile.show')
-                ->with('success', 'Preferensi berhasil diperbarui');
+        }
+        
+        try {
+            $admin->password = Hash::make($request->password);
+            $admin->save();
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password berhasil diperbarui'
+                ]);
+            }
+            
+            return back()->with('success', 'Password berhasil diperbarui');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memperbarui preferensi: ' . $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui password: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui password: ' . $e->getMessage());
         }
     }
 
     public function updatePhoto(Request $request)
     {
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
         $request->validate([
-            'photo' => 'required|image|max:2048'
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048'
         ]);
-
+        
         try {
-            $admin = Auth::guard('admin')->user();
-            $this->service->updatePhoto($admin, $request->file('photo'));
-
-            $fresh = Admin::find($admin->id);
-
+            $file = $request->file('photo');
+            $path = $file->store('admin/photos', 'public');
+            
+            if ($admin->photo && Storage::disk('public')->exists($admin->photo)) {
+                Storage::disk('public')->delete($admin->photo);
+            }
+            
+            $admin->photo = $path;
+            $admin->save();
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Foto profil berhasil diperbarui',
-                'photo_url' => $fresh->photo_url
+                'photo_url' => asset('storage/' . $path)
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Gagal memperbarui foto: ' . $e->getMessage()
             ], 500);
         }
     }
 
     public function removePhoto()
     {
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
         try {
-            $admin = Auth::guard('admin')->user();
-            $this->service->removePhoto($admin);
-
+            if ($admin->photo && Storage::disk('public')->exists($admin->photo)) {
+                Storage::disk('public')->delete($admin->photo);
+            }
+            
+            $admin->photo = null;
+            $admin->save();
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Foto profil berhasil dihapus'
@@ -124,7 +158,32 @@ class ProfileController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Gagal menghapus foto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updatePreferences(Request $request)
+    {
+        /** @var \App\Models\Authentication\Admin $admin */
+        $admin = auth('admin')->user();
+        $this->authorize('updateProfile', $admin);
+        
+        $request->validate([
+            'preferences' => 'required|array',
+        ]);
+        
+        try {
+            $admin->mergePreferences($request->preferences);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Preferensi berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui preferensi: ' . $e->getMessage()
             ], 500);
         }
     }

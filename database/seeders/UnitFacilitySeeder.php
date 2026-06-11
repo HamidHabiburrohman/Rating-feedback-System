@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Units\Unit;
-use App\Models\Units\Facility;
-use App\Models\Units\UnitFacility;
+use App\Models\Unit\Unit;
+use App\Models\Unit\Facility;
+use App\Models\Unit\UnitFacility;
 use Illuminate\Database\Seeder;
 
 class UnitFacilitySeeder extends Seeder

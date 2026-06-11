@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Reports\ReportAttachment;
-use App\Models\Reports\Report;
+use App\Models\Report\ReportAttachment;
+use App\Models\Report\Report;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ReportAttachmentFactory extends Factory

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Reports\ReportReply;
-use App\Models\Reports\Report;
+use App\Models\Report\ReportReply;
+use App\Models\Report\Report;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;

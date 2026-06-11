@@ -2,71 +2,57 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Admin;
+use App\Models\Authentication\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\UploadedFile;
 
-class AdminProfileService
+class AdminProfileService extends BaseAdminService
 {
-    public function updateProfile(Admin $admin, array $data): Admin
+    public function getProfile(int $adminId): array
     {
-        $updateData = [
-            'nama' => $data['nama'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? $admin->phone,
-            'position' => $data['position'] ?? $admin->position,
-            'bio' => $data['bio'] ?? $admin->bio,
-            'location' => $data['location'] ?? $admin->location,
-            'employee_id' => $data['employee_id'] ?? $admin->employee_id,
-            'department' => $data['department'] ?? $admin->department,
-            'timezone' => $data['timezone'] ?? $admin->timezone,
-        ];
-
-        $admin->update($updateData);
-
-        if (isset($data['profile_banner'])) {
-            $admin->setPreference('profile_banner', $data['profile_banner']);
-        }
-
-        return $admin;
+        $admin = Admin::findOrFail($adminId);
+        return $admin->toArray();
     }
 
-    public function updatePassword(Admin $admin, array $data): void
+    public function updateProfile(int $adminId, array $data): bool
     {
-        $admin->update([
-            'password' => Hash::make($data['new_password'])
-        ]);
+        $admin = Admin::findOrFail($adminId);
+        return $admin->update($data);
     }
 
-    public function updatePhoto(Admin $admin, UploadedFile $photo): void
+    public function updatePassword(int $adminId, string $currentPassword, string $newPassword): bool
     {
-        if (!Storage::disk('public')->exists('admins')) {
-            Storage::disk('public')->makeDirectory('admins');
+        $admin = Admin::findOrFail($adminId);
+        
+        if (!Hash::check($currentPassword, $admin->password)) {
+            throw new \Exception('Password saat ini tidak sesuai');
         }
+        
+        return $admin->update(['password' => Hash::make($newPassword)]);
+    }
 
-        if ($admin->photo) {
+    public function updatePhoto(int $adminId, $file): string
+    {
+        $admin = Admin::findOrFail($adminId);
+        
+        if ($admin->photo && Storage::disk('public')->exists($admin->photo)) {
             Storage::disk('public')->delete($admin->photo);
         }
-
-        $filename = 'admin_' . $admin->id . '_' . time() . '.' . $photo->getClientOriginalExtension();
-        $path = $photo->storeAs('admins', $filename, 'public');
-
+        
+        $path = $file->store('admin/photos', 'public');
         $admin->update(['photo' => $path]);
+        
+        return $path;
     }
 
-    public function removePhoto(Admin $admin): void
+    public function removePhoto(int $adminId): bool
     {
-        if ($admin->photo) {
+        $admin = Admin::findOrFail($adminId);
+        
+        if ($admin->photo && Storage::disk('public')->exists($admin->photo)) {
             Storage::disk('public')->delete($admin->photo);
         }
-
-        $admin->update(['photo' => null]);
-    }
-
-    public function updatePreferences(Admin $admin, array $preferences): Admin
-    {
-        $admin->mergePreferences($preferences);
-        return $admin;
+        
+        return $admin->update(['photo' => null]);
     }
 }

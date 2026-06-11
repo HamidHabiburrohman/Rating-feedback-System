@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Reports\Report;
-use App\Models\Reports\ReportAttachment;
+use App\Models\Report\Report;
+use App\Models\Report\ReportAttachment;
 use Illuminate\Database\Seeder;
 
 class ReportAttachmentSeeder extends Seeder

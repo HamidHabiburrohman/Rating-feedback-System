@@ -2,13 +2,13 @@ Frontend:
 
 
     the pages that i should be added
-    -  Pricay policy
+    -  Privacy policy
     -  terms of service
     -  cookie policy
     -  contact support
 
     notification that we need:
-    - succesful loading for admin and student.
+    - successful loading for admin and student.
     - greeting card for admin and student 
 
 

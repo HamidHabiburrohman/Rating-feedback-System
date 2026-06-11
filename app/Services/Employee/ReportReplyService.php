@@ -2,91 +2,92 @@
 
 namespace App\Services\Employee;
 
-use App\Models\Authentication\Employee;
-use App\Models\Reports\Report;
-use App\Models\Reports\ReportReply;
+use App\Models\Report\Report;
+use App\Models\Report\ReportReply;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
-class ReportReplyService
+class ReportReplyService extends BaseEmployeeService
 {
-    protected Employee $employee;
+    protected ReportStatusService $statusService;
 
-    public function setEmployee(Employee $employee): self
+    public function __construct(ReportStatusService $statusService)
     {
-        $this->employee = $employee;
-        return $this;
+        $this->statusService = $statusService;
     }
 
-    public function getRepliesForReport(int $reportId): array
+    public function reply(int $reportId, string $reply, int $employeeId): ReportReply
     {
-        $report = Report::where('id', $reportId)
-            ->whereHas('unit', function ($query) {
-                $query->whereHas('employeeAssignments', function ($q) {
-                    $q->where('employee_id', $this->employee->id)
-                        ->where('is_active', true);
-                });
-            })
-            ->first();
+        return DB::transaction(function () use ($reportId, $reply, $employeeId) {
+            $report = Report::findOrFail($reportId);
 
-        if (!$report) {
-            return [];
-        }
+            if (!$this->isAssignedToUnit($report->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk membalas laporan unit ini.');
+            }
 
-        return $report->replies()->with('employee')->get()->toArray();
+            $reportReply = ReportReply::create([
+                'report_id' => $reportId,
+                'employee_id' => $employeeId,
+                'admin_id' => null,
+                'reply' => $reply,
+                'is_public' => true,
+            ]);
+
+            $report->update(['last_replied_at' => now()]);
+
+            // Auto-update status ke 'replied' jika masih 'new' atau 'in_progress'
+            if (in_array($report->status, ['new', 'in_progress'])) {
+                $this->statusService->updateStatus(
+                    $reportId, 
+                    'replied', 
+                    'Auto-updated status after employee reply', 
+                    $employeeId
+                );
+            }
+
+            Cache::tags(['reports', "report_{$reportId}", "unit_{$report->unit_id}", 'dashboard'])->flush();
+
+            return $reportReply->fresh(['employee']);
+        });
     }
 
-    public function create(int $reportId, string $reply, bool $isPublic = true): ?ReportReply
+    public function updateReply(int $replyId, string $reply, int $employeeId): ReportReply
     {
-        $report = Report::where('id', $reportId)
-            ->whereHas('unit', function ($query) {
-                $query->whereHas('employeeAssignments', function ($q) {
-                    $q->where('employee_id', $this->employee->id)
-                        ->where('is_active', true);
-                });
-            })
-            ->first();
+        return DB::transaction(function () use ($replyId, $reply, $employeeId) {
+            $reportReply = ReportReply::where('id', $replyId)
+                ->where('employee_id', $employeeId)
+                ->firstOrFail();
 
-        if (!$report) {
-            return null;
-        }
+            $report = $reportReply->report;
+            if (!$this->isAssignedToUnit($report->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk mengubah balasan ini.');
+            }
 
-        $replyModel = ReportReply::create([
-            'report_id' => $reportId,
-            'employee_id' => $this->employee->id,
-            'reply' => $reply,
-            'is_public' => $isPublic,
-        ]);
+            $reportReply->update(['reply' => $reply]);
 
-        $report->update(['replied_at' => now()]);
+            Cache::tags(['reports', "report_{$report->id}", "unit_{$report->unit_id}"])->flush();
 
-        return $replyModel;
+            return $reportReply;
+        });
     }
 
-    public function update(int $replyId, string $reply): ?ReportReply
+    public function deleteReply(int $replyId, int $employeeId): bool
     {
-        $replyModel = ReportReply::where('id', $replyId)
-            ->where('employee_id', $this->employee->id)
-            ->first();
+        return DB::transaction(function () use ($replyId, $employeeId) {
+            $reportReply = ReportReply::where('id', $replyId)
+                ->where('employee_id', $employeeId)
+                ->firstOrFail();
 
-        if (!$replyModel) {
-            return null;
-        }
+            $report = $reportReply->report;
+            if (!$this->isAssignedToUnit($report->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk menghapus balasan ini.');
+            }
 
-        $replyModel->reply = $reply;
-        $replyModel->save();
+            $reportReply->delete();
 
-        return $replyModel;
-    }
+            Cache::tags(['reports', "report_{$report->id}", "unit_{$report->unit_id}"])->flush();
 
-    public function delete(int $replyId): bool
-    {
-        $replyModel = ReportReply::where('id', $replyId)
-            ->where('employee_id', $this->employee->id)
-            ->first();
-
-        if (!$replyModel) {
-            return false;
-        }
-
-        return $replyModel->delete();
+            return true;
+        });
     }
 }

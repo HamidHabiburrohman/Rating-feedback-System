@@ -32,12 +32,12 @@ class Employee extends Authenticatable
 
     public function unitAssignments()
     {
-        return $this->hasMany(\App\Models\Employees\EmployeeUnitAssignment::class);
+        return $this->hasMany(\App\Models\Employee\EmployeeUnitAssignment::class);
     }
 
     public function assignedUnits()
     {
-        return $this->belongsToMany(\App\Models\Units\Unit::class, 'employee_unit_assignments')
+        return $this->belongsToMany(\App\Models\Unit\Unit::class, 'employee_unit_assignments')
                     ->withPivot('role_in_unit', 'assigned_at', 'ended_at', 'is_active')
                     ->withTimestamps();
     }

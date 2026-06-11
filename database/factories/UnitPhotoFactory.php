@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Units\Unit;
-use App\Models\Units\UnitPhoto;
+use App\Models\Unit\Unit;
+use App\Models\Unit\UnitPhoto;
 use App\Models\Authentication\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

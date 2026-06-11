@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Reports\ReportStatusHistory;
-use App\Models\Reports\Report;
+use App\Models\Report\ReportStatusHistory;
+use App\Models\Report\Report;
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use Illuminate\Database\Eloquent\Factories\Factory;

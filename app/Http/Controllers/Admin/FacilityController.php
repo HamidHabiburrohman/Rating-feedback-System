@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Facility\StoreFacilityRequest;
-use App\Http\Requests\Admin\Facility\UpdateFacilityRequest;
 use App\Services\Admin\FacilityService;
+use App\Models\Unit\Facility;
 use Illuminate\Http\Request;
 
 class FacilityController extends Controller
@@ -19,111 +18,171 @@ class FacilityController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'sort', 'order', 'per_page']);
-        $facilities = $this->service->getPaginated($filters);
-        $stats = $this->service->getStats();
-        $popular = $this->service->getPopularFacilities(5);
-
-        return view('admin.facilities.index', compact('facilities', 'stats', 'popular'));
+        $this->authorize('viewAny', Facility::class);
+        
+        try {
+            $facilities = $this->service->getAll($request->all());
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'html' => view('admin.facilities.partials.rows', ['facilities' => $facilities])->render()
+                ]);
+            }
+            
+            return view('admin.facilities.index', compact('facilities'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.facilities.index')
+                ->with('error', 'Gagal memuat data: ' . $e->getMessage());
+        }
     }
 
     public function create()
     {
-        return view('admin.facilities.create', ['icons' => $this->service->getAvailableIcons()]);
+        $this->authorize('create', Facility::class);
+        return view('admin.facilities.create');
     }
 
-    public function store(StoreFacilityRequest $request)
+    public function store(Request $request)
     {
+        $this->authorize('create', Facility::class);
+        
+        $request->validate([
+            'name' => 'required|string|max:255|unique:facilities,name',
+            'icon' => 'nullable|string|max:100',
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
+        ]);
+        
         try {
-            $this->service->create($request->validated());
-            return redirect()->route('admin.facilities.index')->with('success', 'Fasilitas berhasil dibuat');
+            $facility = $this->service->create($request->all());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Fasilitas berhasil ditambahkan',
+                    'data' => $facility
+                ]);
+            }
+            
+            return redirect()->route('admin.facilities.index')
+                ->with('success', 'Fasilitas berhasil ditambahkan');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal membuat fasilitas: ' . $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menambahkan: ' . $e->getMessage()
+                ], 422);
+            }
+            
+            return back()->withInput()
+                ->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
     }
 
-    public function show($id)
+    public function show(int $id)
     {
         try {
-            $facility = $this->service->find($id);
-            $units = $facility->units()->select('units.id', 'units.name', 'units.code')->paginate(10);
-            return view('admin.facilities.show', compact('facility', 'units'));
+            $facility = $this->service->findById($id);
+            $this->authorize('view', $facility);
+            return view('admin.facilities.show', compact('facility'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.facilities.index')->with('error', 'Fasilitas tidak ditemukan');
+            return redirect()->route('admin.facilities.index')
+                ->with('error', 'Fasilitas tidak ditemukan');
         }
     }
 
-    public function edit($id)
+    public function edit(int $id)
     {
         try {
-            return view('admin.facilities.edit', [
-                'facility' => $this->service->find($id),
-                'icons' => $this->service->getAvailableIcons()
+            $facility = $this->service->findById($id);
+            $this->authorize('update', $facility);
+            return view('admin.facilities.edit', compact('facility'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.facilities.index')
+                ->with('error', 'Fasilitas tidak ditemukan');
+        }
+    }
+
+    public function update(Request $request, int $id)
+    {
+        try {
+            $facility = Facility::findOrFail($id);
+            $this->authorize('update', $facility);
+            
+            $request->validate([
+                'name' => 'required|string|max:255|unique:facilities,name,' . $id,
+                'icon' => 'nullable|string|max:100',
+                'description' => 'nullable|string|max:1000',
+                'is_active' => 'boolean',
             ]);
+            
+            $this->service->update($id, $request->all());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Fasilitas berhasil diperbarui'
+                ]);
+            }
+            
+            return redirect()->route('admin.facilities.index')
+                ->with('success', 'Fasilitas berhasil diperbarui');
         } catch (\Exception $e) {
-            return redirect()->route('admin.facilities.index')->with('error', 'Fasilitas tidak ditemukan');
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui: ' . $e->getMessage()
+                ], 422);
+            }
+            
+            return back()->withInput()
+                ->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }
     }
 
-    public function update(UpdateFacilityRequest $request, $id)
+    public function destroy(Request $request, int $id)
     {
         try {
-            $this->service->update($id, $request->validated());
-            return redirect()->route('admin.facilities.index')->with('success', 'Fasilitas berhasil diperbarui');
-        } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui fasilitas: ' . $e->getMessage());
-        }
-    }
-
-    public function destroy($id)
-    {
-        try {
+            $facility = Facility::findOrFail($id);
+            $this->authorize('delete', $facility);
+            
             $this->service->delete($id);
-            return redirect()->route('admin.facilities.index')->with('success', 'Fasilitas berhasil dihapus');
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Fasilitas berhasil dihapus'
+                ]);
+            }
+            
+            return redirect()->route('admin.facilities.index')
+                ->with('success', 'Fasilitas berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->route('admin.facilities.index')->with('error', $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
 
-    public function getIcons()
+    public function popular()
     {
-        try {
-            return response()->json(['success' => true, 'data' => $this->service->getAvailableIcons()]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil daftar icon'], 500);
-        }
-    }
-
-    public function stats()
-    {
+        $this->authorize('viewAny', Facility::class);
+        
         try {
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'overall' => $this->service->getStats(),
-                    'popular' => $this->service->getPopularFacilities(10)
-                ]
+                'data' => $this->service->getPopular(10)
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil statistik'], 500);
-        }
-    }
-
-    public function units($id)
-    {
-        try {
-            return response()->json(['success' => true, 'data' => $this->service->getUnits($id)]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil data unit'], 500);
-        }
-    }
-
-    public function export()
-    {
-        try {
-            return $this->service->export();
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data populer'
+            ], 500);
         }
     }
 }

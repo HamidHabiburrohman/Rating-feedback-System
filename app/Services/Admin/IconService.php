@@ -2,8 +2,14 @@
 
 namespace App\Services\Admin;
 
+use Illuminate\Support\Facades\Cache;
+
 class IconService
 {
+    /**
+     * Daftar semua SVG icons yang tersedia di sistem
+     * @var array<string, array{name: string, svg: string}>
+     */
     protected array $icons = [
         'flask' => [
             'name' => 'Lab',
@@ -107,88 +113,153 @@ class IconService
         ],
     ];
 
+    /**
+     * Default SVG ketika icon tidak ditemukan
+     */
+    protected string $defaultSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
+
+    /**
+     * Mengambil semua icons
+     * @return array<string, array{name: string, svg: string}>
+     */
     public function getAllIcons(): array
     {
-        return $this->icons;
+        return Cache::remember('all_icons', 86400, fn() => $this->icons);
     }
 
+    /**
+     * Mengambil icon by key
+     * @return array{name: string, svg: string}|null
+     */
     public function getIcon(string $key): ?array
     {
         return $this->icons[$key] ?? null;
     }
 
-    // Di method getSvg(), pastikan class ditambahkan dengan benar
+    /**
+     * Render SVG dengan custom attributes (class, width, height, dll)
+     */
     public function getSvg(string $key, array $attributes = []): string
     {
-        if (empty($key) || !isset($this->icons[$key])) {
-            return $this->getDefaultSvg($attributes);
+        if (!$this->isValidIcon($key)) {
+            return $this->renderSvg($this->defaultSvg, $attributes);
         }
 
-        $svg = $this->icons[$key]['svg'];
-
-        // Default class jika tidak ada
-        if (empty($attributes['class'])) {
-            $attributes['class'] = 'w-6 h-6';
-        }
-
-        // Hapus class yang sudah ada di SVG dan ganti dengan yang baru
-        $svg = preg_replace('/class="[^"]*"/', '', $svg);
-        $svg = preg_replace('/<svg/', '<svg class="' . $attributes['class'] . '"', $svg);
-
-        return $svg;
+        return $this->renderSvg($this->icons[$key]['svg'], $attributes);
     }
 
+    /**
+     * Mendapatkan info icon lengkap dengan fallback ke default
+     * @return array{key: string, name: string, svg: string}
+     */
     public function getIconKey(string $key): array
     {
-        if (empty($key) || !isset($this->icons[$key])) {
+        if (!$this->isValidIcon($key)) {
             return [
                 'key' => $key,
-                'name' => ucfirst($key ?? 'Default'),
-                'svg' => $this->getDefaultSvg()
+                'name' => ucfirst($key ?: 'Default'),
+                'svg' => $this->renderSvg($this->defaultSvg, ['class' => 'w-6 h-6']),
             ];
         }
 
         return [
             'key' => $key,
-            'name' => $this->icons[$key]['name'] ?? ucfirst($key),
-            'svg' => $this->getSvg($key)
+            'name' => $this->icons[$key]['name'],
+            'svg' => $this->renderSvg($this->icons[$key]['svg'], ['class' => 'w-6 h-6']),
         ];
     }
 
+    /**
+     * Mengambil options untuk dropdown (key => name)
+     * @return array<string, string>
+     */
     public function getIconOptions(): array
     {
-        $options = [];
-        foreach ($this->icons as $key => $icon) {
-            $options[$key] = $icon['name'];
-        }
-        return $options;
+        return Cache::remember('icon_options', 86400, function () {
+            $options = [];
+            foreach ($this->icons as $key => $icon) {
+                $options[$key] = $icon['name'];
+            }
+            return $options;
+        });
     }
 
+    /**
+     * Mengambil data preview untuk UI (digunakan di form edit)
+     * @return array<string, array{name: string, svg: string}>
+     */
     public function getIconPreviews(): array
     {
-        $previews = [];
-        foreach ($this->icons as $key => $icon) {
-            $previews[$key] = [
-                'name' => $icon['name'],
-                'svg' => $this->getSvg($key, ['class' => 'w-6 h-6'])
-            ];
-        }
-        return $previews;
+        return Cache::remember('icon_previews', 86400, function () {
+            $previews = [];
+            foreach ($this->icons as $key => $icon) {
+                $previews[$key] = [
+                    'name' => $icon['name'],
+                    'svg' => $this->renderSvg($icon['svg'], ['class' => 'w-6 h-6']),
+                ];
+            }
+            return $previews;
+        });
     }
 
-    protected function getDefaultSvg(array $attributes = []): string
-    {
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
-
-        if (!empty($attributes['class'])) {
-            $svg = preg_replace('/<svg/', '<svg class="' . $attributes['class'] . '"', $svg);
-        }
-
-        return $svg;
-    }
-
+    /**
+     * Validasi apakah icon key valid
+     */
     public function isValidIcon(string $key): bool
     {
         return !empty($key) && isset($this->icons[$key]);
+    }
+
+    /**
+     * Mendapatkan total icon yang tersedia
+     */
+    public function getTotalIcons(): int
+    {
+        return count($this->icons);
+    }
+
+    /**
+     * Mendapatkan nama icon by key
+     */
+    public function getIconName(string $key): string
+    {
+        return $this->icons[$key]['name'] ?? ucfirst($key ?: 'Unknown');
+    }
+
+    /**
+     * Render SVG dengan inject custom attributes
+     */
+    protected function renderSvg(string $svg, array $attributes): string
+    {
+        if (empty($attributes)) {
+            return $svg;
+        }
+
+        // Default class jika tidak diset
+        if (!isset($attributes['class'])) {
+            $attributes['class'] = 'w-6 h-6';
+        }
+
+        // Build attribute string
+        $attrString = '';
+        foreach ($attributes as $attr => $value) {
+            $attrString .= ' ' . $attr . '="' . htmlspecialchars($value, ENT_QUOTES) . '"';
+        }
+
+        // Hapus class existing dari SVG dan replace dengan yang baru
+        $svg = preg_replace('/\s+class="[^"]*"/', '', $svg);
+
+        // Inject attribute ke tag <svg>
+        return preg_replace('/<svg\b/', '<svg' . $attrString, $svg, 1);
+    }
+
+    /**
+     * Clear semua cache icons (dipanggil saat ada perubahan)
+     */
+    public function clearCache(): void
+    {
+        Cache::forget('all_icons');
+        Cache::forget('icon_options');
+        Cache::forget('icon_previews');
     }
 }

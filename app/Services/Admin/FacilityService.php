@@ -2,118 +2,88 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Facility;
-use App\Services\Admin\BaseAdminService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
+use App\Models\Unit\Facility;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class FacilityService extends BaseAdminService
 {
-    protected array $searchableColumns = ['name'];
-    protected string $defaultSort = 'name';
-    protected string $defaultOrder = 'asc';
-
-    public function __construct(Facility $facility)
+    public function getAll(array $filters = [])
     {
-        $this->model = $facility;
-        parent::__construct();
-    }
+        $query = Facility::withCount('units');
 
-    public function getPaginated(array $filters = []): LengthAwarePaginator
-    {
-        try {
-            $query = $this->getBaseQuery($filters)->withCount('units');
-            return $this->executePaginate($query, $filters);
-        } catch (\Exception $e) {
-            Log::error('FacilityService::getPaginated error', [
-                'message' => $e->getMessage(),
-                'filters' => $filters,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return new LengthAwarePaginator(
-                collect([]),
-                0,
-                $filters['per_page'] ?? 10,
-                1,
-                ['path' => request()->url()]
-            );
-        }
-    }
-
-    // Di FacilityService.php
-    public function getAvailableIcons(): array
-    {
-        $iconService = app(IconService::class);
-        $icons = [];
-
-        foreach ($iconService->getAllIcons() as $key => $icon) {
-            $icons[$key] = $icon['name'];
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        return $icons;
+        if (isset($filters['status'])) {
+            $query->where('is_active', $filters['status'] === 'active');
+        }
+
+        return $query->orderBy('name')->get();
     }
 
-    public function getStats(): array
+    public function findById(int $id): Facility
     {
-        return [
-            'total' => $this->model->count(),
-            'with_units' => $this->model->has('units')->count(),
-            'without_units' => $this->model->doesntHave('units')->count(),
-            'most_used' => $this->model->withCount('units')
-                ->orderByDesc('units_count')
-                ->limit(5)
-                ->get(['id', 'name', 'icon_key', 'units_count'])
-        ];
+        return Facility::withCount('units')->findOrFail($id);
     }
 
-    public function getPopularFacilities(int $limit = 10): array
+    public function create(array $data): Facility
     {
-        return $this->model->withCount('units')
-            ->orderByDesc('units_count')
-            ->limit($limit)
-            ->get()
-            ->toArray();
+        return DB::transaction(function () use ($data) {
+            $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
+            $data['is_active'] = $data['is_active'] ?? true;
+
+            $facility = Facility::create($data);
+
+            Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
+
+            return $facility;
+        });
     }
 
-    public function getUnits(int $facilityId): array
+    public function update(int $id, array $data): Facility
     {
-        $facility = $this->find($facilityId);
+        return DB::transaction(function () use ($id, $data) {
+            $facility = Facility::findOrFail($id);
 
-        return $facility->units()
-            ->with(['unitType', 'unitDepartment'])
-            ->paginate(15)
-            ->toArray();
-    }
-
-    public function export()
-    {
-        $facilities = $this->model->withCount('units')->orderBy('name')->get();
-
-        $filename = 'facilities-export-' . date('Y-m-d') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
-
-        $callback = function () use ($facilities) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, ['Nama Fasilitas', 'Icon', 'Jumlah Unit', 'Dibuat Pada']);
-
-            foreach ($facilities as $facility) {
-                fputcsv($file, [
-                    $facility->name,
-                    $facility->icon_key ?? '-',
-                    $facility->units_count,
-                    $facility->created_at->format('Y-m-d')
-                ]);
+            if (isset($data['name']) && !isset($data['slug'])) {
+                $data['slug'] = Str::slug($data['name']);
             }
 
-            fclose($file);
-        };
+            $facility->update($data);
 
-        return response()->stream($callback, 200, $headers);
+            Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
+
+            return $facility->fresh();
+        });
+    }
+
+    public function delete(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $facility = Facility::findOrFail($id);
+
+            if ($facility->units()->count() > 0) {
+                throw new \Exception('Fasilitas tidak dapat dihapus karena masih digunakan oleh unit lain');
+            }
+
+            $facility->delete();
+            Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
+            return true;
+        });
+    }
+
+    public function getPopular(int $limit = 10): array
+    {
+        return Cache::tags(['facilities', 'dropdown'])->remember("popular_facilities_{$limit}", 3600, function () use ($limit) {
+            return Facility::where('is_active', true)
+                ->withCount('units')
+                ->orderByDesc('units_count')
+                ->limit($limit)
+                ->get(['id', 'name', 'icon', 'units_count'])
+                ->toArray();
+        });
     }
 }

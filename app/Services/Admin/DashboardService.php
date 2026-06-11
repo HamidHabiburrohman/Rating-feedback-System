@@ -2,395 +2,154 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Unit;
-use App\Models\Rating;
-use App\Models\Student;
-use App\Models\UnitVisit;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use App\Models\Authentication\Student;
+use App\Models\Authentication\Employee;
+use App\Models\Unit\Unit;
+use App\Models\Feedback\Rating;
+use App\Models\Report\Report;
+use App\Models\System\ModerationLog;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
-class DashboardService
+class DashboardService extends BaseAdminService
 {
-    public function getOverview()
+    public function getStats(): array
     {
-        try {
-            $data = [
-                'top_rated_units' => $this->getTopUnits('all')['data'] ?? []
-            ];
-
+        return Cache::tags(['dashboard', 'admin'])->remember('admin_dashboard_stats', 120, function () {
             return [
-                'success' => true,
-                'data' => $data
+                'total_units' => Unit::count(),
+                'active_units' => Unit::where('is_active', true)->count(),
+                'total_students' => Student::count(),
+                'total_employees' => Employee::count(),
+                'total_ratings' => Rating::count(),
+                'total_reports' => Report::count(),
+                'pending_reports' => Report::where('status', 'new')->count(),
+                'avg_rating' => round(Rating::avg('overall_score') ?? 0, 2),
             ];
-        } catch (\Exception $e) {
-            Log::error('Error in getOverview: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'data' => ['top_rated_units' => []]
-            ];
-        }
+        });
     }
 
-    public function getStats()
+    public function getRecentRatings(int $limit = 5): array
     {
-        try {
-            $today = Carbon::today();
-            $yesterday = Carbon::yesterday();
-            $weekStart = Carbon::now()->startOfWeek();
-
-            $studentsToday = Student::whereDate('last_login_at', $today)->count();
-            $studentsWeek = Student::where('last_login_at', '>=', $weekStart)->count();
-            $studentsYesterday = Student::whereDate('last_login_at', $yesterday)->count();
-
-            $ratingsToday = Rating::whereDate('created_at', $today)->count();
-            $ratingsYesterday = Rating::whereDate('created_at', $yesterday)->count();
-
-            $activeUnits = Unit::where('is_active', true)->count();
-            $totalUnits = Unit::count();
-            $unitsLastWeek = Unit::where('created_at', '>=', $weekStart)->count();
-
-            $studentTrend = $studentsYesterday > 0
-                ? round((($studentsToday - $studentsYesterday) / $studentsYesterday) * 100)
-                : ($studentsToday > 0 ? 100 : 0);
-
-            $ratingTrend = $ratingsYesterday > 0
-                ? round((($ratingsToday - $ratingsYesterday) / $ratingsYesterday) * 100)
-                : ($ratingsToday > 0 ? 100 : 0);
-
-            $unitTrend = $totalUnits > 0
-                ? round(($unitsLastWeek / $totalUnits) * 100)
-                : 0;
-
-            $unitGrowth = $this->getUnitGrowthData();
-
-            return [
-                'success' => true,
-                'data' => [
-                    'students' => [
-                        'today' => $studentsToday,
-                        'this_week' => $studentsWeek,
-                        'trend' => [
-                            'daily' => $studentTrend,
-                            'weekly' => $unitTrend
-                        ]
-                    ],
-                    'ratings' => [
-                        'today' => $ratingsToday,
-                        'trend' => $ratingTrend
-                    ],
-                    'units' => [
-                        'active' => $activeUnits,
-                        'total' => $totalUnits,
-                        'trend' => $unitTrend
-                    ],
-                    'unit_growth' => $unitGrowth
-                ]
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getStats: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'data' => [
-                    'students' => ['today' => 0, 'this_week' => 0, 'trend' => ['daily' => 0, 'weekly' => 0]],
-                    'ratings' => ['today' => 0, 'trend' => 0],
-                    'units' => ['active' => 0, 'total' => 0, 'trend' => 0],
-                    'unit_growth' => $this->getMockUnitGrowthData()
-                ]
-            ];
-        }
-    }
-
-    protected function getUnitGrowthData()
-    {
-        try {
-            $months = [];
-            $newUnits = [];
-            $cumulative = [];
-
-            for ($i = 11; $i >= 0; $i--) {
-                $date = now()->subMonths($i);
-                $monthName = $date->format('M');
-                $months[] = $monthName;
-
-                $count = Unit::whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->count();
-
-                $newUnits[] = $count;
-            }
-
-            $total = 0;
-            foreach ($newUnits as $count) {
-                $total += $count;
-                $cumulative[] = $total;
-            }
-
-            return [
-                'months' => $months,
-                'new_units' => $newUnits,
-                'cumulative' => $cumulative
-            ];
-        } catch (\Exception $e) {
-            return $this->getMockUnitGrowthData();
-        }
-    }
-
-    protected function getMockUnitGrowthData()
-    {
-        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $total = Unit::count();
-
-        $newUnits = [];
-        $cumulative = [];
-        $runningTotal = 0;
-
-        for ($i = 0; $i < 12; $i++) {
-            if ($i < 6) {
-                $count = rand(1, 5);
-            } else {
-                $count = rand(5, 15);
-            }
-            $newUnits[] = $count;
-            $runningTotal += $count;
-            $cumulative[] = $runningTotal;
-        }
-
-        if ($runningTotal > 0 && $total > 0) {
-            $factor = $total / $runningTotal;
-            $newUnits = array_map(function ($val) use ($factor) {
-                return round($val * $factor);
-            }, $newUnits);
-
-            $runningTotal = 0;
-            $cumulative = [];
-            foreach ($newUnits as $count) {
-                $runningTotal += $count;
-                $cumulative[] = $runningTotal;
-            }
-        }
-
-        return [
-            'months' => $months,
-            'new_units' => $newUnits,
-            'cumulative' => $cumulative
-        ];
-    }
-
-    public function getTopUnits(string $type = 'all')
-    {
-        switch ($type) {
-            case 'popularity':
-                return $this->getMostPopularUnits();
-            case 'quality':
-                return $this->getTopRatedUnits();
-            case 'attention':
-                return $this->getAttentionUnits();
-            case 'all':
-            default:
-                return $this->getAllUnits();
-        }
-    }
-
-    public function getAllUnits()
-    {
-        try {
-            $units = Unit::with(['type', 'primaryPhoto'])
-                ->withCount('ratings as total_ratings')
-                ->where('is_active', true)
-                ->orderBy('name', 'asc')
-                ->limit(5)
-                ->get();
-
-            return [
-                'success' => true,
-                'data' => $this->formatUnitsResponse($units)
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getAllUnits: ' . $e->getMessage());
-            return ['success' => false, 'data' => []];
-        }
-    }
-
-    public function getMostPopularUnits()
-    {
-        try {
-            $units = Unit::with(['type', 'primaryPhoto'])
-                ->withCount('ratings as total_ratings')
-                ->where('is_active', true)
-                ->where('total_ratings', '>', 0)
-                ->orderBy('total_ratings', 'desc')
-                ->limit(5)
-                ->get();
-
-            return [
-                'success' => true,
-                'data' => $this->formatUnitsResponse($units)
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getMostPopularUnits: ' . $e->getMessage());
-            return ['success' => false, 'data' => []];
-        }
-    }
-
-    public function getTopRatedUnits()
-    {
-        try {
-            $units = Unit::with(['type', 'primaryPhoto'])
-                ->withCount('ratings as total_ratings')
-                ->where('is_active', true)
-                ->where('total_ratings', '>', 0)
-                ->orderBy('avg_rating', 'desc')
-                ->limit(5)
-                ->get();
-
-            return [
-                'success' => true,
-                'data' => $this->formatUnitsResponse($units)
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getTopRatedUnits: ' . $e->getMessage());
-            return ['success' => false, 'data' => []];
-        }
-    }
-
-    public function getAttentionUnits()
-    {
-        try {
-            $units = Unit::with(['type', 'primaryPhoto'])
-                ->withCount('ratings as total_ratings')
-                ->where('is_active', true)
-                ->where('avg_rating', '<', 2.5)
-                ->where('total_ratings', '>', 0)
-                ->orderBy('avg_rating', 'asc')
-                ->limit(5)
-                ->get();
-
-            Log::info('Attention units found: ' . $units->count());
-
-            return [
-                'success' => true,
-                'data' => $this->formatUnitsResponse($units)
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getAttentionUnits: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'data' => []
-            ];
-        }
-    }
-
-    protected function formatUnitsResponse($units)
-    {
-        $result = [];
-        foreach ($units as $unit) {
-            $result[] = [
-                'id' => $unit->id,
-                'name' => $unit->name,
-                'code' => $unit->code,
-                'type_name' => $unit->type ? $unit->type->name : 'General',
-                'unit_type' => $unit->type ? [
-                    'id' => $unit->type->id,
-                    'name' => $unit->type->name,
-                    'slug' => $unit->type->slug
-                ] : null,
-                'avg_rating' => round($unit->avg_rating ?? 0, 1),
-                'rata_rata_rating' => round($unit->avg_rating ?? 0, 1),
-                'total_ratings' => $unit->total_ratings ?? 0,
-                'total_rating' => $unit->total_ratings ?? 0,
-                'is_active' => $unit->is_active,
-                'status' => $unit->is_active ? 'Aktif' : 'Tidak Aktif',
-                'status_aktif' => $unit->is_active,
-                'thumbnail' => $unit->primaryPhoto ? $unit->primaryPhoto->thumbnail_url : null,
-                'is_open' => $unit->is_open
-            ];
-        }
-
-        return $result;
-    }
-
-    public function getRecentRated()
-    {
-        try {
-            $ratings = Rating::with(['unit', 'unit.type', 'student'])
-                ->where('status', 'active')
+        return Cache::tags(['dashboard', 'ratings'])->remember('admin_recent_ratings', 180, function () use ($limit) {
+            return Rating::with(['student', 'unit'])
                 ->latest()
-                ->limit(5)
-                ->get();
-
-            return [
-                'success' => true,
-                'data' => $ratings->map(function ($rating) {
-                    return [
-                        'id' => $rating->id,
-                        'unit_id' => $rating->unit_id,
-                        'unit_name' => $rating->unit->name ?? 'Unknown Unit',
-                        'unit_type' => $rating->unit->type->name ?? 'General',
-                        'student_name' => $rating->student->name ?? 'Anonymous',
-                        'rating' => round($rating->overall_score, 1),
-                        'comment' => $rating->comment,
-                        'date' => $rating->created_at->toDateTimeString(),
-                        'date_formatted' => $rating->created_at->diffForHumans(),
-                        'time_ago' => $rating->created_at->diffForHumans()
-                    ];
-                })
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getRecentRated: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'data' => []
-            ];
-        }
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        });
     }
 
-    public function getAuditLogs()
+    public function getRecentReports(int $limit = 5): array
     {
-        try {
-            return [
-                'success' => true,
-                'data' => []
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'data' => []
-            ];
-        }
+        return Cache::tags(['dashboard', 'reports'])->remember('admin_recent_reports', 180, function () use ($limit) {
+            return Report::with(['student', 'unit', 'category'])
+                ->latest()
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        });
     }
 
-    public function getCharts()
+    public function getChartData(string $period = 'week'): array
     {
-        try {
-            $studentLoginTrend = [];
-            $unitGrowth = $this->getUnitGrowthData();
+        $cacheKey = "admin_chart_{$period}";
+        return Cache::tags(['dashboard'])->remember($cacheKey, 300, function () use ($period) {
+            $days = $period === 'month' ? 30 : 7;
+            $start = now()->subDays($days);
 
-            for ($i = 6; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i);
-                $students = Student::whereDate('last_login_at', $date)->count();
-                $studentLoginTrend[] = [
-                    'day' => $date->format('D'),
-                    'date' => $date->format('Y-m-d'),
-                    'students' => $students
-                ];
+            $ratings = Rating::where('created_at', '>=', $start)
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date');
+
+            $reports = Report::where('created_at', '>=', $start)
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date');
+
+            return [
+                'labels' => collect(range(0, $days - 1))->map(fn($i) => now()->subDays($days - 1 - $i)->format('Y-m-d'))->toArray(),
+                'ratings' => $ratings,
+                'reports' => $reports,
+            ];
+        });
+    }
+
+    public function getOverview(): array
+    {
+        return Cache::tags(['dashboard'])->remember('admin_overview', 300, function () {
+            return [
+                'rating_distribution' => Rating::selectRaw('FLOOR(overall_score) as score, COUNT(*) as count')
+                    ->groupBy('score')
+                    ->pluck('count', 'score')
+                    ->toArray(),
+                'report_status' => Report::selectRaw('status, COUNT(*) as count')
+                    ->groupBy('status')
+                    ->pluck('count', 'status')
+                    ->toArray(),
+            ];
+        });
+    }
+
+    public function getAuditLogs(array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = ModerationLog::with(['admin', 'target']);
+
+        if (!empty($filters['action'])) $query->where('action', $filters['action']);
+        if (!empty($filters['target_type'])) $query->where('target_type', $filters['target_type']);
+        if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        return $query->latest()->paginate($filters['per_page'] ?? 15);
+    }
+
+    public function getRecentRated(int $limit = 10): array
+    {
+        return Cache::tags(['dashboard'])->remember('admin_recent_rated_units', 300, function () use ($limit) {
+            return Unit::with(['type', 'primaryPhoto'])
+                ->where('is_active', true)
+                ->where('total_ratings', '>', 0)
+                ->orderByDesc('updated_at')
+                ->limit($limit)
+                ->get(['id', 'name', 'slug', 'total_ratings', 'avg_rating', 'unit_type_id', 'primary_photo_id'])
+                ->toArray();
+        });
+    }
+
+    public function getTopUnits(string $type = 'all', int $limit = 5): array
+    {
+        $cacheKey = "admin_top_units_{$type}_{$limit}";
+        return Cache::tags(['dashboard', 'units'])->remember($cacheKey, 300, function () use ($type, $limit) {
+            $query = Unit::with(['type', 'primaryPhoto'])
+                ->where('is_active', true)
+                ->where('avg_rating', '>', 0);
+
+            if ($type !== 'all') {
+                $query->whereHas('type', fn($q) => $q->where('slug', $type));
             }
 
-            return [
-                'success' => true,
-                'data' => [
-                    'student_login_trend' => $studentLoginTrend,
-                    'unit_growth' => $unitGrowth
-                ]
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error in getCharts: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'data' => [
-                    'student_login_trend' => [],
-                    'unit_growth' => $this->getMockUnitGrowthData()
-                ]
-            ];
-        }
+            return $query->orderByDesc('avg_rating')
+                ->orderByDesc('total_ratings')
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        });
+    }
+
+    public function getAttentionUnits(): array
+    {
+        return Cache::tags(['dashboard', 'units'])->remember('admin_attention_units', 300, function () {
+            return Unit::with(['type', 'primaryPhoto'])
+                ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->where('avg_rating', '<', 2.5)
+                      ->orWhere('total_ratings', 0)
+                      ->orWhereHas('reports', fn($r) => $r->where('status', 'new'));
+                })
+                ->limit(5)
+                ->get()
+                ->toArray();
+        });
     }
 }

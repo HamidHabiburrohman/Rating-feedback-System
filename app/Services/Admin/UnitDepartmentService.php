@@ -2,125 +2,104 @@
 
 namespace App\Services\Admin;
 
-use App\Models\UnitDepartment;
-use App\Services\Admin\BaseAdminService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
+use App\Models\Unit\UnitDepartment;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class UnitDepartmentService extends BaseAdminService
 {
-    /**
-     * @var UnitDepartment
-     */
-
-
-    protected array $searchableColumns = ['name', 'code', 'description'];
-    protected array $filterableColumns = ['is_active'];
-    protected string $defaultSort = 'name';
-    protected string $defaultOrder = 'asc';
-
-    public function __construct(UnitDepartment $unitDepartment)
+    public function getAll(array $filters = [])
     {
-        $this->model = $unitDepartment;
-        parent::__construct();
-    }
+        $query = UnitDepartment::withCount('units');
 
-    public function getPaginated(array $filters = []): LengthAwarePaginator
-    {
-        try {
-            $query = $this->getBaseQuery($filters)->withCount('units');
-            return $this->executePaginate($query, $filters);
-        } catch (\Exception $e) {
-
-        Log::error('UnitDepartmentService::getPaginated error', [
-                'message' => $e->getMessage(),
-                'filters' => $filters,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return new LengthAwarePaginator(
-                collect([]),
-                0,
-                $filters['per_page'] ?? 10,
-                1,
-                ['path' => request()->url()]
-            );
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', "%{$filters['search']}%");
         }
+
+        if (isset($filters['status'])) {
+            $query->where('is_active', $filters['status'] === 'active');
+        }
+
+        return $query->orderBy('name')->get();
     }
 
-    public function getStats(): array
+    public function findById(int $id): UnitDepartment
     {
-        return [
-            'total' => $this->model->count(),
-            'active' => $this->model->where('is_active', true)->count(),
-            'inactive' => $this->model->where('is_active', false)->count(),
-            'with_units' => $this->model->has('units')->count(),
-            'without_units' => $this->model->doesntHave('units')->count()
-        ];
-    }
-
-    public function getForFilter(): array
-    {
-        return [
-            'statuses' => [
-                '' => 'Semua Status',
-                '1' => 'Aktif',
-                '0' => 'Nonaktif'
-            ]
-        ];
+        return UnitDepartment::withCount('units')->findOrFail($id);
     }
 
     public function create(array $data): UnitDepartment
     {
-        $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
+        return DB::transaction(function () use ($data) {
+            $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
+            $data['is_active'] = $data['is_active'] ?? true;
 
-        return parent::create($data);
+            $department = UnitDepartment::create($data);
+
+            Cache::tags(['units', 'dropdown', 'landing'])->flush();
+
+            return $department;
+        });
     }
 
     public function update(int $id, array $data): UnitDepartment
     {
-        $department = $this->find($id);
+        return DB::transaction(function () use ($id, $data) {
+            $department = UnitDepartment::findOrFail($id);
 
-        if (isset($data['name']) && $data['name'] !== $department->name) {
-            $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
-        }
+            if (isset($data['name']) && !isset($data['slug'])) {
+                $data['slug'] = Str::slug($data['name']);
+            }
 
-        return parent::update($id, $data);
+            $department->update($data);
+
+            Cache::tags(['units', 'dropdown', 'landing'])->flush();
+
+            return $department->fresh();
+        });
     }
 
     public function delete(int $id): bool
     {
-        $department = $this->find($id);
+        return DB::transaction(function () use ($id) {
+            $department = UnitDepartment::findOrFail($id);
 
-        if ($department && $department->units()->count() > 0) {
-            throw new \Exception('Tidak dapat menghapus departemen yang masih memiliki unit');
-        }
+            if ($department->units()->count() > 0) {
+                throw new \Exception('Departemen tidak dapat dihapus karena masih digunakan oleh unit lain');
+            }
 
-        return parent::delete($id);
+            $department->delete();
+            Cache::tags(['units', 'dropdown', 'landing'])->flush();
+            return true;
+        });
     }
 
-    public function toggleStatus(int $id): array
+    public function toggleStatus(int $id): UnitDepartment
     {
-        $department = $this->findOrFail($id);
-        $department->is_active = !$department->is_active;
-        $department->save();
+        return DB::transaction(function () use ($id) {
+            $department = UnitDepartment::findOrFail($id);
+            $department->update(['is_active' => !$department->is_active]);
 
-        $this->logAdminAction('toggle_department_status', $department, null, [
-            'previous' => !$department->is_active,
-            'current' => $department->is_active
-        ]);
-
-        return $this->formatStatusResponse($department);
+            Cache::tags(['units', 'dropdown', 'landing'])->flush();
+            return $department->fresh();
+        });
     }
 
-    public function find(int $id, array $with = []): ?UnitDepartment
+    public function getStats(): array
     {
-        return parent::find($id, $with);
-    }
-
-    public function findOrFail(int $id, array $with = []): UnitDepartment
-    {
-        return parent::findOrFail($id, $with);
+        return Cache::tags(['units', 'dropdown'])->remember('department_stats', 300, function () {
+            return [
+                'total' => UnitDepartment::count(),
+                'active' => UnitDepartment::where('is_active', true)->count(),
+                'inactive' => UnitDepartment::where('is_active', false)->count(),
+                'with_units' => UnitDepartment::has('units')->count(),
+                'top_departments' => UnitDepartment::withCount('units')
+                    ->orderByDesc('units_count')
+                    ->limit(5)
+                    ->get(['id', 'name', 'units_count'])
+                    ->toArray(),
+            ];
+        });
     }
 }

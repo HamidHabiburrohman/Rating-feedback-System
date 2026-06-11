@@ -3,15 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Report\ReportFilterRequest;
-use App\Http\Requests\Admin\Report\UpdateReportStatusRequest;
-use App\Http\Requests\Admin\Report\BulkReportActionRequest;
-use App\Http\Requests\Admin\Report\ReplyReportRequest;
-use App\Http\Requests\Admin\Report\UpdateReportRequest;
 use App\Services\Admin\ReportManagementService;
+use App\Models\Report\Report;
 use Illuminate\Http\Request;
-use App\Models\Report;
-use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -22,166 +16,135 @@ class ReportController extends Controller
         $this->service = $service;
     }
 
-    public function index(ReportFilterRequest $request)
+    public function index(Request $request)
     {
-        $filters = $request->validated();
-        $reports = $this->service->getPaginatedReports($filters);
-        $filterData = $this->service->getFilterData();
-        $stats = $this->service->getStats();
-
-        return view('admin.reports.index', compact('reports', 'filterData', 'stats'));
-    }
-
-    public function show($id)
-    {
+        $this->authorize('viewAny', Report::class);
+        
         try {
-            $report = $this->service->findReport($id);
-
-            // Ambil photo unit - pastikan URL valid
-            $photoUrl = null;
-            if ($report->unit && $report->unit->photos) {
-                $primaryPhoto = $report->unit->photos->where('is_primary', true)->first();
-                $photo = $primaryPhoto ? $primaryPhoto : $report->unit->photos->first();
-
-                // Cek apakah photo ada dan thumbnail_url tidak kosong
-                if ($photo && $photo->thumbnail_url && $photo->thumbnail_url !== '') {
-                    $photoUrl = $photo->thumbnail_url;
-                }
+            $filters = $request->only(['search', 'status', 'priority', 'unit_id', 'per_page', 'sort']);
+            $reports = $this->service->getFilteredReports($filters);
+            $stats = $this->service->getStats();
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'html' => view('admin.reports.partials.rows', compact('reports'))->render(),
+                    'pagination' => view('admin.reports.partials.pagination', ['paginator' => $reports])->render()
+                ]);
             }
-
-            return view('admin.reports.show', compact('report', 'photoUrl'));
+            
+            return view('admin.reports.index', compact('reports', 'stats'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.reports.index')->with('error', 'Laporan tidak ditemukan');
+            return redirect()->route('admin.reports.index')
+                ->with('error', 'Gagal memuat data laporan');
         }
     }
 
-    public function edit($id)
+    public function show(int $id)
     {
         try {
-            $report = $this->service->findReport($id);
-            return view('admin.reports.edit', compact('report'));
+            $data = $this->service->getDetail($id);
+            $this->authorize('view', $data['report']);
+            return view('admin.reports.show', $data);
         } catch (\Exception $e) {
-            return redirect()->route('admin.reports.index')->with('error', 'Laporan tidak ditemukan');
+            return redirect()->route('admin.reports.index')
+                ->with('error', 'Laporan tidak ditemukan');
         }
     }
 
-    public function update(UpdateReportRequest $request, Report $report)
+    public function updateStatus(Request $request, int $id)
     {
+        $report = Report::findOrFail($id);
+        $this->authorize('update', $report);
+        
+        $request->validate([
+            'status' => 'required|in:new,assigned,in_progress,replied,resolved,rejected,pending_preview',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+        
         try {
-            $this->service->updateReport($report->id, $request->validated(), Auth::id());
-
-            return redirect()->route('admin.reports.show', $report->id)
-                ->with('success', 'Laporan berhasil diperbarui');
+            $this->service->updateStatus($id, $request->status, $request->reason, auth('admin')->id());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Status laporan berhasil diperbarui'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal memperbarui laporan: ' . $e->getMessage())
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    public function updateStatus(UpdateReportStatusRequest $request, Report $report)
+    public function reply(Request $request, int $id)
     {
+        $report = Report::findOrFail($id);
+        $this->authorize('reply', $report);
+        
+        $request->validate([
+            'reply' => 'required|string|min:3|max:5000',
+            'is_public' => 'boolean',
+        ]);
+        
         try {
-            $this->service->updateStatus($report->id, $request->validated(), Auth::id());
-
-            return redirect()->route('admin.reports.show', $report->id)
-                ->with('success', 'Status laporan berhasil diperbarui');
+            $this->service->reply(
+                $id,
+                $request->reply,
+                $request->boolean('is_public', true),
+                auth('admin')->id()
+            );
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Balasan berhasil dikirim'
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim balasan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
-    public function bulkAction(BulkReportActionRequest $request)
+    public function bulkUpdateStatus(Request $request)
     {
+        $this->authorize('update', Report::class);
+        
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:reports,id',
+            'status' => 'required|in:new,assigned,in_progress,replied,resolved,rejected,pending_preview',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+        
         try {
             $count = $this->service->bulkUpdateStatus(
-                $request->report_ids,
-                $request->action,
-                $request->admin_response ?? '',
-                Auth::id()
+                $request->ids,
+                $request->status,
+                $request->reason,
+                auth('admin')->id()
             );
-
-            return redirect()->route('admin.reports.index')
-                ->with('success', $count . ' laporan berhasil diproses');
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} laporan berhasil diperbarui"
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal memproses laporan: ' . $e->getMessage());
-        }
-    }
-
-    public function stats(Request $request)
-    {
-        try {
-            $data = [
-                'overall' => $this->service->getStats(),
-                'monthly' => $this->service->getMonthlyStats()
-            ];
-
-            if ($request->wantsJson()) {
-                return response()->json(['success' => true, 'data' => $data]);
-            }
-
-            return view('admin.reports.stats', $data);
-        } catch (\Exception $e) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Gagal mengambil statistik'], 500);
-            }
-            return redirect()->back()->with('error', 'Gagal mengambil statistik: ' . $e->getMessage());
-        }
-    }
-
-    public function unitStats($unitId)
-    {
-        try {
-            $reports = $this->service->getPaginatedReports(['unit_id' => $unitId]);
-            return view('admin.reports.unit-stats', compact('reports', 'unitId'));
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengambil statistik unit: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui massal: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function export(Request $request)
     {
+        $this->authorize('export', Report::class);
+        
         try {
-            return $this->service->export($request->only(['status', 'priority', 'unit_id', 'date_from', 'date_to']));
+            return $this->service->export($request->all());
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
-        }
-    }
-
-    public function destroy(Report $report)
-    {
-        try {
-            $this->service->deleteReport($report->id);
-
-            return redirect()->route('admin.reports.index')
-                ->with('success', 'Laporan berhasil dihapus');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus laporan: ' . $e->getMessage());
-        }
-    }
-
-    public function reply(ReplyReportRequest $request, Report $report)
-    {
-        try {
-            $status = $request->status ?? 'replied';
-
-            $this->service->reply(
-                $report->id,
-                $request->tanggapan_admin,
-                Auth::id(),
-                $request->ip(),
-                $request->userAgent(),
-                $status
-            );
-
-            return redirect()->route('admin.reports.show', $report->id)
-                ->with('success', 'Tanggapan berhasil dikirim');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal mengirim tanggapan: ' . $e->getMessage())
-                ->withInput();
+            return back()->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
         }
     }
 }

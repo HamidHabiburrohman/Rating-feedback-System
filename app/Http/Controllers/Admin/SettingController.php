@@ -3,40 +3,63 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Setting\UpdateSettingRequest;
 use App\Services\Admin\SettingService;
+use App\Models\System\Setting;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
-    protected SettingService $settingService;
+    protected SettingService $service;
 
-    public function __construct(SettingService $settingService)
+    public function __construct(SettingService $service)
     {
-        $this->settingService = $settingService;
+        $this->service = $service;
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        $group = $request->get('group', 'general');
-        $settings = $this->settingService->getByGroup($group);
-        $groups = $this->settingService->getAll()->groupBy('group')->keys();
+        $this->authorize('viewAny', Setting::class);
         
-        return view('admin.settings.index', compact('settings', 'groups', 'group'));
-    }
-
-    public function update(UpdateSettingRequest $request)
-    {
-        $updated = $this->settingService->updateMultiple($request->settings);
-        if (!$updated) {
-            return redirect()->back()->with('error', 'Failed to update settings');
+        try {
+            $settings = $this->service->getAll();
+            $groups = $this->service->getGrouped();
+            
+            return view('admin.settings.index', compact('settings', 'groups'));
+        } catch (\Exception $e) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Gagal memuat pengaturan');
         }
-        return redirect()->back()->with('success', 'Settings updated successfully');
     }
 
-    public function get($key)
+    public function update(Request $request)
     {
-        $value = $this->settingService->get($key);
-        return response()->json(['success' => true, 'data' => $value]);
+        $this->authorize('update', Setting::class);
+        
+        $request->validate([
+            'settings' => 'required|array',
+            'settings.*' => 'nullable|string|max:5000',
+        ]);
+        
+        try {
+            $this->service->updateMany($request->settings, auth('admin')->id());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pengaturan berhasil diperbarui'
+                ]);
+            }
+            
+            return back()->with('success', 'Pengaturan berhasil diperbarui');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui pengaturan: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui pengaturan: ' . $e->getMessage());
+        }
     }
 }

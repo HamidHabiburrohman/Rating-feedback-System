@@ -12,13 +12,19 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware('web')
+            Route::middleware(['web', 'admin'])
+                ->prefix('admin')
+                ->name('admin.')
                 ->group(base_path('routes/admin.php'));
-
-            Route::middleware('web')
+            
+            Route::middleware(['web', 'employee'])
+                ->prefix('employee')
+                ->name('employee.')
                 ->group(base_path('routes/employee.php'));
-
-            Route::middleware('web')
+            
+            Route::middleware(['web', 'student'])
+                ->prefix('student')
+                ->name('student.')
                 ->group(base_path('routes/student.php'));
         }
     )
@@ -27,7 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'employee' => \App\Http\Middleware\EmployeeMiddleware::class,
             'student' => \App\Http\Middleware\StudentMiddleware::class,
+            'guest' => \App\Http\Middleware\GuestMiddleware::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
+        
+        $middleware->redirectGuestsTo(fn () => route('admin.login'));
+        $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -2,210 +2,130 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Unit;
-use App\Models\UnitPhoto;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Models\Unit\Unit;
+use App\Models\Unit\UnitPhoto;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
-class UnitPhotoService
+class UnitPhotoService extends BaseAdminService
 {
-    protected UnitPhoto $unitPhoto;
-
-    public function __construct(UnitPhoto $unitPhoto)
+    public function getByUnit(int $unitId)
     {
-        $this->unitPhoto = $unitPhoto;
+        return UnitPhoto::where('unit_id', $unitId)
+            ->orderBy('is_primary', 'desc')
+            ->orderBy('sort_order')
+            ->get();
     }
 
-    public function validatePhotos(array $photos): array
+    public function uploadMultiple(int $unitId, array $files): array
     {
-        $errors = [];
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
-        $maxSize = 5 * 1024 * 1024;
-
-        foreach ($photos as $index => $photo) {
-            if (!in_array($photo->getMimeType(), $allowedMimes)) {
-                $errors[] = "File ke-" . ($index + 1) . " harus berupa gambar (JPEG/PNG)";
-            }
-
-            if ($photo->getSize() > $maxSize) {
-                $errors[] = "File ke-" . ($index + 1) . " maksimal 5MB";
-            }
-        }
-
-        return $errors;
-    }
-
-    public function upload(Unit $unit, array $photos, ?bool $setAsPrimary = false): array
-    {
-        try {
+        return DB::transaction(function () use ($unitId, $files) {
+            $unit = Unit::findOrFail($unitId);
             $uploaded = [];
-            $hasPrimary = $unit->photos()->where('is_primary', true)->exists();
-            $validationErrors = $this->validatePhotos($photos);
+            $maxOrder = UnitPhoto::where('unit_id', $unitId)->max('sort_order') ?? 0;
 
-            if (!empty($validationErrors)) {
-                return [
-                    'success' => false,
-                    'message' => implode(', ', $validationErrors),
-                    'errors' => $validationErrors
-                ];
-            }
+            foreach ($files as $index => $file) {
+                $path = $file->store('units/photos', 'public');
+                $thumbnailPath = $this->generateThumbnail($file);
 
-            foreach ($photos as $index => $photo) {
-                $path = $photo->store("units/{$unit->id}", 'public');
-
-                $photoData = [
-                    'unit_id' => $unit->id,
-                    'uploaded_by_admin_id' => Auth::id(),
+                $photo = UnitPhoto::create([
+                    'unit_id' => $unitId,
                     'original_path' => $path,
-                    'file_name' => $photo->getClientOriginalName(),
-                    'mime_type' => $photo->getMimeType(),
-                    'file_size' => $photo->getSize(),
-                    'sort_order' => $unit->photos()->count() + $index + 1,
-                    'is_primary' => (!$hasPrimary && $index === 0) || ($setAsPrimary && $index === 0)
-                ];
+                    'thumbnail_path' => $thumbnailPath,
+                    'file_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'is_primary' => $unit->photos()->count() === 0 && $index === 0,
+                    'sort_order' => $maxOrder + $index + 1,
+                    'uploaded_by_admin_id' => $this->getAdminId(),
+                ]);
 
-                $uploaded[] = $this->unitPhoto->create($photoData);
+                $uploaded[] = $photo;
             }
 
-            $this->logAdminAction('upload_photos', $unit, null, ['count' => count($photos)]);
+            Cache::tags(['units', "unit_{$unitId}", 'landing'])->flush();
 
-            return [
-                'success' => true,
-                'message' => count($uploaded) . ' foto berhasil diupload',
-                'data' => $uploaded
-            ];
-        } catch (\Exception $e) {
-            Log::error('Upload photo error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat upload foto: ' . $e->getMessage()
-            ];
-        }
+            return $uploaded;
+        });
     }
 
-    public function setPrimary(Unit $unit, int $photoId): array
+    public function setPrimary(int $photoId, int $unitId): bool
     {
-        try {
-            $photo = $this->unitPhoto->where('unit_id', $unit->id)->find($photoId);
+        return DB::transaction(function () use ($photoId, $unitId) {
+            UnitPhoto::where('unit_id', $unitId)->update(['is_primary' => false]);
+            UnitPhoto::where('id', $photoId)->where('unit_id', $unitId)->update(['is_primary' => true]);
 
-            if (!$photo) {
-                return [
-                    'success' => false,
-                    'message' => 'Foto tidak ditemukan'
-                ];
+            Cache::tags(['units', "unit_{$unitId}", 'landing'])->flush();
+
+            return true;
+        });
+    }
+
+    public function reorder(int $unitId, array $orders): bool
+    {
+        return DB::transaction(function () use ($unitId, $orders) {
+            foreach ($orders as $order) {
+                UnitPhoto::where('id', $order['id'])
+                    ->where('unit_id', $unitId)
+                    ->update(['sort_order' => $order['sort_order']]);
             }
 
-            $this->unitPhoto->where('unit_id', $unit->id)->update(['is_primary' => false]);
-
-            $photo->is_primary = true;
-            $photo->save();
-
-            $this->logAdminAction('set_primary_photo', $photo, null, ['photo_id' => $photoId]);
-
-            return [
-                'success' => true,
-                'message' => 'Foto berhasil dijadikan sebagai foto utama'
-            ];
-        } catch (\Exception $e) {
-            Log::error('Set primary photo error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ];
-        }
+            Cache::tags(['units', "unit_{$unitId}", 'landing'])->flush();
+            return true;
+        });
     }
 
-    public function reorder(Unit $unit, array $photoIds): array
+    public function delete(int $photoId, int $unitId): bool
     {
-        try {
-            foreach ($photoIds as $index => $id) {
-                $this->unitPhoto->where('unit_id', $unit->id)
-                    ->where('id', $id)
-                    ->update(['sort_order' => $index + 1]);
+        return DB::transaction(function () use ($photoId, $unitId) {
+            $photo = UnitPhoto::where('id', $photoId)->where('unit_id', $unitId)->firstOrFail();
+
+            if ($photo->is_primary && UnitPhoto::where('unit_id', $unitId)->count() > 1) {
+                $nextPrimary = UnitPhoto::where('unit_id', $unitId)
+                    ->where('id', '!=', $photoId)
+                    ->orderBy('sort_order')
+                    ->first();
+                
+                if ($nextPrimary) {
+                    $nextPrimary->update(['is_primary' => true]);
+                }
             }
-
-            $this->logAdminAction('reorder_photos', $unit, null, ['count' => count($photoIds)]);
-
-            return [
-                'success' => true,
-                'message' => 'Urutan foto berhasil diubah'
-            ];
-        } catch (\Exception $e) {
-            Log::error('Reorder photos error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    public function deletePhoto(UnitPhoto $photo): array
-    {
-        try {
-            $unitId = $photo->unit_id;
-            $wasPrimary = $photo->is_primary;
 
             if ($photo->original_path && Storage::disk('public')->exists($photo->original_path)) {
                 Storage::disk('public')->delete($photo->original_path);
             }
-
-            $result = $photo->delete();
-
-            if (!$result) {
-                return [
-                    'success' => false,
-                    'message' => 'Gagal menghapus foto'
-                ];
+            if ($photo->thumbnail_path && Storage::disk('public')->exists($photo->thumbnail_path)) {
+                Storage::disk('public')->delete($photo->thumbnail_path);
             }
 
-            if ($wasPrimary) {
-                $newPrimary = $this->unitPhoto->where('unit_id', $unitId)
-                    ->orderBy('sort_order')
-                    ->first();
+            $photo->delete();
+            Cache::tags(['units', "unit_{$unitId}", 'landing'])->flush();
 
-                if ($newPrimary) {
-                    $newPrimary->is_primary = true;
-                    $newPrimary->save();
-                }
+            return true;
+        });
+    }
+
+    protected function generateThumbnail(UploadedFile $file): ?string
+    {
+        try {
+            if (!extension_loaded('gd') && !extension_loaded('imagick')) {
+                return null;
             }
 
-            $unit = Unit::find($unitId);
-            if ($unit) {
-                $this->logAdminAction('delete_photo', $unit, null, [
-                    'photo_id' => $photo->id,
-                    'was_primary' => $wasPrimary
-                ]);
-            }
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($file);
+            $image->scaleDown(width: 400);
 
-            return [
-                'success' => true,
-                'message' => 'Foto berhasil dihapus'
-            ];
+            $thumbnailPath = 'units/thumbnails/' . uniqid() . '_' . $file->getClientOriginalName();
+            Storage::disk('public')->put($thumbnailPath, (string) $image->encode());
+
+            return $thumbnailPath;
         } catch (\Exception $e) {
-            Log::error('Delete photo error: ' . $e->getMessage());
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    protected function getAdminId(): ?int
-    {
-        return Auth::id();
-    }
-
-    protected function logAdminAction(string $action, $target, $reason = null, array $metadata = [])
-    {
-        if (class_exists('\App\Models\ModerationLog')) {
-            \App\Models\ModerationLog::log(
-                $this->getAdminId(),
-                $action,
-                $target,
-                $reason,
-                $metadata
-            );
+            return null;
         }
     }
 }

@@ -1,62 +1,60 @@
 <?php
 
-use App\Http\Controllers\Employee\Auth\LoginController as EmployeeLoginController;
-use App\Http\Controllers\Employee\Auth\ForgotPasswordController as EmployeeForgotPasswordController;
-use App\Http\Controllers\Employee\Auth\ResetPasswordController as EmployeeResetPasswordController;
-use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardController;
-use App\Http\Controllers\Employee\ProfileController as EmployeeProfileController;
-use App\Http\Controllers\Employee\UnitController as EmployeeUnitController;
-use App\Http\Controllers\Employee\RatingController as EmployeeRatingController;
-use App\Http\Controllers\Employee\ReportController as EmployeeReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Employee\Auth\LoginController;
+use App\Http\Controllers\Employee\Auth\ForgotPasswordController;
+use App\Http\Controllers\Employee\Auth\ResetPasswordController;
+use App\Http\Controllers\Employee\DashboardController;
+use App\Http\Controllers\Employee\ProfileController;
+use App\Http\Controllers\Employee\UnitController;
+use App\Http\Controllers\Employee\RatingController;
+use App\Http\Controllers\Employee\ReportController;
 
-Route::prefix('employee')->name('employee.')->group(function () {
-    Route::middleware('guest:employee')->group(function () {
-        Route::get('/login', [EmployeeLoginController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [EmployeeLoginController::class, 'login'])->name('login.submit');
-        Route::get('/forgot-password', [EmployeeForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-        Route::post('/forgot-password', [EmployeeForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-        Route::get('/reset-password', [EmployeeResetPasswordController::class, 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [EmployeeResetPasswordController::class, 'reset'])->name('password.update');
-    });
-
-    Route::post('/logout', [EmployeeLoginController::class, 'logout'])->middleware('auth:employee')->name('logout');
-    Route::get('/auth/check', [EmployeeLoginController::class, 'check'])->middleware('auth:employee')->name('auth.check');
-
-    Route::middleware(['auth:employee'])->group(function () {
-        Route::prefix('dashboard')->name('dashboard.')->group(function () {
-            Route::get('/', [EmployeeDashboardController::class, 'index'])->name('index');
-        });
-
-        Route::prefix('profile')->name('profile.')->group(function () {
-            Route::get('/', [EmployeeProfileController::class, 'show'])->name('show');
-            Route::get('/edit', [EmployeeProfileController::class, 'edit'])->name('edit');
-            Route::put('/', [EmployeeProfileController::class, 'update'])->name('update');
-            Route::put('/password', [EmployeeProfileController::class, 'updatePassword'])->name('password.update');
-        });
-
-        Route::prefix('units')->name('units.')->group(function () {
-            Route::get('/', [EmployeeUnitController::class, 'index'])->name('index');
-            Route::get('/{unit}', [EmployeeUnitController::class, 'show'])->name('show');
-            Route::get('/{unit}/edit', [EmployeeUnitController::class, 'edit'])->name('edit');
-            Route::put('/{unit}', [EmployeeUnitController::class, 'update'])->name('update');
-        });
-
-        Route::prefix('ratings')->name('ratings.')->group(function () {
-            Route::get('/', [EmployeeRatingController::class, 'index'])->name('index');
-            Route::get('/{rating}', [EmployeeRatingController::class, 'show'])->name('show');
-            Route::post('/{rating}/reply', [EmployeeRatingController::class, 'reply'])->name('reply');
-            Route::put('/replies/{reply}', [EmployeeRatingController::class, 'updateReply'])->name('update-reply');
-            Route::delete('/replies/{reply}', [EmployeeRatingController::class, 'deleteReply'])->name('delete-reply');
-        });
-
-        Route::prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [EmployeeReportController::class, 'index'])->name('index');
-            Route::get('/{report}', [EmployeeReportController::class, 'show'])->name('show');
-            Route::post('/{report}/reply', [EmployeeReportController::class, 'reply'])->name('reply');
-            Route::put('/replies/{reply}', [EmployeeReportController::class, 'updateReply'])->name('update-reply');
-            Route::delete('/replies/{reply}', [EmployeeReportController::class, 'deleteReply'])->name('delete-reply');
-            Route::put('/{report}/status', [EmployeeReportController::class, 'updateStatus'])->name('update-status');
-        });
-    });
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    
+    Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    
+    Route::get('reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
+
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('check-auth', [LoginController::class, 'check'])->name('auth.check');
+
+Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+Route::get('dashboard/recent-ratings', [DashboardController::class, 'recentRatings'])->name('dashboard.recent-ratings');
+Route::get('dashboard/recent-reports', [DashboardController::class, 'recentReports'])->name('dashboard.recent-reports');
+
+Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::put('profile/update', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+Route::post('profile/update-photo', [ProfileController::class, 'updatePhoto'])->name('profile.update-photo');
+Route::delete('profile/remove-photo', [ProfileController::class, 'removePhoto'])->name('profile.remove-photo');
+Route::put('profile/update-preferences', [ProfileController::class, 'updatePreferences'])->name('profile.update-preferences');
+
+Route::get('units', [UnitController::class, 'index'])->name('units.index');
+Route::get('units/{id}', [UnitController::class, 'show'])->name('units.show');
+Route::get('units/{id}/edit', [UnitController::class, 'edit'])->name('units.edit');
+Route::put('units/{id}', [UnitController::class, 'update'])->name('units.update');
+Route::get('units/{unitId}/rating-categories', [UnitController::class, 'ratingCategories'])->name('units.rating-categories');
+
+Route::get('ratings', [RatingController::class, 'index'])->name('ratings.index');
+Route::get('ratings/{id}', [RatingController::class, 'show'])->name('ratings.show');
+Route::post('ratings/{ratingId}/reply', [RatingController::class, 'storeReply'])->name('ratings.reply.store');
+Route::put('ratings/reply/{replyId}', [RatingController::class, 'updateReply'])->name('ratings.reply.update');
+Route::delete('ratings/reply/{replyId}', [RatingController::class, 'destroyReply'])->name('ratings.reply.destroy');
+Route::get('ratings/{ratingId}/replies', [RatingController::class, 'getReplies'])->name('ratings.replies');
+
+Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+Route::get('reports/{id}', [ReportController::class, 'show'])->name('reports.show');
+Route::post('reports/{id}/update-status', [ReportController::class, 'updateStatus'])->name('reports.update-status');
+Route::post('reports/{id}/resolve', [ReportController::class, 'resolve'])->name('reports.resolve');
+Route::post('reports/{id}/reopen', [ReportController::class, 'reopen'])->name('reports.reopen');
+Route::post('reports/{reportId}/reply', [ReportController::class, 'storeReply'])->name('reports.reply.store');
+Route::put('reports/reply/{replyId}', [ReportController::class, 'updateReply'])->name('reports.reply.update');
+Route::delete('reports/reply/{replyId}', [ReportController::class, 'destroyReply'])->name('reports.reply.destroy');
+Route::get('reports/{id}/history', [ReportController::class, 'history'])->name('reports.history');

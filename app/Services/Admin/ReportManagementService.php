@@ -2,304 +2,207 @@
 
 namespace App\Services\Admin;
 
-use App\Models\Report;
-use App\Models\Rating;
-use App\Services\Admin\BaseAdminService;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\Report\Report;
+use App\Models\Report\ReportReply;
+use App\Models\Report\ReportStatusHistory;
+use App\Models\System\ModerationLog;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ReportManagementService extends BaseAdminService
 {
-    protected array $searchableColumns = ['title', 'description', 'tracking_code'];
-    protected array $filterableColumns = ['status', 'priority', 'unit_id', 'student_id', 'admin_id'];
-    protected string $defaultSort = 'created_at';
-    protected string $defaultOrder = 'desc';
+    protected array $validStatuses = ['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview'];
 
-    public function __construct(Report $report)
+    public function getFilteredReports(array $filters = [])
     {
-        $this->model = $report;
-        parent::__construct();
+        $query = Report::with(['student', 'unit', 'category', 'rating']);
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('tracking_code', 'like', "%{$search}%")
+                  ->orWhereHas('student', fn($s) => $s->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('unit', fn($u) => $u->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if (!empty($filters['status'])) $query->where('status', $filters['status']);
+        if (!empty($filters['priority'])) $query->where('priority', $filters['priority']);
+        if (!empty($filters['unit_id'])) $query->where('unit_id', $filters['unit_id']);
+        
+        if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        $sort = $filters['sort'] ?? 'latest';
+        switch ($sort) {
+            case 'oldest': 
+                $query->oldest(); 
+                break;
+            case 'priority': 
+                $query->orderByRaw("FIELD(priority, 'critical', 'high', 'medium', 'low')"); 
+                break;
+            default: 
+                $query->latest();
+        }
+
+        return $query->paginate($filters['per_page'] ?? 15);
     }
 
-    public function getPaginatedReports(array $filters = []): LengthAwarePaginator
+    public function getDetail(int $id): array
     {
-        try {
-            $query = $this->getBaseQuery($filters)
-                ->with(['unit', 'student', 'rating', 'admin']);
+        $cacheKey = "admin_report_detail_{$id}";
+        
+        return Cache::tags(['reports', "report_{$id}"])->remember($cacheKey, 300, function () use ($id) {
+            $report = Report::with([
+                'student', 'unit', 'category', 'rating',
+                'replies.admin', 'replies.employee',
+                'statusHistory.admin', 'statusHistory.employee',
+                'attachments'
+            ])->findOrFail($id);
 
-            return $this->executePaginate($query, $filters);
-        } catch (\Exception $e) {
-            Log::error('ReportManagementService::getPaginatedReports error', [
-                'message' => $e->getMessage(),
-                'filters' => $filters,
-                'trace' => $e->getTraceAsString()
+            return [
+                'report' => $report,
+                'moderation_logs' => ModerationLog::where('target_type', Report::class)
+                    ->where('target_id', $id)
+                    ->with('admin')
+                    ->latest()
+                    ->get(),
+            ];
+        });
+    }
+
+    public function updateStatus(int $id, string $status, ?string $reason, int $adminId): bool
+    {
+        return DB::transaction(function () use ($id, $status, $reason, $adminId) {
+            if (!in_array($status, $this->validStatuses)) {
+                throw new \Exception("Status '{$status}' tidak valid");
+            }
+
+            $report = Report::findOrFail($id);
+            $oldStatus = $report->status;
+
+            $report->status = $status;
+            if ($status === 'resolved') {
+                $report->resolved_at = now();
+            }
+            $report->save();
+
+            ReportStatusHistory::create([
+                'report_id' => $id,
+                'old_status' => $oldStatus,
+                'new_status' => $status,
+                'changed_by_admin_id' => $adminId,
+                'changed_by_employee_id' => null,
+                'reason' => $reason,
             ]);
 
-            return new LengthAwarePaginator(
-                collect([]),
-                0,
-                $filters['per_page'] ?? 10,
-                1,
-                ['path' => request()->url()]
-            );
-        }
+            $this->logModeration($report, 'update_status', $oldStatus, $status, $reason, $adminId);
+
+            Cache::tags(['reports', "report_{$id}", "unit_{$report->unit_id}", 'dashboard'])->flush();
+
+            return true;
+        });
     }
 
-    public function getFilterData(): array
+    public function reply(int $id, string $reply, bool $isPublic, int $adminId): ReportReply
     {
-        return [
-            'statuses' => [
-                '' => 'Semua Status',
-                'new' => 'Baru',
-                'in_progress' => 'Diproses',
-                'replied' => 'Ditanggapi',
-                'resolved' => 'Selesai',
-                'rejected' => 'Ditolak'
-            ],
-            'priorities' => [
-                '' => 'Semua Prioritas',
-                'low' => 'Rendah',
-                'medium' => 'Sedang',
-                'high' => 'Tinggi',
-                'critical' => 'Kritis'
-            ],
-            'units' => \App\Models\Unit::pluck('name', 'id')->toArray()
-        ];
+        return DB::transaction(function () use ($id, $reply, $isPublic, $adminId) {
+            $report = Report::findOrFail($id);
+
+            $reportReply = ReportReply::create([
+                'report_id' => $id,
+                'admin_id' => $adminId,
+                'employee_id' => null,
+                'reply' => $reply,
+                'is_public' => $isPublic,
+            ]);
+
+            $report->update(['last_replied_at' => now()]);
+            
+            if (in_array($report->status, ['new', 'in_progress'])) {
+                $this->updateStatus($id, 'replied', 'Auto-updated status after admin reply', $adminId);
+            }
+
+            Cache::tags(['reports', "report_{$id}", "unit_{$report->unit_id}"])->flush();
+
+            return $reportReply;
+        });
+    }
+
+    public function bulkUpdateStatus(array $ids, string $status, ?string $reason, int $adminId): int
+    {
+        return DB::transaction(function () use ($ids, $status, $reason, $adminId) {
+            $count = 0;
+            foreach ($ids as $id) {
+                try {
+                    $this->updateStatus($id, $status, $reason, $adminId);
+                    $count++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            return $count;
+        });
+    }
+
+    public function export(array $filters = [])
+    {
+        $query = Report::with(['student', 'unit', 'category']);
+
+        if (!empty($filters['status'])) $query->where('status', $filters['status']);
+        if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
+        if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
+
+        $reports = $query->get();
+
+        $rows = $reports->map(function ($report) {
+            return [
+                'ID' => $report->id,
+                'Tracking Code' => $report->tracking_code,
+                'Unit' => $report->unit?->name ?? '-',
+                'Student' => $report->student?->name ?? '-',
+                'Category' => $report->category?->name ?? '-',
+                'Title' => $report->title,
+                'Priority' => $report->priority,
+                'Status' => $report->status,
+                'Created At' => $report->created_at?->format('Y-m-d H:i:s'),
+            ];
+        })->toArray();
+
+        $headers = array_keys($rows[0] ?? []);
+        $filename = 'reports_' . now()->format('Y-m-d_His');
+
+        $exportManager = app(\App\Services\Export\ExportManager::class);
+        return $exportManager->getExcelService()->export($rows, $headers, 'Report Export', $filename);
     }
 
     public function getStats(): array
     {
-        return [
-            'total' => $this->model->count(),
-            'new' => $this->model->where('status', 'new')->count(),
-            'in_progress' => $this->model->where('status', 'in_progress')->count(),
-            'resolved' => $this->model->where('status', 'resolved')->count(),
-            'rejected' => $this->model->where('status', 'rejected')->count(),
-            'pending_preview' => $this->model->where('status', 'pending_preview')->count(),
-            'high_priority' => $this->model->whereIn('priority', ['high', 'critical'])->count(),
-            'today' => $this->model->whereDate('created_at', today())->count(),
-            'this_week' => $this->model->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-        ];
+        return Cache::tags(['reports', 'dashboard'])->remember('admin_report_stats', 300, function () {
+            return [
+                'total' => Report::count(),
+                'new' => Report::where('status', 'new')->count(),
+                'in_progress' => Report::where('status', 'in_progress')->count(),
+                'resolved' => Report::where('status', 'resolved')->count(),
+                'rejected' => Report::where('status', 'rejected')->count(),
+                'by_priority' => Report::selectRaw('priority, COUNT(*) as count')->groupBy('priority')->pluck('count', 'priority')->toArray(),
+            ];
+        });
     }
 
-    public function getMonthlyStats(): array
+    protected function logModeration(Report $report, string $action, string $oldValue, string $newValue, ?string $reason, int $adminId): void
     {
-        $months = [];
-        $counts = [];
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->format('M Y');
-
-            $count = $this->model->whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-
-            $counts[] = $count;
-        }
-
-        return [
-            'months' => $months,
-            'counts' => $counts
-        ];
-    }
-
-    public function findReport(int $id): ?Report
-    {
-        return $this->model->with(['unit', 'student', 'rating', 'admin'])->find($id);
-    }
-
-    public function reply(int $id, string $response, int $adminId, ?string $ipAddress = null, ?string $userAgent = null, ?string $status = 'replied'): Report
-    {
-        $report = $this->findOrFail($id);
-        $oldResponse = $report->admin_response;
-        $oldStatus = $report->status;
-
-        $report->update([
-            'admin_response' => $response,
+        ModerationLog::create([
             'admin_id' => $adminId,
-            'ditanggapi_pada' => now(),
-            'status' => $status
+            'target_type' => Report::class,
+            'target_id' => $report->id,
+            'action' => $action,
+            'old_value' => $oldValue,
+            'new_value' => $newValue,
+            'reason' => $reason,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
         ]);
-
-        $this->logAdminAction('reply_report', $report, null, [
-            'old_response' => $oldResponse,
-            'new_response' => $response,
-            'old_status' => $oldStatus,
-            'new_status' => $status,
-            'ip_address' => $ipAddress,
-            'user_agent' => $userAgent
-        ]);
-
-        return $report->fresh(['unit', 'student', 'rating', 'admin']);
-    }
-
-    public function updateStatus(int $id, array $data, int $adminId): Report
-    {
-        $report = $this->findOrFail($id);
-        $oldStatus = $report->status;
-
-        $updateData = [
-            'status' => $data['status'],
-            'admin_id' => $adminId,
-        ];
-
-        if ($data['status'] === 'replied' && isset($data['admin_response'])) {
-            $updateData['admin_response'] = $data['admin_response'];
-            $updateData['ditanggapi_pada'] = now();
-        }
-
-        if (in_array($data['status'], ['resolved', 'rejected']) && !$report->ditanggapi_pada) {
-            $updateData['ditanggapi_pada'] = now();
-        }
-
-        $report->update($updateData);
-
-        $this->logAdminAction('update_report_status', $report, null, [
-            'old_status' => $oldStatus,
-            'new_status' => $data['status']
-        ]);
-
-        return $report->fresh(['unit', 'student', 'rating', 'admin']);
-    }
-
-    public function bulkUpdateStatus(array $reportIds, string $status, ?string $adminResponse = null, int $adminId): int
-    {
-        $updateData = [
-            'status' => $status,
-            'admin_id' => $adminId,
-        ];
-
-        if ($adminResponse !== null && $status === 'replied') {
-            $updateData['admin_response'] = $adminResponse;
-            $updateData['ditanggapi_pada'] = now();
-        }
-
-        if (in_array($status, ['resolved', 'rejected'])) {
-            $updateData['ditanggapi_pada'] = now();
-        }
-
-        $count = $this->model->whereIn('id', $reportIds)->update($updateData);
-
-        if ($count > 0) {
-            $this->logAdminAction('bulk_update_report_status', (object)[
-                'report_ids' => $reportIds,
-                'count' => $count
-            ], null, [
-                'status' => $status,
-                'admin_id' => $adminId
-            ]);
-        }
-
-        return $count;
-    }
-
-    public function deleteReport(int $id): bool
-    {
-        $report = $this->findOrFail($id);
-        $result = $report->delete();
-
-        if ($result) {
-            $this->logAdminAction('delete_report', $report);
-        }
-
-        return $result;
-    }
-
-    public function export(array $filters)
-    {
-        $query = $this->getBaseQuery($filters)
-            ->with(['unit', 'student', 'rating', 'admin']);
-
-        $reports = $query->get();
-
-        $filename = 'reports-export-' . date('Y-m-d') . '.csv';
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
-
-        $callback = function () use ($reports) {
-            $file = fopen('php://output', 'w');
-
-            fputcsv($file, [
-                'Tracking Code',
-                'Title',
-                'Unit',
-                'Student',
-                'Priority',
-                'Status',
-                'Admin Response',
-                'Replied At',
-                'Created At'
-            ]);
-
-            foreach ($reports as $report) {
-                fputcsv($file, [
-                    $report->tracking_code,
-                    $report->title,
-                    $report->unit->name ?? '-',
-                    $report->student->name ?? '-',
-                    $report->priority,
-                    $report->status,
-                    $report->admin_response ?? '-',
-                    $report->ditanggapi_pada ? $report->ditanggapi_pada->format('Y-m-d H:i') : '-',
-                    $report->created_at->format('Y-m-d H:i')
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-
-    public function find(int $id, array $with = []): ?Report
-    {
-        return parent::find($id, $with);
-    }
-
-    public function findOrFail(int $id, array $with = []): Report
-    {
-        return parent::findOrFail($id, $with);
-    }
-
-    public function updateReport(int $id, array $data, int $adminId): Report
-    {
-        $report = $this->findOrFail($id);
-        $oldData = [
-            'title' => $report->title,
-            'description' => $report->description,
-            'priority' => $report->priority,
-            'status' => $report->status,
-            'admin_response' => $report->admin_response
-        ];
-
-        $updateData = [
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'priority' => $data['priority'],
-            'status' => $data['status'],
-        ];
-
-        if (isset($data['admin_response'])) {
-            $updateData['admin_response'] = $data['admin_response'];
-
-            if ($data['status'] === 'replied' && !$report->replied_at) {
-                $updateData['replied_at'] = now();
-            }
-        }
-
-        $report->update($updateData);
-
-        $this->logAdminAction('update_report', $report, null, [
-            'old_data' => $oldData,
-            'new_data' => $updateData,
-            'admin_id' => $adminId
-        ]);
-
-        return $report->fresh(['unit', 'student', 'rating', 'admin']);
     }
 }

@@ -2,109 +2,104 @@
 
 namespace App\Services\Employee;
 
-use App\Models\Authentication\Employee;
-use App\Models\Reports\Report;
-use App\Models\Reports\ReportStatusHistory;
+use App\Models\Report\Report;
+use App\Models\Report\ReportStatusHistory;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
-class ReportStatusService
+class ReportStatusService extends BaseEmployeeService
 {
-    protected Employee $employee;
+    protected array $validStatuses = ['in_progress', 'replied', 'resolved'];
 
-    protected array $validStatuses = ['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview'];
-
-    public function setEmployee(Employee $employee): self
+    public function updateStatus(int $reportId, string $status, ?string $reason, int $employeeId): bool
     {
-        $this->employee = $employee;
-        return $this;
+        return DB::transaction(function () use ($reportId, $status, $reason, $employeeId) {
+            if (!in_array($status, $this->validStatuses)) {
+                throw new \Exception("Status '{$status}' tidak valid untuk employee.");
+            }
+
+            $report = Report::findOrFail($reportId);
+
+            if (!$this->isAssignedToUnit($report->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk mengubah status laporan unit ini.');
+            }
+
+            $oldStatus = $report->status;
+            if ($oldStatus === $status) {
+                return true; // Tidak ada perubahan
+            }
+
+            $report->status = $status;
+            if ($status === 'resolved') {
+                $report->resolved_at = now();
+            }
+            $report->save();
+
+            ReportStatusHistory::create([
+                'report_id' => $reportId,
+                'old_status' => $oldStatus,
+                'new_status' => $status,
+                'changed_by_employee_id' => $employeeId,
+                'changed_by_admin_id' => null,
+                'reason' => $reason,
+            ]);
+
+            Cache::tags(['reports', "report_{$reportId}", "unit_{$report->unit_id}", "employee_{$employeeId}", 'dashboard'])->flush();
+
+            return true;
+        });
     }
 
-    public function updateStatus(int $reportId, string $newStatus, ?string $reason = null): bool
+    public function resolve(int $reportId, ?string $reason, int $employeeId): bool
     {
-        $report = Report::where('id', $reportId)
-            ->whereHas('unit', function ($query) {
-                $query->whereHas('employeeAssignments', function ($q) {
-                    $q->where('employee_id', $this->employee->id)
-                        ->where('is_active', true);
-                });
-            })
-            ->first();
-
-        if (!$report) {
-            return false;
-        }
-
-        if (!$this->isValidTransition($report->status, $newStatus)) {
-            return false;
-        }
-
-        $oldStatus = $report->status;
-        $report->status = $newStatus;
-
-        if ($newStatus === 'resolved') {
-            $report->resolved_at = now();
-        }
-
-        $report->save();
-
-        $this->logHistory($reportId, $oldStatus, $newStatus, $reason);
-
-        return true;
+        return $this->updateStatus($reportId, 'resolved', $reason, $employeeId);
     }
 
-    public function resolve(int $reportId, ?string $resolutionNote = null): bool
+    public function reopen(int $reportId, ?string $reason, int $employeeId): bool
     {
-        return $this->updateStatus($reportId, 'resolved', $resolutionNote);
-    }
+        return DB::transaction(function () use ($reportId, $reason, $employeeId) {
+            $report = Report::findOrFail($reportId);
 
-    public function reopen(int $reportId, ?string $reason = null): bool
-    {
-        $report = Report::find($reportId);
-        if (!$report) {
-            return false;
-        }
+            if (!$this->isAssignedToUnit($report->unit_id)) {
+                throw new \Exception('Anda tidak memiliki akses untuk membuka kembali laporan unit ini.');
+            }
 
-        if ($report->status !== 'resolved' && $report->status !== 'rejected') {
-            return false;
-        }
+            if (!in_array($report->status, ['resolved', 'rejected'])) {
+                throw new \Exception('Hanya laporan yang sudah diselesaikan atau ditolak yang bisa dibuka kembali.');
+            }
 
-        return $this->updateStatus($reportId, 'in_progress', $reason);
+            $oldStatus = $report->status;
+            $report->status = 'in_progress';
+            $report->resolved_at = null;
+            $report->save();
+
+            ReportStatusHistory::create([
+                'report_id' => $reportId,
+                'old_status' => $oldStatus,
+                'new_status' => 'in_progress',
+                'changed_by_employee_id' => $employeeId,
+                'changed_by_admin_id' => null,
+                'reason' => $reason ?? 'Laporan dibuka kembali oleh employee',
+            ]);
+
+            Cache::tags(['reports', "report_{$reportId}", "unit_{$report->unit_id}", "employee_{$employeeId}", 'dashboard'])->flush();
+
+            return true;
+        });
     }
 
     public function getHistory(int $reportId): array
     {
-        return ReportStatusHistory::where('report_id', $reportId)
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->toArray();
-    }
-
-    protected function isValidTransition(string $oldStatus, string $newStatus): bool
-    {
-        $allowed = [
-            'new' => ['assigned', 'in_progress', 'rejected'],
-            'assigned' => ['in_progress', 'replied', 'rejected'],
-            'in_progress' => ['replied', 'resolved', 'rejected'],
-            'replied' => ['in_progress', 'resolved', 'rejected'],
-            'resolved' => ['reopened', 'in_progress'],
-            'rejected' => ['reopened', 'in_progress'],
-            'pending_preview' => ['new', 'rejected'],
-        ];
-
-        if (!isset($allowed[$oldStatus])) {
-            return false;
+        $report = Report::findOrFail($reportId);
+        
+        if (!$this->isAssignedToUnit($report->unit_id)) {
+            throw new \Exception('Anda tidak memiliki akses ke laporan ini.');
         }
 
-        return in_array($newStatus, $allowed[$oldStatus]);
-    }
-
-    protected function logHistory(int $reportId, string $oldStatus, string $newStatus, ?string $reason = null): void
-    {
-        ReportStatusHistory::create([
-            'report_id' => $reportId,
-            'old_status' => $oldStatus,
-            'new_status' => $newStatus,
-            'changed_by_employee_id' => $this->employee->id,
-            'reason' => $reason,
-        ]);
+        return $report->statusHistory()
+            ->with(['employee', 'admin'])
+            ->latest()
+            ->get()
+            ->toArray();
     }
 }
