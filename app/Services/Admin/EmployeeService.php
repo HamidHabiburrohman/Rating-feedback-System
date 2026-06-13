@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Employee\WelcomeMail;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeService extends BaseAdminService
 {
@@ -43,8 +46,12 @@ class EmployeeService extends BaseAdminService
     public function create(array $data): Employee
     {
         return DB::transaction(function () use ($data) {
-            $data['password'] = Hash::make($data['password'] ?? 'password123');
+            $temporaryPassword = $data['password'] ?? $this->generateTemporaryPassword();
+
+            $data['password'] = Hash::make($temporaryPassword);
             $data['is_active'] = $data['is_active'] ?? true;
+
+            $data['employee_code'] = $data['employee_code'] ?? 'EMP-' . strtoupper(Str::random(8));
 
             $unitId = $data['unit_id'] ?? null;
             $roleInUnit = $data['role_in_unit'] ?? null;
@@ -62,10 +69,35 @@ class EmployeeService extends BaseAdminService
                 ]);
             }
 
+            try {
+                $unit = $unitId ? Unit::find($unitId) : null;
+
+                Mail::to($employee->email)->send(new WelcomeMail(
+                    $employee->id,
+                    $employee->name,
+                    $employee->email,
+                    $temporaryPassword, // ✅ Plaintext, bisa dipakai login!
+                    $unit ? [$unit->name] : []
+                ));
+            } catch (\Exception $e) {
+                Log::warning("Failed to send welcome email to {$employee->email}: " . $e->getMessage());
+            }
+
             Cache::tags(['employees', 'dashboard'])->flush();
 
             return $employee->fresh(['unitAssignments.unit']);
         });
+    }
+
+    /**
+     * Generate temporary password yang aman tapi mudah diketik
+     * Format: 4 huruf kapital + 4 angka (contoh: ABCD1234)
+     */
+    protected function generateTemporaryPassword(): string
+    {
+        $letters = strtoupper(Str::random(4));
+        $numbers = random_int(1000, 9999);
+        return $letters . $numbers;
     }
 
     public function getDetail(int $id): array

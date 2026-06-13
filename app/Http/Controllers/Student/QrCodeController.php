@@ -3,92 +3,89 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Student\QrCode\QrValidationRequest;
 use App\Services\Student\QrValidationService;
 use App\Services\Student\RatingService;
 use Illuminate\Http\Request;
 
 class QrCodeController extends Controller
 {
-    protected QrValidationService $qrValidationService;
+    protected QrValidationService $validationService;
     protected RatingService $ratingService;
 
-    public function __construct(QrValidationService $qrValidationService, RatingService $ratingService)
-    {
-        $this->qrValidationService = $qrValidationService;
+    public function __construct(
+        QrValidationService $validationService,
+        RatingService $ratingService
+    ) {
+        $this->validationService = $validationService;
         $this->ratingService = $ratingService;
     }
 
     public function scanForm()
     {
-        $student = auth('student')->user();
-        $this->qrValidationService->setStudent($student);
         return view('student.qr.scan');
     }
 
     public function scanResult(Request $request)
     {
-        $qrCode = $request->get('qr_code');
-        return view('student.qr.result', compact('qrCode'));
-    }
-
-    public function validateQr(QrValidationRequest $request)
-    {
-        $student = auth('student')->user();
-        $this->qrValidationService->setStudent($student);
-        $this->ratingService->setStudent($student);
-
-        $data = $request->validated();
-
-        $qrResult = $this->qrValidationService->validateQr($data['qr_code']);
-
-        if (!$qrResult['valid']) {
-            return response()->json(['success' => false, 'message' => $qrResult['message']], 400);
+        $request->validate([
+            'code' => 'required|string',
+        ]);
+        
+        $result = $this->validationService->validateQrCode($request->code);
+        
+        if (!$result['valid']) {
+            return redirect()->route('student.qr.scan')
+                ->with('error', $result['message']);
         }
-
-        $qrCode = $qrResult['qr_code'];
-        $unit = $qrResult['unit'];
-
-        $gpsResult = $this->qrValidationService->validateGps(
-            $data['latitude'],
-            $data['longitude'],
-            $qrCode
-        );
-
-        $visit = $this->qrValidationService->createVisit(
-            $unit->id,
-            $qrCode->id,
-            $data['latitude'],
-            $data['longitude'],
-            $gpsResult['valid']
-        );
-
-        $hasActiveRating = $this->qrValidationService->hasActiveRating($unit->id);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'unit' => $unit,
-                'qr_code' => $qrCode,
-                'gps_validation' => $gpsResult,
-                'visit_id' => $visit->id,
-                'has_active_rating' => $hasActiveRating,
-                'can_rate' => !$hasActiveRating && $gpsResult['valid'],
-            ]
+        
+        return view('student.qr.result', [
+            'unit' => $result['unit'],
+            'qr_code' => $result['qr_code'],
         ]);
     }
 
-    public function checkStatus($unitId)
+    public function validateQr(Request $request)
     {
-        $student = auth('student')->user();
-        $this->qrValidationService->setStudent($student);
-
-        $hasActiveRating = $this->qrValidationService->hasActiveRating($unitId);
-
-        return response()->json([
-            'success' => true,
-            'has_active_rating' => $hasActiveRating,
-            'can_rate' => !$hasActiveRating,
+        $request->validate([
+            'code' => 'required|string',
         ]);
+        
+        try {
+            $result = $this->validationService->validateQrCode($request->code);
+            
+            return response()->json([
+                'success' => true,
+                'valid' => $result['valid'],
+                'message' => $result['message'],
+                'unit' => $result['unit'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memvalidasi QR Code: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkStatus(int $unitId)
+    {
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
+        
+        try {
+            $status = $this->validationService->checkUnitStatus($unitId);
+            $hasRated = $this->ratingService->hasUserRated($unitId, $student->id);
+            
+            return response()->json([
+                'success' => true,
+                'status' => $status,
+                'has_rated' => $hasRated,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengecek status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

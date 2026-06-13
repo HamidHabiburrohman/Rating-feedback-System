@@ -2,10 +2,13 @@
 
 namespace App\Services\Employee;
 
+use App\Models\Authentication\Employee;
 use App\Models\Feedback\Rating;
 use App\Models\Feedback\RatingReply;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Student\RatingRepliedMail;
 
 class RatingReplyService extends BaseEmployeeService
 {
@@ -27,7 +30,17 @@ class RatingReplyService extends BaseEmployeeService
             ]);
 
             $rating->update(['last_replied_at' => now()]);
+            $student = $rating->student;
+            $employee = Employee::find($employeeId);
 
+            Mail::to($student->email)->send(new RatingRepliedMail(
+                $student->name,
+                $rating->unit->name,
+                $rating->tracking_code,
+                $employee->name,
+                'Employee',
+                $reply
+            ));
             Cache::tags(['ratings', "rating_{$ratingId}", "unit_{$rating->unit_id}", 'dashboard'])->flush();
 
             return $ratingReply->fresh(['employee']);
@@ -77,7 +90,7 @@ class RatingReplyService extends BaseEmployeeService
     public function getReplies(int $ratingId): array
     {
         $rating = Rating::findOrFail($ratingId);
-        
+
         if (!$this->isAssignedToUnit($rating->unit_id)) {
             throw new \Exception('Anda tidak memiliki akses ke rating ini.');
         }

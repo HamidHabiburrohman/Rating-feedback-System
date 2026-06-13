@@ -4,79 +4,100 @@ namespace App\Services\Student;
 
 use App\Models\Authentication\Student;
 use App\Models\System\Notification;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
-class NotificationService
+class NotificationService extends BaseStudentService
 {
-    protected Student $student;
-
-    public function setStudent(Student $student): self
+    public function getAll(int $studentId, array $filters = [])
     {
-        $this->student = $student;
-        return $this;
+        $query = Notification::where('notifiable_type', Student::class)
+            ->where('notifiable_id', $studentId);
+
+        if (!empty($filters['is_read'])) {
+            $query->whereNotNull('read_at');
+        }
+
+        if (isset($filters['is_read']) && $filters['is_read'] === false) {
+            $query->whereNull('read_at');
+        }
+
+        return $query->latest()->paginate($filters['per_page'] ?? 20);
     }
 
-    public function getAll(): Collection
+    public function getUnreadCount(int $studentId): int
     {
-        return $this->student->notifications()
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $cacheKey = "student_unread_notifications_{$studentId}";
+
+        return Cache::tags(['notifications', "student_{$studentId}"])->remember($cacheKey, 60, function () use ($studentId) {
+            return Notification::where('notifiable_type', Student::class)
+                ->where('notifiable_id', $studentId)
+                ->whereNull('read_at')
+                ->count();
+        });
     }
 
-    public function getUnread(): Collection
+    public function markAsRead(int $studentId, int $notificationId): bool
     {
-        return $this->student->notifications()
-            ->whereNull('read_at')
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
-    public function getRead(): Collection
-    {
-        return $this->student->notifications()
-            ->whereNotNull('read_at')
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
-    public function getUnreadCount(): int
-    {
-        return $this->student->notifications()
-            ->whereNull('read_at')
-            ->count();
-    }
-
-    public function markAsRead(int $notificationId): bool
-    {
-        $notification = $this->student->notifications()
-            ->where('id', $notificationId)
+        $notification = Notification::where('id', $notificationId)
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $studentId)
             ->first();
 
         if (!$notification) {
             return false;
         }
 
-        $notification->read_at = now();
-        return $notification->save();
+        $notification->update(['read_at' => now()]);
+
+        Cache::tags(['notifications', "student_{$studentId}"])->flush();
+
+        return true;
     }
 
-    public function markAllAsRead(): bool
+    public function markAllAsRead(int $studentId): int
     {
-        return $this->student->notifications()
+        $count = Notification::where('notifiable_type', Student::class)
+            ->where('notifiable_id', $studentId)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
+
+        Cache::tags(['notifications', "student_{$studentId}"])->flush();
+
+        return $count;
     }
 
-    public function delete(int $notificationId): bool
+    public function delete(int $studentId, int $notificationId): bool
     {
-        $notification = $this->student->notifications()
-            ->where('id', $notificationId)
+        $notification = Notification::where('id', $notificationId)
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $studentId)
             ->first();
 
         if (!$notification) {
             return false;
         }
 
-        return $notification->delete();
+        $notification->delete();
+
+        Cache::tags(['notifications', "student_{$studentId}"])->flush();
+
+        return true;
+    }
+
+    public static function sendToStudent(Student $student, string $type, string $title, string $message, array $data = []): Notification
+    {
+        $notification = Notification::create([
+            'notifiable_type' => Student::class,
+            'notifiable_id' => $student->id,
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'data' => json_encode($data),
+            'read_at' => null,
+        ]);
+
+        Cache::tags(['notifications', "student_{$student->id}"])->flush();
+
+        return $notification;
     }
 }

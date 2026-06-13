@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Student\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
+use App\Models\Authentication\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use App\Mail\StudentResetPasswordMail;
+use App\Mail\Student\ResetPasswordMail;
 use Illuminate\Support\Facades\DB;
 
 class ForgotPasswordController extends Controller
@@ -27,7 +27,6 @@ class ForgotPasswordController extends Controller
 
         $input = $request->input('email');
 
-        // Cari berdasarkan NIM atau email
         $student = Student::where('student_identifier', $input)
             ->orWhere('email', $input)
             ->first();
@@ -38,10 +37,8 @@ class ForgotPasswordController extends Controller
             ])->withInput();
         }
 
-        // Generate token
         $token = Str::random(64);
 
-        // Simpan ke tabel student_password_resets
         DB::table('student_password_resets')->updateOrInsert(
             ['student_identifier' => $student->student_identifier],
             [
@@ -50,13 +47,12 @@ class ForgotPasswordController extends Controller
             ]
         );
 
-        // Kirim email
         $resetUrl = route('student.password.reset', [
             'token' => $token,
             'identifier' => $student->student_identifier,
         ]);
 
-        Mail::to($student->email)->send(new StudentResetPasswordMail($resetUrl, $student->name));
+        Mail::to($student->email)->send(new ResetPasswordMail($resetUrl, $student->name));
 
         return back()->with('status', 'Link reset password telah dikirim ke email Anda.');
     }

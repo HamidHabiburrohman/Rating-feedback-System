@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Authentication\Admin;
-use App\Mail\AdminResetPasswordMail;
+use App\Mail\Admin\ResetPasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -26,7 +26,7 @@ class ForgotPasswordController extends Controller
             'email' => 'required|email',
         ]);
 
-        /** @var \App\Models\Authentication\Admin|null $admin */
+        /** @var Admin|null $admin */
         $admin = Admin::where('email', $request->email)->first();
 
         if (!$admin) {
@@ -57,7 +57,7 @@ class ForgotPasswordController extends Controller
         ]);
 
         try {
-            Mail::to($admin->email)->send(new AdminResetPasswordMail($resetUrl, $admin->nama));
+            Mail::to($admin->email)->send(new ResetPasswordMail($resetUrl, $admin->nama));
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([

@@ -2,10 +2,14 @@
 
 namespace App\Services\Employee;
 
+use App\Models\Authentication\Employee;
 use App\Models\Report\Report;
 use App\Models\Report\ReportStatusHistory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Student\ReportStatusChangedMail;
+use Illuminate\Support\Facades\Log;
 
 class ReportStatusService extends BaseEmployeeService
 {
@@ -25,8 +29,9 @@ class ReportStatusService extends BaseEmployeeService
             }
 
             $oldStatus = $report->status;
+
             if ($oldStatus === $status) {
-                return true; // Tidak ada perubahan
+                return true; 
             }
 
             $report->status = $status;
@@ -43,6 +48,26 @@ class ReportStatusService extends BaseEmployeeService
                 'changed_by_admin_id' => null,
                 'reason' => $reason,
             ]);
+
+            try {
+                $student = $report->student;
+                $employee = Employee::find($employeeId);
+
+                if ($student && $student->email) {
+                    Mail::to($student->email)->send(new ReportStatusChangedMail(
+                        $student->name,
+                        $report->tracking_code,
+                        $report->title,
+                        $oldStatus,
+                        $status,
+                        $reason,
+                        $employee?->name ?? 'Employee',
+                        'Employee'
+                    ));
+                }
+            } catch (\Exception $e) {
+                Log::warning("Failed to send status change notification: " . $e->getMessage());
+            }
 
             Cache::tags(['reports', "report_{$reportId}", "unit_{$report->unit_id}", "employee_{$employeeId}", 'dashboard'])->flush();
 
@@ -91,7 +116,7 @@ class ReportStatusService extends BaseEmployeeService
     public function getHistory(int $reportId): array
     {
         $report = Report::findOrFail($reportId);
-        
+
         if (!$this->isAssignedToUnit($report->unit_id)) {
             throw new \Exception('Anda tidak memiliki akses ke laporan ini.');
         }

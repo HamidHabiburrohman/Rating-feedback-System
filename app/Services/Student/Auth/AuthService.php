@@ -1,126 +1,136 @@
 <?php
-
 namespace App\Services\Student\Auth;
 
-use App\Models\Student;
-use App\Models\StudentSession;
-use App\Services\Student\BaseStudentService;
+use App\Models\Authentication\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Mail\Student\VerificationMail;
+use App\Mail\Student\ResetPasswordMail;
 
-class AuthService extends BaseStudentService
+class AuthService
 {
-    protected Student $student;
-    protected StudentSession $studentSession;
-
-    public function __construct(Student $student, StudentSession $studentSession)
+    public function register(array $data): Student
     {
-        $this->student = $student;
-        $this->studentSession = $studentSession;
+        return DB::transaction(function () use ($data) {
+            $student = Student::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'student_identifier' => $this->generateUniqueIdentifier(),
+                'is_active' => true,
+                'is_verified' => false,
+            ]);
+
+            $this->sendVerificationEmail($student);
+            return $student;
+        });
     }
 
-    public function login(string $identifier, string $password, ?string $ip, ?string $userAgent): Student
+    public function login(array $credentials, bool $remember = false): ?Student
     {
-        try {
-            $student = $this->student
-                ->where('student_identifier', $identifier)
-                ->orWhere('email', $identifier)
-                ->first();
+        if (Auth::guard('student')->attempt($credentials, $remember)) {
+            $student = Auth::guard('student')->user();
 
-            if (!$student) {
-                throw new \Exception('Nomor induk atau email tidak ditemukan');
+            if (!$student->is_active) {
+                Auth::guard('student')->logout();
+                throw new \Exception('Akun Anda telah dinonaktifkan.');
             }
 
-            if (!Hash::check($password, $student->password)) {
-                throw new \Exception('Password yang Anda masukkan salah');
+            if (!$student->is_verified) {
+                Auth::guard('student')->logout();
+                throw new \Exception('Silakan verifikasi email Anda terlebih dahulu.');
             }
-
-            // Gunakan guard 'student' untuk login
-            Auth::guard('student')->login($student);
-
-            $this->createSession($student->id, $ip, $userAgent);
-
-            Log::info('Student logged in', [
-                'student_id' => $student->id,
-                'identifier' => $identifier,
-                'ip' => $ip
-            ]);
 
             return $student;
-        } catch (\Exception $e) {
-            Log::error('Login failed', [
-                'identifier' => $identifier,
-                'ip' => $ip,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
         }
+        return null;
     }
 
     public function logout(): void
     {
+        Auth::guard('student')->logout();
+    }
+
+    public function verifyEmail(int $studentId): bool
+    {
+        $student = Student::findOrFail($studentId);
+        if (!$student->is_verified) {
+            $student->update(['is_verified' => true]);
+        }
+        return true;
+    }
+
+    public function requestPasswordReset(string $email): ?string
+    {
+        $student = Student::where('email', $email)->first();
+        if (!$student) return null;
+        if (!$student->is_active) throw new \Exception('Akun Anda telah dinonaktifkan.');
+
+        $token = Str::random(64);
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $student->email],
+            ['token' => Hash::make($token), 'created_at' => now()]
+        );
+
+        $resetUrl = route('student.password.reset', ['token' => $token, 'email' => $student->email]);
+        
         try {
-            $student = Auth::guard('student')->user();
-
-            if ($student) {
-                $this->endSession($student->id);
-            }
-
-            Auth::guard('student')->logout();
-
-            request()->session()->invalidate();
-            request()->session()->regenerateToken();
-
-            Log::info('Student logged out', [
-                'student_id' => $student->id ?? null
-            ]);
+            Mail::to($student->email)->send(new ResetPasswordMail($resetUrl, $student->name));
         } catch (\Exception $e) {
-            Log::error('Logout failed', [
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
-    public function check(): bool
-    {
-        return Auth::guard('student')->check();
-    }
-
-    public function getAuthenticatedStudent(): ?Student
-    {
-        $student = Auth::guard('student')->user();
-
-        if ($student instanceof Student) {
-            return $student;
+            Log::warning("Failed to send reset password email: " . $e->getMessage());
         }
 
-        return null;
+        return $token;
     }
 
-    protected function createSession(int $studentId, ?string $ip, ?string $userAgent): void
+    public function resetPassword(string $email, string $token, string $newPassword): bool
     {
-        // Hapus session lama jika ada
-        $this->studentSession
-            ->where('student_id', $studentId)
-            ->delete();
-            
-        // Buat session baru
-        $this->studentSession->create([
-            'student_id' => $studentId,
-            'session_token' => session()->getId(),
-            'ip_address' => $ip,
-            'user_agent' => $userAgent,
-            'last_activity_at' => now()
-        ]);
+        $resetRecord = DB::table('password_reset_tokens')->where('email', $email)->first();
+
+        if (!$resetRecord || !Hash::check($token, $resetRecord->token) || now()->parse($resetRecord->created_at)->addMinutes(60)->isPast()) {
+            return false;
+        }
+
+        $student = Student::where('email', $email)->first();
+        if (!$student) return false;
+
+        return DB::transaction(function () use ($student, $newPassword, $email) {
+            $student->update(['password' => Hash::make($newPassword)]);
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            return true;
+        });
     }
 
-    protected function endSession(int $studentId): void
+    protected function generateUniqueIdentifier(): string
     {
-        $this->studentSession
-            ->where('student_id', $studentId)
-            ->where('session_token', session()->getId())
-            ->delete();
+        do {
+            $identifier = 'STU-' . strtoupper(Str::random(8));
+        } while (Student::where('student_identifier', $identifier)->exists());
+        return $identifier;
+    }
+
+    protected function sendVerificationEmail(Student $student): void
+    {
+        try {
+            $verificationUrl = URL::temporarySignedRoute(
+                'student.verify.email',
+                now()->addHours(24),
+                ['id' => $student->id]
+            );
+
+            Mail::to($student->email)->send(new VerificationMail(
+                $student->id,
+                $student->name,
+                $student->email,
+                $verificationUrl
+            ));
+        } catch (\Exception $e) {
+            Log::warning("Failed to send verification email to {$student->email}: " . $e->getMessage());
+        }
     }
 }

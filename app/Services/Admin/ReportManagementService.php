@@ -2,13 +2,16 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Authentication\Admin;
 use App\Models\Report\Report;
 use App\Models\Report\ReportReply;
 use App\Models\Report\ReportStatusHistory;
 use App\Models\System\ModerationLog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Student\ReportStatusChangedMail;
+use Illuminate\Support\Facades\Log;
 class ReportManagementService extends BaseAdminService
 {
     protected array $validStatuses = ['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview'];
@@ -21,28 +24,28 @@ class ReportManagementService extends BaseAdminService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('tracking_code', 'like', "%{$search}%")
-                  ->orWhereHas('student', fn($s) => $s->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('unit', fn($u) => $u->where('name', 'like', "%{$search}%"));
+                    ->orWhere('tracking_code', 'like', "%{$search}%")
+                    ->orWhereHas('student', fn($s) => $s->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('unit', fn($u) => $u->where('name', 'like', "%{$search}%"));
             });
         }
 
         if (!empty($filters['status'])) $query->where('status', $filters['status']);
         if (!empty($filters['priority'])) $query->where('priority', $filters['priority']);
         if (!empty($filters['unit_id'])) $query->where('unit_id', $filters['unit_id']);
-        
+
         if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
         if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
 
         $sort = $filters['sort'] ?? 'latest';
         switch ($sort) {
-            case 'oldest': 
-                $query->oldest(); 
+            case 'oldest':
+                $query->oldest();
                 break;
-            case 'priority': 
-                $query->orderByRaw("FIELD(priority, 'critical', 'high', 'medium', 'low')"); 
+            case 'priority':
+                $query->orderByRaw("FIELD(priority, 'critical', 'high', 'medium', 'low')");
                 break;
-            default: 
+            default:
                 $query->latest();
         }
 
@@ -52,12 +55,17 @@ class ReportManagementService extends BaseAdminService
     public function getDetail(int $id): array
     {
         $cacheKey = "admin_report_detail_{$id}";
-        
+
         return Cache::tags(['reports', "report_{$id}"])->remember($cacheKey, 300, function () use ($id) {
             $report = Report::with([
-                'student', 'unit', 'category', 'rating',
-                'replies.admin', 'replies.employee',
-                'statusHistory.admin', 'statusHistory.employee',
+                'student',
+                'unit',
+                'category',
+                'rating',
+                'replies.admin',
+                'replies.employee',
+                'statusHistory.admin',
+                'statusHistory.employee',
                 'attachments'
             ])->findOrFail($id);
 
@@ -101,6 +109,26 @@ class ReportManagementService extends BaseAdminService
 
             Cache::tags(['reports', "report_{$id}", "unit_{$report->unit_id}", 'dashboard'])->flush();
 
+            try {
+                $student = $report->student;
+                $admin = Admin::find($adminId);
+
+                if ($student && $student->email) {
+                    Mail::to($student->email)->send(new ReportStatusChangedMail(
+                        $student->name,
+                        $report->tracking_code,
+                        $report->title,
+                        $oldStatus,
+                        $status,
+                        $reason,
+                        $admin?->nama ?? 'Admin',
+                        'Admin'
+                    ));
+                }
+            } catch (\Exception $e) {
+                Log::warning("Failed to send status change notification: " . $e->getMessage());
+            }
+
             return true;
         });
     }
@@ -119,7 +147,7 @@ class ReportManagementService extends BaseAdminService
             ]);
 
             $report->update(['last_replied_at' => now()]);
-            
+
             if (in_array($report->status, ['new', 'in_progress'])) {
                 $this->updateStatus($id, 'replied', 'Auto-updated status after admin reply', $adminId);
             }

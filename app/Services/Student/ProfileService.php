@@ -2,193 +2,222 @@
 
 namespace App\Services\Student;
 
-use App\Models\Student;
-use App\Models\StudentSession;
+use App\Models\Authentication\Student;
+use App\Models\Feedback\Rating;
+use App\Models\Report\Report;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Collection;
 
 class ProfileService extends BaseStudentService
 {
-    protected Student $student;
-    protected StudentSession $studentSession;
-
-    public function __construct(Student $student, StudentSession $studentSession)
+    public function getProfile(int $studentId): array
     {
-        $this->student = $student;
-        $this->studentSession = $studentSession;
+        $cacheKey = "student_profile_{$studentId}";
+
+        return Cache::tags(['profile', "student_{$studentId}"])->remember($cacheKey, 300, function () use ($studentId) {
+            $student = Student::findOrFail($studentId);
+
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'student_identifier' => $student->student_identifier,
+                'phone' => $student->phone,
+                'photo' => $student->photo,
+                'bio' => $student->bio,
+                'is_active' => $student->is_active,
+                'is_verified' => $student->is_verified,
+                'created_at' => $student->created_at,
+            ];
+        });
     }
 
-    public function getProfile(string $studentIdentifier): Student
+    public function updateProfile(int $studentId, array $data): bool
     {
-        $student = $this->student->where('student_identifier', $studentIdentifier)->first();
+        $student = Student::findOrFail($studentId);
+        $result = $student->update($data);
 
-        if (!$student) {
-            throw new \Exception('Student not found');
+        if ($result) {
+            Cache::tags(['profile', "student_{$studentId}"])->flush();
         }
 
-        return $student;
+        return $result;
     }
 
-    public function getStats(string $studentIdentifier): array
+    public function updatePassword(int $studentId, string $currentPassword, string $newPassword): bool
     {
-        $student = $this->getProfile($studentIdentifier);
+        $student = Student::findOrFail($studentId);
 
-        $ratingsCount = $student->ratings()->count();
-        $reportsCount = $student->reports()->count();
-        $sessionsCount = $student->sessions()->count();
+        if (!Hash::check($currentPassword, $student->password)) {
+            throw new \Exception('Password saat ini tidak sesuai');
+        }
 
-        return [
-            'total_ratings' => $ratingsCount,
-            'total_reports' => $reportsCount,
-            'total_sessions' => $sessionsCount,
-            'last_active' => $student->sessions()
-                ->latest('last_activity_at')
-                ->first()?->last_activity_at?->diffForHumans() ?? 'Never',
-            'average_rating' => round($student->ratings()->avg('overall_score') ?? 0, 2),
-            'member_since' => $student->created_at->format('d M Y')
-        ];
+        $result = $student->update(['password' => Hash::make($newPassword)]);
+
+        return $result;
     }
 
-    public function getRecentActivities(string $studentIdentifier): Collection
+    public function updatePhoto(int $studentId, $file): string
     {
-        $student = $this->getProfile($studentIdentifier);
-        
-        $ratings = $student->ratings()->with('unit')->latest()->limit(10)->get()->map(function($rating) {
-            return (object)[
-                'type' => 'rating',
-                'description' => 'Memberikan rating untuk ' . ($rating->unit->name ?? 'Unit'),
-                'created_at' => $rating->created_at,
-                'unit_name' => $rating->unit->name ?? null,
+        $student = Student::findOrFail($studentId);
+
+        if ($student->photo && Storage::disk('public')->exists($student->photo)) {
+            Storage::disk('public')->delete($student->photo);
+        }
+
+        $path = $file->store('students/photos', 'public');
+        $student->update(['photo' => $path]);
+
+        Cache::tags(['profile', "student_{$studentId}"])->flush();
+
+        return $path;
+    }
+
+    public function removePhoto(int $studentId): bool
+    {
+        $student = Student::findOrFail($studentId);
+
+        if ($student->photo && Storage::disk('public')->exists($student->photo)) {
+            Storage::disk('public')->delete($student->photo);
+        }
+
+        $result = $student->update(['photo' => null]);
+
+        if ($result) {
+            Cache::tags(['profile', "student_{$studentId}"])->flush();
+        }
+
+        return $result;
+    }
+
+    public function getStats(int $studentId): array
+    {
+        $cacheKey = "student_profile_stats_{$studentId}";
+
+        return Cache::tags(['profile', "student_{$studentId}"])->remember($cacheKey, 300, function () use ($studentId) {
+            $student = Student::findOrFail($studentId);
+
+            return [
+                'total_ratings' => $student->ratings()->count(),
+                'total_reports' => $student->reports()->count(),
+                'total_units_visited' => $student->visits()->distinct('unit_id')->count('unit_id'),
             ];
         });
-        
-        $reports = $student->reports()->with('rating.unit')->latest()->limit(10)->get()->map(function($report) {
-            return (object)[
-                'type' => 'report',
-                'description' => 'Melaporkan masalah pada ' . ($report->rating->unit->name ?? 'Unit'),
-                'created_at' => $report->created_at,
-                'unit_name' => $report->rating->unit->name ?? null,
-            ];
-        });
-        
-        $activities = $ratings->concat($reports)->sortByDesc('created_at')->take(10);
-        
-        return $activities->values();
     }
 
-    public function getWeeklyEngagement(string $studentIdentifier): array
+    public function getRecentActivities(int $studentId, int $limit = 10): array
     {
-        $student = $this->getProfile($studentIdentifier);
-        
-        $weeklyData = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i);
-            $count = $student->ratings()
-                ->whereDate('created_at', $date)
+        $cacheKey = "student_recent_activities_{$studentId}";
+
+        return Cache::tags(['profile', "student_{$studentId}"])->remember($cacheKey, 300, function () use ($studentId, $limit) {
+            $student = Student::findOrFail($studentId);
+
+            $ratings = $student->ratings()
+                ->with('unit')
+                ->latest()
+                ->limit($limit)
+                ->get()
+                ->map(function ($rating) {
+                    return [
+                        'type' => 'rating',
+                        'title' => 'Rating untuk ' . ($rating->unit->name ?? 'Unit'),
+                        'description' => 'Memberikan rating ' . $rating->overall_score . ' bintang',
+                        'created_at' => $rating->created_at,
+                        'url' => route('student.ratings.show', $rating->tracking_code),
+                    ];
+                });
+
+            $reports = $student->reports()
+                ->with('unit')
+                ->latest()
+                ->limit($limit)
+                ->get()
+                ->map(function ($report) {
+                    return [
+                        'type' => 'report',
+                        'title' => 'Laporan: ' . $report->title,
+                        'description' => 'Status: ' . ucfirst($report->status),
+                        'created_at' => $report->created_at,
+                        'url' => route('student.reports.show', $report->tracking_code),
+                    ];
+                });
+
+            return $ratings->concat($reports)
+                ->sortByDesc('created_at')
+                ->take($limit)
+                ->values()
+                ->toArray();
+        });
+    }
+
+    public function getWeeklyEngagement(int $studentId): array
+    {
+        $cacheKey = "student_weekly_engagement_{$studentId}";
+
+        return Cache::tags(['profile', "student_{$studentId}"])->remember($cacheKey, 300, function () use ($studentId) {
+            $student = Student::findOrFail($studentId);
+            $startDate = now()->subDays(7);
+
+            $ratingsThisWeek = $student->ratings()
+                ->where('created_at', '>=', $startDate)
                 ->count();
-            $weeklyData[] = $count;
-        }
-        
-        return $weeklyData;
+
+            $reportsThisWeek = $student->reports()
+                ->where('created_at', '>=', $startDate)
+                ->count();
+
+            $visitsThisWeek = $student->visits()
+                ->where('visited_at', '>=', $startDate)
+                ->distinct('unit_id')
+                ->count('unit_id');
+
+            return [
+                'ratings' => $ratingsThisWeek,
+                'reports' => $reportsThisWeek,
+                'visits' => $visitsThisWeek,
+                'total_engagement' => $ratingsThisWeek + $reportsThisWeek + $visitsThisWeek,
+            ];
+        });
     }
 
-    public function updateProfile(string $studentIdentifier, array $data, $photo = null): Student
+    public function getSessions(int $studentId): array
     {
-        $student = $this->getProfile($studentIdentifier);
+        try {
+            $sessions = DB::table('sessions')
+                ->where('user_id', $studentId)
+                ->orderByDesc('last_activity')
+                ->get()
+                ->map(function ($session) {
+                    return [
+                        'id' => $session->id,
+                        'ip_address' => $session->ip_address,
+                        'user_agent' => $session->user_agent,
+                        'last_activity' => \Carbon\Carbon::createFromTimestamp($session->last_activity),
+                        'payload' => $session->payload,
+                    ];
+                })
+                ->toArray();
 
-        $allowedFields = [
-            'name', 'email', 'password',
-            'major', 'class_year', 'bio',
-            'phone', 'location', 'portfolio_url', 'linkedin_url'
-        ];
-
-        $filteredData = array_intersect_key($data, array_flip($allowedFields));
-
-        if (isset($filteredData['password']) && empty($filteredData['password'])) {
-            unset($filteredData['password']);
+            return $sessions;
+        } catch (\Exception $e) {
+            return [];
         }
-
-        if ($photo && $photo->isValid()) {
-            if ($student->photo && Storage::disk('public')->exists($student->photo)) {
-                Storage::disk('public')->delete($student->photo);
-            }
-
-            $path = $photo->store('student/profile-photos', 'public');
-            $filteredData['photo'] = $path;
-        }
-
-        if (!empty($filteredData)) {
-            $student->update($filteredData);
-        }
-
-        return $student->fresh();
     }
 
-    public function getActiveSessions(string $studentIdentifier): array
+    public function terminateSession(int $studentId, string $sessionId): bool
     {
-        $student = $this->getProfile($studentIdentifier);
-
-        return $this->studentSession->where('student_id', $student->id)
-            ->where('last_activity_at', '>=', now()->subMinutes(30))
-            ->orderByDesc('last_activity_at')
-            ->get()
-            ->map(fn($session) => [
-                'id' => $session->id,
-                'session_token' => substr($session->session_token, 0, 8) . '...',
-                'ip_address' => $session->ip_address ?? 'Unknown',
-                'user_agent' => $this->parseUserAgent($session->user_agent),
-                'last_activity' => $session->last_activity_at?->diffForHumans(),
-                'is_current' => $session->session_token === session()->getId()
-            ])
-            ->toArray();
-    }
-
-    public function terminateSession(string $studentIdentifier, int $sessionId): bool
-    {
-        $student = $this->getProfile($studentIdentifier);
-
-        $session = $this->studentSession->where('student_id', $student->id)
+        return DB::table('sessions')
             ->where('id', $sessionId)
-            ->first();
-
-        if (!$session) {
-            throw new \Exception('Session not found');
-        }
-
-        if ($session->session_token === session()->getId()) {
-            throw new \Exception('Tidak dapat mengakhiri sesi saat ini');
-        }
-
-        return $session->delete();
+            ->where('user_id', $studentId)
+            ->delete() > 0;
     }
 
-    public function terminateAllSessions(string $studentIdentifier): int
+    public function terminateAllSessions(int $studentId): int
     {
-        $student = $this->getProfile($studentIdentifier);
-
-        return $this->studentSession->where('student_id', $student->id)
-            ->where('session_token', '!=', session()->getId())
+        return DB::table('sessions')
+            ->where('user_id', $studentId)
             ->delete();
-    }
-
-    private function parseUserAgent(?string $userAgent): string
-    {
-        if (!$userAgent) {
-            return 'Unknown Device';
-        }
-
-        if (str_contains($userAgent, 'Windows')) {
-            return 'Windows PC';
-        } elseif (str_contains($userAgent, 'Mac')) {
-            return 'Mac';
-        } elseif (str_contains($userAgent, 'iPhone')) {
-            return 'iPhone';
-        } elseif (str_contains($userAgent, 'Android')) {
-            return 'Android Device';
-        } elseif (str_contains($userAgent, 'Linux')) {
-            return 'Linux Device';
-        }
-
-        return 'Unknown Device';
     }
 }

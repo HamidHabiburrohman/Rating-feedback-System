@@ -3,84 +3,126 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Student\Notification\MarkAsReadRequest;
+use App\Models\Authentication\Student;
 use App\Services\Student\NotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    protected NotificationService $notificationService;
+    protected NotificationService $service;
 
-    public function __construct(NotificationService $notificationService)
+    public function __construct(NotificationService $service)
     {
-        $this->notificationService = $notificationService;
+        $this->service = $service;
     }
 
     public function index(Request $request)
     {
+        /** @var Student $student */
         $student = auth('student')->user();
-        $this->notificationService->setStudent($student);
-
-        $type = $request->get('type', 'all');
-
-        if ($type === 'unread') {
-            $notifications = $this->notificationService->getUnread();
-        } elseif ($type === 'read') {
-            $notifications = $this->notificationService->getRead();
-        } else {
-            $notifications = $this->notificationService->getAll();
+        
+        try {
+            $filters = $request->only(['is_read', 'per_page']);
+            $notifications = $this->service->getAll($student->id, $filters);
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'html' => view('student.notifications.partials.list', compact('notifications'))->render(),
+                    'pagination' => view('student.notifications.partials.pagination', ['paginator' => $notifications])->render()
+                ]);
+            }
+            
+            return view('student.notifications.index', compact('notifications'));
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memuat notifikasi: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('student.dashboard.index')
+                ->with('error', 'Gagal memuat notifikasi: ' . $e->getMessage());
         }
-
-        $unreadCount = $this->notificationService->getUnreadCount();
-
-        return view('student.notifications.index', compact('notifications', 'unreadCount', 'type'));
     }
 
-    public function markAsRead(MarkAsReadRequest $request, $id)
+    public function markAsRead(Request $request, int $id)
     {
+        /** @var \App\Models\Authentication\Student $student */
         $student = auth('student')->user();
-        $this->notificationService->setStudent($student);
-
-        $marked = $this->notificationService->markAsRead($id);
-
-        if (!$marked) {
-            return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
+        
+        try {
+            $this->service->markAsRead($student->id, $id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifikasi berhasil ditandai sebagai dibaca'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai notifikasi: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'message' => 'Notification marked as read']);
     }
 
     public function markAllAsRead()
     {
+        /** @var \App\Models\Authentication\Student $student */
         $student = auth('student')->user();
-        $this->notificationService->setStudent($student);
-
-        $this->notificationService->markAllAsRead();
-
-        return redirect()->route('student.notifications.index')->with('success', 'All notifications marked as read');
+        
+        try {
+            $count = $this->service->markAllAsRead($student->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} notifikasi berhasil ditandai sebagai dibaca"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai notifikasi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, int $id)
     {
+        /** @var \App\Models\Authentication\Student $student */
         $student = auth('student')->user();
-        $this->notificationService->setStudent($student);
-
-        $deleted = $this->notificationService->delete($id);
-
-        if (!$deleted) {
-            return response()->json(['success' => false, 'message' => 'Notification not found'], 404);
+        
+        try {
+            $this->service->delete($student->id, $id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifikasi berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus notifikasi: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'message' => 'Notification deleted']);
     }
 
     public function unreadCount()
     {
+        /** @var \App\Models\Authentication\Student $student */
         $student = auth('student')->user();
-        $this->notificationService->setStudent($student);
-
-        $count = $this->notificationService->getUnreadCount();
-
-        return response()->json(['success' => true, 'count' => $count]);
+        
+        try {
+            $count = $this->service->getUnreadCount($student->id);
+            
+            return response()->json([
+                'success' => true,
+                'count' => $count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jumlah notifikasi'
+            ], 500);
+        }
     }
 }

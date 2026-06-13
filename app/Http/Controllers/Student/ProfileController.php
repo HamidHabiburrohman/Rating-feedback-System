@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Student\Profile\UpdateProfileRequest;
 use App\Services\Student\ProfileService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Collection;
+use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
@@ -19,109 +17,164 @@ class ProfileController extends Controller
 
     public function show()
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return redirect()->route('student.login')->with('error', 'Silakan login terlebih dahulu');
+        try {
+            $profile = $this->service->getProfile($student->id);
+            $stats = $this->service->getStats($student->id);
+            $recentActivities = $this->service->getRecentActivities($student->id);
+            $weeklyEngagement = $this->service->getWeeklyEngagement($student->id);
+            
+            return view('student.profile.show', compact('profile', 'stats', 'recentActivities', 'weeklyEngagement'));
+        } catch (\Exception $e) {
+            return redirect()->route('student.dashboard.index')
+                ->with('error', 'Gagal memuat profil: ' . $e->getMessage());
         }
-
-        $studentIdentifier = $student->student_identifier;
-        
-        $profile = $this->service->getProfile($studentIdentifier);
-        $stats = $this->service->getStats($studentIdentifier);
-        $activities = $this->service->getRecentActivities($studentIdentifier);
-        $weeklyEngagement = $this->service->getWeeklyEngagement($studentIdentifier);
-        
-        $score = $stats['average_rating'] * 20;
-        $resolvedCount = $stats['total_reports'];
-
-        $activitiesCollection = collect($activities);
-        $recentActivities = $activitiesCollection->take(3);
-        $totalActivities = $activitiesCollection->count();
-
-        return view('student.profile.show', [
-            'profile' => $profile,
-            'stats' => $stats,
-            'score' => $score,
-            'resolvedCount' => $resolvedCount,
-            'recentActivities' => $recentActivities,
-            'totalActivities' => $totalActivities,
-            'weeklyEngagement' => $weeklyEngagement,
-        ]);
     }
 
     public function edit()
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return redirect()->route('student.login')->with('error', 'Silakan login terlebih dahulu');
+        try {
+            $profile = $this->service->getProfile($student->id);
+            return view('student.profile.edit', compact('profile'));
+        } catch (\Exception $e) {
+            return redirect()->route('student.profile.show')
+                ->with('error', 'Gagal memuat profil: ' . $e->getMessage());
         }
-
-        $profile = $this->service->getProfile($student->student_identifier);
-        
-        return view('student.profile.edit', [
-            'profile' => $profile
-        ]);
     }
 
-    public function update(UpdateProfileRequest $request)
+    public function update(Request $request)
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return redirect()->route('student.login')->with('error', 'Silakan login terlebih dahulu');
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'bio' => 'nullable|string|max:1000',
+        ]);
+        
+        try {
+            $this->service->updateProfile($student->id, $request->only(['name', 'phone', 'bio']));
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profil berhasil diperbarui'
+                ]);
+            }
+            
+            return back()->with('success', 'Profil berhasil diperbarui');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui profil: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
         }
+    }
 
-        $this->service->updateProfile($student->student_identifier, $request->validated(), $request->file('photo'));
-
-        return redirect()->route('student.profile.show')->with('success', 'Profil berhasil diperbarui');
+    public function updatePassword(Request $request)
+    {
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
+        
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+        
+        try {
+            $this->service->updatePassword(
+                $student->id,
+                $request->current_password,
+                $request->password
+            );
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password berhasil diperbarui'
+                ]);
+            }
+            
+            return back()->with('success', 'Password berhasil diperbarui');
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+            
+            return back()->withErrors(['current_password' => $e->getMessage()]);
+        }
     }
 
     public function sessions()
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return redirect()->route('student.login')->with('error', 'Silakan login terlebih dahulu');
+        try {
+            $sessions = $this->service->getSessions($student->id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $sessions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat sesi aktif: ' . $e->getMessage()
+            ], 500);
         }
-
-        $sessions = $this->service->getActiveSessions($student->student_identifier);
-
-        return view('student.profile.sessions', [
-            'sessions' => $sessions
-        ]);
     }
 
-    public function terminateSession(int $sessionId)
+    public function terminateSession(Request $request, string $sessionId)
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
-
         try {
-            $this->service->terminateSession($student->student_identifier, $sessionId);
-            return response()->json(['success' => true, 'message' => 'Sesi berhasil diakhiri']);
+            $this->service->terminateSession($student->id, $sessionId);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Sesi berhasil dihentikan'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghentikan sesi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function terminateAllSessions()
     {
-        $student = Auth::guard('student')->user();
+        /** @var \App\Models\Authentication\Student $student */
+        $student = auth('student')->user();
         
-        if (!$student) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
-
         try {
-            $count = $this->service->terminateAllSessions($student->student_identifier);
-            return response()->json(['success' => true, 'message' => "{$count} sesi berhasil diakhiri"]);
+            $count = $this->service->terminateAllSessions($student->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} sesi berhasil dihentikan"
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghentikan sesi: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

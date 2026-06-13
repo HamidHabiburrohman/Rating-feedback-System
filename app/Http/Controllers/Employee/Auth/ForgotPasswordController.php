@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Mail\Employee\ResetPasswordMail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -56,7 +57,7 @@ class ForgotPasswordController extends Controller
         ]);
 
         try {
-            // Mail::to($employee->email)->send(new EmployeeResetPasswordMail($resetUrl, $employee->name));
+            Mail::to($employee->email)->send(new ResetPasswordMail($resetUrl, $employee->name));
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([

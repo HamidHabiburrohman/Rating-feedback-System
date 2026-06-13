@@ -2,10 +2,13 @@
 
 namespace App\Services\Employee;
 
+use App\Models\Authentication\Employee;
 use App\Models\Report\Report;
 use App\Models\Report\ReportReply;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Student\ReportRepliedMail;
 
 class ReportReplyService extends BaseEmployeeService
 {
@@ -35,15 +38,26 @@ class ReportReplyService extends BaseEmployeeService
 
             $report->update(['last_replied_at' => now()]);
 
-            // Auto-update status ke 'replied' jika masih 'new' atau 'in_progress'
             if (in_array($report->status, ['new', 'in_progress'])) {
                 $this->statusService->updateStatus(
-                    $reportId, 
-                    'replied', 
-                    'Auto-updated status after employee reply', 
+                    $reportId,
+                    'replied',
+                    'Auto-updated status after employee reply',
                     $employeeId
                 );
             }
+
+            $student = $report->student;
+            $employee = Employee::find($employeeId);
+
+            Mail::to($student->email)->send(new ReportRepliedMail(
+                $student->name,
+                $report->tracking_code,
+                $report->title,
+                $employee->name,
+                'Employee',
+                $reply
+            ));
 
             Cache::tags(['reports', "report_{$reportId}", "unit_{$report->unit_id}", 'dashboard'])->flush();
 

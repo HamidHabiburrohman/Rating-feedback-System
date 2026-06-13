@@ -2,8 +2,13 @@
 
 namespace App\Services\Student;
 
-use App\Models\Report;
-use App\Models\Rating;
+use App\Models\Authentication\Student;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Student\ReportSubmittedMail;
+use App\Models\Report\Report;
+use App\Models\Report\ReportCategory;
+use App\Models\Feedback\Rating;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseStudentService
@@ -17,9 +22,9 @@ class ReportService extends BaseStudentService
 
     public function canReport(Rating $rating): bool
     {
-        $studentIdentifier = auth('student')->user()->student_identifier;
+        $studentId = auth('student')->id();
 
-        if ($rating->student_identifier !== $studentIdentifier) {
+        if ($rating->student_id !== $studentId) {
             return false;
         }
 
@@ -27,17 +32,12 @@ class ReportService extends BaseStudentService
             return false;
         }
 
-        $activeReport = $rating->activeReport()->first();
-        if ($activeReport && in_array($activeReport->status, ['new', 'processing', 'under_review'])) {
+        if ($rating->reports()->whereIn('status', ['new', 'in_progress'])->exists()) {
             return false;
         }
 
-        $lastReport = $rating->reports()
-            ->where('status', 'resolved')
-            ->latest()
-            ->first();
-
-        if ($lastReport && $lastReport->updated_at->addDays(7) > now()) {
+        $lastResolved = $rating->reports()->where('status', 'resolved')->latest()->first();
+        if ($lastResolved && $lastResolved->updated_at->addDays(7) > now()) {
             return false;
         }
 
@@ -46,82 +46,87 @@ class ReportService extends BaseStudentService
 
     public function getReportStatusMessage(Rating $rating): string
     {
-        $studentIdentifier = auth('student')->user()->student_identifier;
-
-        if ($rating->student_identifier !== $studentIdentifier) {
+        if ($rating->student_id !== auth('student')->id()) {
             return 'Anda tidak memiliki akses ke rating ini';
         }
 
         if ($rating->status !== 'active') {
-            return 'Hanya rating aktif yang dapat dilaporkan';
+            return 'Rating ini tidak dapat dilaporkan';
         }
 
-        $activeReport = $rating->activeReport()->first();
-        if ($activeReport && in_array($activeReport->status, ['new', 'processing', 'under_review'])) {
-            return 'Laporan untuk rating ini sedang diproses oleh admin';
+        if ($rating->reports()->whereIn('status', ['new', 'in_progress'])->exists()) {
+            return 'Anda sudah memiliki laporan yang sedang diproses untuk rating ini';
         }
 
-        $lastReport = $rating->reports()
-            ->where('status', 'resolved')
-            ->latest()
-            ->first();
-
-        if ($lastReport) {
-            $daysPassed = now()->diffInDays($lastReport->updated_at);
-            $daysLeft = 7 - $daysPassed;
-            if ($daysLeft > 0) {
-                return "Tunggu {$daysLeft} hari lagi sebelum dapat melapor kembali";
-            }
+        $lastResolved = $rating->reports()->where('status', 'resolved')->latest()->first();
+        if ($lastResolved && $lastResolved->updated_at->addDays(7) > now()) {
+            return 'Silakan tunggu 7 hari setelah laporan sebelumnya diselesaikan';
         }
 
-        return 'Anda dapat melaporkan rating ini';
+        return '';
     }
 
-    public function createReport(array $data, string $studentIdentifier): Report
+    public function createReport(array $data, int $studentId): Report
     {
-        return DB::transaction(function () use ($data, $studentIdentifier) {
-            $rating = Rating::with('unit')->findOrFail($data['rating_id']);
+        return DB::transaction(function () use ($data, $studentId) {
+            $rating = Rating::findOrFail($data['rating_id']);
 
             if (!$this->canReport($rating)) {
                 throw new \Exception($this->getReportStatusMessage($rating));
             }
 
-            $reportData = [
+            $report = $this->report->create([
                 'tracking_code' => 'RPT-' . strtoupper(uniqid()),
                 'rating_id' => $rating->id,
                 'unit_id' => $rating->unit_id,
-                'student_identifier' => $studentIdentifier,
+                'student_id' => $studentId,
+                'report_category_id' => ReportCategory::where('slug', $data['category'])->first()?->id,
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'priority' => $data['priority'] ?? 'medium',
-                'status' => 'new'
-            ];
+                'status' => 'new',
+                'attachment_path' => null,
+                'attachment_original_name' => null,
+                'attachment_mime_type' => null,
+                'attachment_size' => null,
+            ]);
 
-            if (isset($data['attachment']) && $data['attachment'] && $data['attachment']->isValid()) {
-                $file = $data['attachment'];
-                $path = $file->store('reports/' . date('Y/m/d'), 'public');
-
-                $reportData['attachment_path'] = $path;
-                $reportData['attachment_original_name'] = $file->getClientOriginalName();
-                $reportData['attachment_mime_type'] = $file->getMimeType();
-                $reportData['attachment_size'] = $file->getSize();
+            if (!empty($data['attachment_path'])) {
+                $report->update([
+                    'attachment_path' => $data['attachment_path'],
+                    'attachment_original_name' => $data['attachment_original_name'] ?? null,
+                    'attachment_mime_type' => $data['attachment_mime_type'] ?? null,
+                    'attachment_size' => $data['attachment_size'] ?? null,
+                ]);
             }
 
-            return $this->report->create($reportData);
+            $student = Student::find($studentId);
+
+            Mail::to($student->email)->send(new ReportSubmittedMail(
+                $student->name,
+                $rating->unit->name,
+                $report->title,
+                $report->tracking_code,
+                $report->priority
+            ));
+
+            return $report->fresh(['rating', 'category', 'unit']);
         });
     }
 
     public function findByTrackingCode(string $trackingCode): Report
     {
-        return $this->report->with(['unit', 'rating', 'admin'])
+        return $this->report
+            ->with(['rating', 'category', 'unit', 'replies.employee', 'statusHistory.employee'])
             ->where('tracking_code', $trackingCode)
             ->firstOrFail();
     }
 
-    public function getUserReports(string $studentIdentifier, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function getUserReports(int $studentId, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->report->with(['unit'])
-            ->where('student_identifier', $studentIdentifier);
+        $query = $this->report
+            ->with(['rating', 'category', 'unit'])
+            ->where('student_id', $studentId);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -129,26 +134,29 @@ class ReportService extends BaseStudentService
 
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('title', 'LIKE', "%{$filters['search']}%")
-                    ->orWhere('tracking_code', 'LIKE', "%{$filters['search']}%");
+                $q->where('title', 'like', "%{$filters['search']}%")
+                    ->orWhere('description', 'like', "%{$filters['search']}%")
+                    ->orWhereHas('unit', fn($u) => $u->where('name', 'like', "%{$filters['search']}%"));
             });
         }
 
-        $perPage = $filters['per_page'] ?? 10;
-
-        return $query->latest()->paginate($perPage);
+        return $query->latest()->paginate($filters['per_page'] ?? 10);
     }
 
-    public function getReportStats(string $studentIdentifier): array
+    public function getReportStats(int $studentId): array
     {
-        $reports = $this->report->where('student_identifier', $studentIdentifier);
+        $cacheKey = "student_report_stats_{$studentId}";
 
-        return [
-            'total' => $reports->count(),
-            'new' => $reports->where('status', 'new')->count(),
-            'processing' => $reports->where('status', 'processing')->count(),
-            'resolved' => $reports->where('status', 'resolved')->count(),
-            'rejected' => $reports->where('status', 'rejected')->count()
-        ];
+        return Cache::tags(['reports', "student_{$studentId}"])->remember($cacheKey, 300, function () use ($studentId) {
+            $reports = $this->report->where('student_id', $studentId);
+
+            return [
+                'total' => $reports->count(),
+                'new' => $reports->where('status', 'new')->count(),
+                'in_progress' => $reports->where('status', 'in_progress')->count(),
+                'resolved' => $reports->where('status', 'resolved')->count(),
+                'rejected' => $reports->where('status', 'rejected')->count(),
+            ];
+        });
     }
 }
