@@ -51,6 +51,11 @@ class Admin extends Authenticatable
         ])->save();
     }
 
+
+    public function getPreference(string $key, $default = null)
+    {
+        return $this->preferences[$key] ?? $default;
+    }
     public function mergePreferences(array $preferences): void
     {
         $current = $this->preferences ?? [];

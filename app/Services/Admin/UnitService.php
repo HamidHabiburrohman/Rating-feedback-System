@@ -20,8 +20,8 @@ class UnitService extends BaseAdminService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
             });
         }
 
@@ -65,17 +65,26 @@ class UnitService extends BaseAdminService
             return [
                 'unit_types' => UnitType::where('is_active', true)->orderBy('name')->get(['id', 'name']),
                 'departments' => UnitDepartment::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-                'facilities' => Facility::where('is_active', true)->orderBy('name')->get(['id', 'name', 'icon']),
+                'facilities' => Facility::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             ];
         });
     }
 
+    public function getUnitTypesForFilter()
+    {
+        return UnitType::where('is_active', true)->orderBy('name')->get();
+    }
+
+    public function getDepartmentsForFilter()
+    {
+        return UnitDepartment::where('is_active', true)->orderBy('name')->get();
+    }
     public function create(array $data): Unit
     {
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name'] . '-' . uniqid());
             $data['is_active'] = $data['is_active'] ?? true;
-            
+
             $facilities = $data['facilities'] ?? [];
             unset($data['facilities']);
 
@@ -94,12 +103,16 @@ class UnitService extends BaseAdminService
     public function getDetail(int $id): array
     {
         $cacheKey = "admin_unit_detail_{$id}";
-        
+
         return Cache::tags(['units', "unit_{$id}"])->remember($cacheKey, 300, function () use ($id) {
             $unit = Unit::with([
-                'unitType', 'unitDepartment', 'facilities',
-                'primaryPhoto', 'photos' => fn($q) => $q->orderBy('sort_order'),
-                'qrCodes', 'employeeAssignments.employee'
+                'unitType',
+                'unitDepartment',
+                'facilities',
+                'primaryPhoto',
+                'photos' => fn($q) => $q->orderBy('sort_order'),
+                'qrCodes',
+                'employeeAssignments.employee'
             ])->findOrFail($id);
 
             return [

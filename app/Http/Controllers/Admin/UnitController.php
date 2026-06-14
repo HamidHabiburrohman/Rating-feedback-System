@@ -19,19 +19,20 @@ class UnitController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Unit::class);
-        
+
         try {
             $filters = $request->only(['search', 'type', 'department', 'status', 'per_page', 'sort']);
             $units = $this->service->getFilteredUnits($filters);
-            
+            $unitTypes = $this->service->getUnitTypesForFilter();
+
             if ($request->ajax()) {
                 return response()->json([
                     'html' => view('admin.units.partials.rows', compact('units'))->render(),
                     'pagination' => view('admin.units.partials.pagination', ['paginator' => $units])->render()
                 ]);
             }
-            
-            return view('admin.units.index', compact('units'));
+
+            return view('admin.units.index', compact('units', 'unitTypes'));
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
@@ -39,7 +40,7 @@ class UnitController extends Controller
                     'message' => 'Gagal memuat data unit: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('admin.units.index')
                 ->with('error', 'Gagal memuat data unit: ' . $e->getMessage());
         }
@@ -48,18 +49,19 @@ class UnitController extends Controller
     public function create()
     {
         $this->authorize('create', Unit::class);
-        
-        $data = $this->service->getFormData();
-        return view('admin.units.create', $data);
+        $unitTypes = $this->service->getUnitTypesForFilter();
+        $unitDepartments = $this->service->getDepartmentsForFilter();
+
+        return view('admin.units.create', compact('unitTypes', 'unitDepartments'));
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Unit::class);
-        
+
         try {
             $unit = $this->service->create($request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -67,7 +69,7 @@ class UnitController extends Controller
                     'redirect' => route('admin.units.show', $unit->id)
                 ]);
             }
-            
+
             return redirect()->route('admin.units.show', $unit->id)
                 ->with('success', 'Unit berhasil ditambahkan');
         } catch (\Exception $e) {
@@ -77,7 +79,7 @@ class UnitController extends Controller
                     'message' => 'Gagal menambahkan unit: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return back()->withInput()
                 ->with('error', 'Gagal menambahkan unit: ' . $e->getMessage());
         }
@@ -112,16 +114,16 @@ class UnitController extends Controller
         try {
             $unit = Unit::findOrFail($id);
             $this->authorize('update', $unit);
-            
+
             $updated = $this->service->update($id, $request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Unit berhasil diperbarui'
                 ]);
             }
-            
+
             return redirect()->route('admin.units.show', $id)
                 ->with('success', 'Unit berhasil diperbarui');
         } catch (\Exception $e) {
@@ -131,7 +133,7 @@ class UnitController extends Controller
                     'message' => 'Gagal memperbarui unit: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return back()->withInput()
                 ->with('error', 'Gagal memperbarui unit: ' . $e->getMessage());
         }
@@ -142,16 +144,16 @@ class UnitController extends Controller
         try {
             $unit = Unit::findOrFail($id);
             $this->authorize('delete', $unit);
-            
+
             $this->service->delete($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Unit berhasil dihapus'
                 ]);
             }
-            
+
             return redirect()->route('admin.units.index')
                 ->with('success', 'Unit berhasil dihapus');
         } catch (\Exception $e) {
@@ -161,7 +163,7 @@ class UnitController extends Controller
                     'message' => 'Gagal menghapus unit: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Gagal menghapus unit: ' . $e->getMessage());
         }
     }
@@ -169,16 +171,16 @@ class UnitController extends Controller
     public function trashed(Request $request)
     {
         $this->authorize('viewAny', Unit::class);
-        
+
         $units = $this->service->getTrashed($request->all());
-        
+
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('admin.units.partials.trashed-rows', compact('units'))->render(),
                 'pagination' => view('admin.units.partials.pagination', ['paginator' => $units])->render()
             ]);
         }
-        
+
         return view('admin.units.trashed', compact('units'));
     }
 
@@ -186,14 +188,14 @@ class UnitController extends Controller
     {
         try {
             $this->service->restore($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Unit berhasil dipulihkan'
                 ]);
             }
-            
+
             return back()->with('success', 'Unit berhasil dipulihkan');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -202,7 +204,7 @@ class UnitController extends Controller
                     'message' => 'Gagal memulihkan unit: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Gagal memulihkan unit: ' . $e->getMessage());
         }
     }
@@ -211,14 +213,14 @@ class UnitController extends Controller
     {
         try {
             $this->service->forceDelete($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Unit berhasil dihapus permanen'
                 ]);
             }
-            
+
             return back()->with('success', 'Unit berhasil dihapus permanen');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -227,7 +229,7 @@ class UnitController extends Controller
                     'message' => 'Gagal menghapus permanen: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Gagal menghapus permanen: ' . $e->getMessage());
         }
     }
@@ -237,9 +239,9 @@ class UnitController extends Controller
         try {
             $unit = Unit::findOrFail($id);
             $this->authorize('update', $unit);
-            
+
             $this->service->toggleStatus($id);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Status unit berhasil diperbarui'
@@ -257,14 +259,14 @@ class UnitController extends Controller
         try {
             $unit = Unit::findOrFail($id);
             $this->authorize('update', $unit);
-            
+
             $request->validate([
                 'facilities' => 'nullable|array',
                 'facilities.*' => 'exists:facilities,id'
             ]);
-            
+
             $this->service->syncFacilities($id, $request->facilities ?? []);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Fasilitas berhasil disinkronkan'
@@ -282,9 +284,9 @@ class UnitController extends Controller
         try {
             $request->validate(['ids' => 'required|array', 'ids.*' => 'exists:units,id']);
             $this->authorize('delete', Unit::class);
-            
+
             $count = $this->service->bulkDelete($request->ids);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "{$count} unit berhasil dihapus"
@@ -302,7 +304,7 @@ class UnitController extends Controller
         try {
             $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
             $count = $this->service->bulkRestore($request->ids);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "{$count} unit berhasil dipulihkan"
@@ -320,7 +322,7 @@ class UnitController extends Controller
         try {
             $request->validate(['ids' => 'required|array', 'ids.*' => 'integer']);
             $count = $this->service->bulkForceDelete($request->ids);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "{$count} unit berhasil dihapus permanen"
@@ -338,7 +340,7 @@ class UnitController extends Controller
         try {
             $request->validate(['ids' => 'required|array', 'ids.*' => 'exists:units,id']);
             $count = $this->service->bulkActivate($request->ids);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "{$count} unit berhasil diaktifkan"

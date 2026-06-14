@@ -14,8 +14,7 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
-        
-        $this->registerCustomMigrations();
+
         $this->registerBladeDirectives();
         $this->registerViewComposers();
         $this->registerPolicies();
@@ -26,25 +25,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->bindExportServices();
         $this->loadSettingsHelpers();
-    }
-
-    protected function registerCustomMigrations(): void
-    {
-        $migrationFolders = [
-            database_path('migrations/authentication'),
-            database_path('migrations/units'),
-            database_path('migrations/employees'),
-            database_path('migrations/feedback'),
-            database_path('migrations/reports'),
-            database_path('migrations/system'),
-            database_path('migrations/infrastructure'),
-        ];
-
-        foreach ($migrationFolders as $path) {
-            if (is_dir($path)) {
-                $this->loadMigrationsFrom($path);
-            }
-        }
     }
 
     protected function registerBladeDirectives(): void
@@ -61,11 +41,11 @@ class AppServiceProvider extends ServiceProvider
     protected function registerViewComposers(): void
     {
         view()->composer('*', fn($view) => $view->with('appName', config('app.name')));
-        
+
         view()->composer('layouts.admin', function ($view) {
             $view->with('currentAdmin', auth('admin')->user());
         });
-        
+
         view()->composer('layouts.employee', function ($view) {
             $employee = auth('employee')->user();
             $unreadCount = 0;
@@ -74,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('currentEmployee', $employee)->with('unreadNotifications', $unreadCount);
         });
-        
+
         view()->composer('layouts.student', function ($view) {
             $student = auth('student')->user();
             $unreadCount = 0;

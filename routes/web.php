@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingPageController;
 
-Route::get('/', [LandingPageController::class, 'index'])->name('landing');
+Route::get('/', [LandingPageController::class, 'index'])->name('landing.index');
 
 Route::get('/home', function () {
     if (auth('admin')->check()) {
@@ -18,9 +18,5 @@ Route::get('/home', function () {
         return redirect()->route('student.dashboard');
     }
     
-    return redirect()->route('landing');
+    return redirect()->route('landing.index');
 })->name('home');
-
-Route::get('/login', function () {
-    return redirect()->route('admin.login');
-})->name('login');

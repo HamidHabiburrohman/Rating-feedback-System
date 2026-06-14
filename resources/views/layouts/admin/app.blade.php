@@ -21,7 +21,6 @@
 
             <main id="main-content">
                 @include('components.shared.alert')
-                @include('components.admin.alert')
 
                 @yield('admin-content')
             </main>
@@ -32,7 +31,7 @@
         </div>
     </div>
 
-    @include('components.admin.delete-modal')
+    @include('components.shared.delete-modal')
 
     <script defer src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
     <script defer src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>

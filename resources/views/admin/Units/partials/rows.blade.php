@@ -1,13 +1,5 @@
 @if(is_object($units) && method_exists($units, 'count') && $units->count())
     @foreach($units as $unit)
-        @php
-            $activeStatus = \App\Services\Admin\UnitService::getActiveStatusBadge($unit->is_active);
-            $statusClass = \App\Services\Admin\UnitService::getStatusBadgeClass($unit->operational_status);
-            $statusLabel = \App\Services\Admin\UnitService::getStatusLabel($unit->operational_status);
-
-            $iconKey = $unit->type->icon_key ?? 'building';
-        @endphp
-
         <tr>
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3">
@@ -16,11 +8,11 @@
             </td>
 
             <td>
-                {{ $unit->type->name ?? '-' }}
+                {{ $unit->unitType->name ?? '-' }}
             </td>
 
             <td>
-                <x-admin.status-badge status="{{ $unit->operational_status }}" />
+                <x-shared.status-badge :status="$unit->operational_status ?? 'open'" />
             </td>
 
             <td class="text-center pe-4">
@@ -30,14 +22,20 @@
                     <x-admin.button type="delete" onclick="openModal('deleteModal{{ $unit->id }}')" tooltip="Delete Unit" />
                 </div>
 
-                <x-admin.delete-modal-component :id="'deleteModal' . $unit->id" title="Delete Unit" :item-name="$unit->name"
-                    itemType="unit" :delete-route="route('admin.units.destroy', $unit->id)" deleteMethod="DELETE" />
+                <x-shared.delete-modal 
+                    :id="'deleteModal' . $unit->id" 
+                    title="Delete Unit" 
+                    :item-name="$unit->name"
+                    itemType="unit" 
+                    :delete-route="route('admin.units.destroy', $unit->id)" 
+                    deleteMethod="DELETE" 
+                />
             </td>
         </tr>
     @endforeach
 @elseif(is_string($units) || $units === null)
     <tr>
-        <td colspan="6" class="text-center py-5 text-muted">
+        <td colspan="4" class="text-center py-5 text-muted">
             <div style="padding: 40px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
@@ -56,7 +54,7 @@
     </tr>
 @else
     <tr>
-        <td colspan="6" class="text-center py-5 text-muted">
+        <td colspan="4" class="text-center py-5 text-muted">
             <div style="padding: 40px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
@@ -67,7 +65,8 @@
                     <line x1="2" y1="16" x2="22" y2="16"></line>
                 </svg>
                 <p>No units found</p>
-                <a href="{{ route('admin.units.create') }}" class="btn btn-primary rounded-pill mt-3 px-4">
+                <a href="{{ route('admin.units.create') }}" class="btn btn-primary rounded-pill mt-3 px-4"
+                    style="background: #f8773c; border: none;">
                     Add New Unit
                 </a>
             </div>

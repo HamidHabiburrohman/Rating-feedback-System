@@ -49,7 +49,7 @@ class Employee extends Authenticatable
 
     public function reportReplies()
     {
-        return $this->hasMany(\App\Models\Reports\ReportReply::class);
+        return $this->hasMany(\App\Models\Report\ReportReply::class);
     }
 
     public function notifications()

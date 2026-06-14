@@ -345,7 +345,7 @@
                     </div>
                 </div>
 
-                <div class="form-group full-width" style="margin-top: 0.5rem;">
+                {{-- <div class="form-group full-width" style="margin-top: 0.5rem;">
                     <label for="facilities" class="form-label">Fasilitas</label>
                     <select id="facilities" name="facilities[]" multiple
                         class="form-select no-icon @error('facilities') is-invalid @enderror"
@@ -357,7 +357,7 @@
                     </select>
                     <span class="help-text">Ketik untuk mencari, klik untuk memilih. Bisa pilih lebih dari satu.</span>
                     @error('facilities')<span class="error-message">{{ $message }}</span>@enderror
-                </div>
+                </div> --}}
 
                 <div class="form-group full-width" style="margin-top: 0.5rem;">
                     <label for="description" class="form-label">Deskripsi</label>

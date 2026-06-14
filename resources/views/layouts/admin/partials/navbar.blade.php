@@ -1,9 +1,14 @@
 @php
-    $admin = Auth::guard('admin')->user();
-    $adminName = $admin?->nama ?? ($admin?->name ?? 'Admin');
-    $adminPhotoUrl = $admin?->photo_url ?? null;
-    $adminRole = $admin?->role ?? 'admin';
-    $adminInitials = strtoupper(substr($adminName, 0, 2));
+$admin = Auth::guard('admin')->user();
+$adminName = $admin?->nama ?? ($admin?->name ?? 'Admin');
+$adminPhotoUrl = $admin?->photo_url ?? null;
+$adminRole = $admin?->role ?? 'admin';
+$adminInitials = strtoupper(substr($adminName, 0, 2));
+$unreadNotifications = 0;
+
+if ($admin && method_exists($admin, 'notifications')) {
+    $unreadNotifications = $admin->notifications()->whereNull('read_at')->count();
+}
 @endphp
 
 <nav class="navbar-wrapper">
@@ -19,12 +24,9 @@
         <div class="navbar-right">
             <button class="navbar-icon-btn notification-btn" id="notificationsBtn" aria-label="Notifications">
                 <i class="ti ti-bell"></i>
-                <span class="navbar-badge" id="notificationBadge">3</span>
-            </button>
-
-            <button class="navbar-icon-btn message-btn" id="messagesBtn" aria-label="Messages">
-                <i class="ti ti-message-circle"></i>
-                <span class="navbar-badge" id="messageBadge">2</span>
+                @if($unreadNotifications > 0)
+                    <span class="navbar-badge" id="notificationBadge">{{ $unreadNotifications > 99 ? '99+' : $unreadNotifications }}</span>
+                @endif
             </button>
 
             <div class="navbar-divider"></div>
@@ -45,8 +47,6 @@
                                 Super Admin
                             @elseif($adminRole === 'admin')
                                 Administrator
-                            @elseif($adminRole === 'unit')
-                                Unit Manager
                             @else
                                 {{ ucfirst($adminRole) }}
                             @endif
@@ -74,16 +74,11 @@
                     <div class="dropdown-items">
                         <a href="{{ route('admin.profile.show') }}" class="dropdown-item">
                             <i class="ti ti-user"></i>
-                            <span>My Profile</span>
+                            <span>View Profile</span>
                         </a>
                         <a href="{{ route('admin.profile.edit') }}" class="dropdown-item">
                             <i class="ti ti-settings"></i>
                             <span>Account Settings</span>
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item">
-                            <i class="ti ti-help"></i>
-                            <span>Help & Support</span>
                         </a>
                         <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ route('admin.logout') }}" class="logout-form">
@@ -103,103 +98,18 @@
         <div class="panel-header">
             <div class="panel-title">
                 <h3>Notifications</h3>
-                <button class="panel-mark-read" id="markNotificationsRead">Mark all as read</button>
+                @if($unreadNotifications > 0)
+                    <button class="panel-mark-read" id="markNotificationsRead">Mark all as read</button>
+                @endif
             </div>
         </div>
-        <div class="panel-items notifications-list">
-            <div class="panel-item notification-item unread">
-                <div class="item-icon warning">
-                    <i class="ti ti-alert-triangle"></i>
-                </div>
-                <div class="item-content">
-                    <p class="item-text">New report submitted for <strong>Laboratorium Kimia</strong></p>
-                    <span class="item-time">5 minutes ago</span>
-                </div>
-            </div>
-            <div class="panel-divider"></div>
-
-            <div class="panel-item notification-item unread">
-                <div class="item-icon success">
-                    <i class="ti ti-star"></i>
-                </div>
-                <div class="item-content">
-                    <p class="item-text">New rating received for <strong>Perpustakaan</strong> (4.8 ★)</p>
-                    <span class="item-time">1 hour ago</span>
-                </div>
-            </div>
-            <div class="panel-divider"></div>
-
-            <div class="panel-item notification-item">
-                <div class="item-icon info">
-                    <i class="ti ti-user-plus"></i>
-                </div>
-                <div class="item-content">
-                    <p class="item-text">3 new students registered today</p>
-                    <span class="item-time">3 hours ago</span>
-                </div>
-            </div>
-            <div class="panel-divider"></div>
-
-            <div class="panel-item notification-item">
-                <div class="item-icon primary">
-                    <i class="ti ti-building"></i>
-                </div>
-                <div class="item-content">
-                    <p class="item-text">Unit <strong>Ruang Serbaguna</strong> has been updated</p>
-                    <span class="item-time">Yesterday</span>
-                </div>
+        <div class="panel-items notifications-list" id="notificationsList">
+            <div class="panel-empty">
+                <p>No notifications yet</p>
             </div>
         </div>
         <div class="panel-footer">
-            <a href="#">View all notifications</a>
-        </div>
-    </div>
-
-    <div class="dropdown-panel messages-panel" id="messagesPanel">
-        <div class="panel-header">
-            <div class="panel-title">
-                <h3>Messages</h3>
-                <span class="panel-count">2 new</span>
-            </div>
-        </div>
-        <div class="panel-items messages-list">
-            <div class="panel-item message-item unread">
-                <div class="message-avatar">
-                    <span class="avatar-text">AR</span>
-                </div>
-                <div class="item-content">
-                    <div class="message-sender">Ahmad Rizki</div>
-                    <p class="item-text">Kapan bisa follow up untuk unit kantor pusat?</p>
-                    <span class="item-time">2 minutes ago</span>
-                </div>
-            </div>
-            <div class="panel-divider"></div>
-
-            <div class="panel-item message-item unread">
-                <div class="message-avatar">
-                    <span class="avatar-text">SN</span>
-                </div>
-                <div class="item-content">
-                    <div class="message-sender">Siti Nurhaliza</div>
-                    <p class="item-text">Data fasilitas sudah diupdate, silakan check</p>
-                    <span class="item-time">15 minutes ago</span>
-                </div>
-            </div>
-            <div class="panel-divider"></div>
-
-            <div class="panel-item message-item">
-                <div class="message-avatar">
-                    <span class="avatar-text">RB</span>
-                </div>
-                <div class="item-content">
-                    <div class="message-sender">Rifki Bagus</div>
-                    <p class="item-text">Laporan rating sudah siap untuk presentasi</p>
-                    <span class="item-time">1 hour ago</span>
-                </div>
-            </div>
-        </div>
-        <div class="panel-footer">
-            <a href="#">View all messages</a>
+            <a href="{{ route('admin.notifications.index') }}">View all notifications</a>
         </div>
     </div>
 </nav>
@@ -774,79 +684,96 @@
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const userTrigger = document.getElementById('userTrigger');
-        const userDropdown = document.getElementById('userDropdownMenu');
-        const notificationsBtn = document.getElementById('notificationsBtn');
-        const notificationsPanel = document.getElementById('notificationsPanel');
-        const messagesBtn = document.getElementById('messagesBtn');
-        const messagesPanel = document.getElementById('messagesPanel');
-        const markReadBtn = document.getElementById('markNotificationsRead');
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const userTrigger = document.getElementById('userTrigger');
+    const userDropdown = document.getElementById('userDropdownMenu');
+    const notificationsBtn = document.getElementById('notificationsBtn');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    const markReadBtn = document.getElementById('markNotificationsRead');
 
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                const currentType = document.body.getAttribute('data-sidebartype');
-                const newType = currentType === 'mini' ? 'full' : 'mini';
-                document.body.setAttribute('data-sidebartype', newType);
-                localStorage.setItem('sidebarType', newType);
-            });
-        }
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            const currentType = document.body.getAttribute('data-sidebartype');
+            const newType = currentType === 'mini' ? 'full' : 'mini';
+            document.body.setAttribute('data-sidebartype', newType);
+            localStorage.setItem('sidebarType', newType);
+        });
+    }
 
-        if (userTrigger && userDropdown) {
-            userTrigger.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const isExpanded = userTrigger.getAttribute('aria-expanded') === 'true';
-                userTrigger.setAttribute('aria-expanded', !isExpanded);
-                userDropdown.classList.toggle('show');
-                notificationsPanel.classList.remove('show');
-                messagesPanel.classList.remove('show');
-            });
-        }
+    if (userTrigger && userDropdown) {
+        userTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isExpanded = userTrigger.getAttribute('aria-expanded') === 'true';
+            userTrigger.setAttribute('aria-expanded', !isExpanded);
+            userDropdown.classList.toggle('show');
+            notificationsPanel.classList.remove('show');
+        });
+    }
 
-        if (notificationsBtn && notificationsPanel) {
-            notificationsBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                notificationsPanel.classList.toggle('show');
-                messagesPanel.classList.remove('show');
-                userDropdown.classList.remove('show');
-                userTrigger.setAttribute('aria-expanded', 'false');
-            });
-        }
+    if (notificationsBtn && notificationsPanel) {
+        notificationsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationsPanel.classList.toggle('show');
+            userDropdown.classList.remove('show');
+            userTrigger.setAttribute('aria-expanded', 'false');
+            loadNotifications();
+        });
+    }
 
-        if (messagesBtn && messagesPanel) {
-            messagesBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                messagesPanel.classList.toggle('show');
-                notificationsPanel.classList.remove('show');
-                userDropdown.classList.remove('show');
-                userTrigger.setAttribute('aria-expanded', 'false');
-            });
-        }
-
-        if (markReadBtn) {
-            markReadBtn.addEventListener('click', function() {
-                document.querySelectorAll('.notification-item.unread').forEach(item => {
-                    item.classList.remove('unread');
-                });
-                const badge = document.getElementById('notificationBadge');
-                if (badge) {
-                    badge.style.display = 'none';
+    if (markReadBtn) {
+        markReadBtn.addEventListener('click', function() {
+            fetch('{{ route("admin.notifications.mark-all-read") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('notificationBadge');
+                    if (badge) badge.style.display = 'none';
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+                    markReadBtn.style.display = 'none';
                 }
             });
-        }
-
-        document.addEventListener('click', function(e) {
-            if (userDropdown && !userDropdown.contains(e.target) && !userTrigger.contains(e.target)) {
-                userDropdown.classList.remove('show');
-                userTrigger.setAttribute('aria-expanded', 'false');
-            }
-            if (notificationsPanel && !notificationsPanel.contains(e.target) && !notificationsBtn.contains(e.target)) {
-                notificationsPanel.classList.remove('show');
-            }
-            if (messagesPanel && !messagesPanel.contains(e.target) && !messagesBtn.contains(e.target)) {
-                messagesPanel.classList.remove('show');
-            }
         });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (userDropdown && !userDropdown.contains(e.target) && !userTrigger.contains(e.target)) {
+            userDropdown.classList.remove('show');
+            userTrigger.setAttribute('aria-expanded', 'false');
+        }
+        if (notificationsPanel && !notificationsPanel.contains(e.target) && !notificationsBtn.contains(e.target)) {
+            notificationsPanel.classList.remove('show');
+        }
     });
+
+    function loadNotifications() {
+        fetch('{{ route("admin.notifications.latest") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.notifications.length > 0) {
+                    const list = document.getElementById('notificationsList');
+                    list.innerHTML = data.notifications.map((notif, index) => `
+                        <div class="panel-item notification-item ${notif.read_at ? '' : 'unread'}">
+                            <div class="item-icon ${notif.type}">
+                                <i class="ti ti-${notif.icon}"></i>
+                            </div>
+                            <div class="item-content">
+                                <p class="item-text">${notif.message}</p>
+                                <span class="item-time">${notif.time}</span>
+                            </div>
+                        </div>
+                        ${index < data.notifications.length - 1 ? '<div class="panel-divider"></div>' : ''}
+                    `).join('');
+                }
+            });
+    }
+});
 </script>

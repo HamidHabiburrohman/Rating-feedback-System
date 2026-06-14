@@ -29,7 +29,7 @@ class Rating extends Model
 
     public function unit()
     {
-        return $this->belongsTo(\App\Models\Units\Unit::class);
+        return $this->belongsTo(\App\Models\Unit\Unit::class);
     }
 
     public function student()
@@ -44,7 +44,7 @@ class Rating extends Model
 
     public function qrCode()
     {
-        return $this->belongsTo(\App\Models\Units\QrCode::class);
+        return $this->belongsTo(\App\Models\Unit\QrCode::class);
     }
 
     public function scores()
@@ -64,7 +64,7 @@ class Rating extends Model
 
     public function report()
     {
-        return $this->hasOne(\App\Models\Reports\Report::class);
+        return $this->hasOne(\App\Models\Report\Report::class);
     }
 
     protected static function newFactory()
