@@ -19,40 +19,47 @@ class ReportCategoryController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', ReportCategory::class);
-        
+
         try {
-            $categories = $this->service->getAll($request->all());
-            
+            // Ambil hanya parameter filter yang valid untuk dikirim ke Service
+            $filters = $request->only(['search', 'status', 'page']);
+
+            $categories = $this->service->getAll($filters);
+
             if ($request->ajax()) {
                 return response()->json([
-                    'html' => view('admin.report-categories.partials.rows', ['categories' => $categories])->render()
+                    'html' => view('admin.report-categories.partials.rows', compact('categories'))->render()
                 ]);
             }
-            
+
             return view('admin.report-categories.index', compact('categories'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.report-categories.index')->with('error', 'Gagal memuat data');
+            // Disarankan log error untuk mempermudah debugging internal
+            logger()->error('Error fetching report categories: ' . $e->getMessage());
+
+            return redirect()->route('admin.report-categories.index')
+                ->with('error', 'Gagal memuat data: ' . $e->getMessage());
         }
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', ReportCategory::class);
-        
+
         $request->validate([
             'name' => 'required|string|max:255|unique:report_categories,name',
             'slug' => 'nullable|string|max:255|unique:report_categories,slug',
             'description' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
         ]);
-        
+
         try {
             $category = $this->service->create($request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Kategori berhasil ditambahkan', 'data' => $category]);
             }
-            
+
             return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil ditambahkan');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -66,21 +73,21 @@ class ReportCategoryController extends Controller
     {
         $category = ReportCategory::findOrFail($id);
         $this->authorize('update', $category);
-        
+
         $request->validate([
             'name' => 'required|string|max:255|unique:report_categories,name,' . $id,
             'slug' => 'nullable|string|max:255|unique:report_categories,slug,' . $id,
             'description' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
         ]);
-        
+
         try {
             $this->service->update($id, $request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Kategori berhasil diperbarui']);
             }
-            
+
             return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil diperbarui');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -94,14 +101,14 @@ class ReportCategoryController extends Controller
     {
         $category = ReportCategory::findOrFail($id);
         $this->authorize('delete', $category);
-        
+
         try {
             $this->service->delete($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus']);
             }
-            
+
             return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil dihapus');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -115,7 +122,7 @@ class ReportCategoryController extends Controller
     {
         $category = ReportCategory::findOrFail($id);
         $this->authorize('update', $category);
-        
+
         try {
             $this->service->toggleActive($id);
             return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);

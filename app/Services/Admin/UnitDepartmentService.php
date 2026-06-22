@@ -17,11 +17,23 @@ class UnitDepartmentService extends BaseAdminService
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        if (isset($filters['status'])) {
+        if (isset($filters['status']) && $filters['status'] !== '') {
             $query->where('is_active', $filters['status'] === 'active');
         }
 
-        return $query->orderBy('name')->get();
+        $sortField = $filters['sort'] ?? 'name';
+        $sortOrder = $filters['order'] ?? 'asc';
+
+        $allowedSorts = ['name', 'created_at', 'units_count'];
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'name';
+        }
+
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        $query->orderBy($sortField, $sortOrder);
+
+        return $query->paginate(10);
     }
 
     public function findById(int $id): UnitDepartment
@@ -34,11 +46,8 @@ class UnitDepartmentService extends BaseAdminService
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
             $data['is_active'] = $data['is_active'] ?? true;
-
             $department = UnitDepartment::create($data);
-
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
-
             return $department;
         });
     }
@@ -47,15 +56,11 @@ class UnitDepartmentService extends BaseAdminService
     {
         return DB::transaction(function () use ($id, $data) {
             $department = UnitDepartment::findOrFail($id);
-
             if (isset($data['name']) && !isset($data['slug'])) {
                 $data['slug'] = Str::slug($data['name']);
             }
-
             $department->update($data);
-
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
-
             return $department->fresh();
         });
     }
@@ -64,11 +69,9 @@ class UnitDepartmentService extends BaseAdminService
     {
         return DB::transaction(function () use ($id) {
             $department = UnitDepartment::findOrFail($id);
-
             if ($department->units()->count() > 0) {
                 throw new \Exception('Departemen tidak dapat dihapus karena masih digunakan oleh unit lain');
             }
-
             $department->delete();
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
             return true;
@@ -80,7 +83,6 @@ class UnitDepartmentService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $department = UnitDepartment::findOrFail($id);
             $department->update(['is_active' => !$department->is_active]);
-
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
             return $department->fresh();
         });

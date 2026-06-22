@@ -1,79 +1,74 @@
-@if(is_object($categories) && method_exists($categories, 'count') && $categories->count())
-    @foreach($categories as $category)
+@if ($isLoading ?? false)
+    @for ($i = 0; $i < ($skeletonCount ?? 10); $i++)
+        <tr>
+            <td class="ps-4">
+                <div class="skeleton" style="width: 160px; height: 16px;"></div>
+            </td>
+            <td>
+                <div class="skeleton" style="width: 60px; height: 24px; border-radius: 12px;"></div>
+            </td>
+            <td>
+                <div class="skeleton" style="width: 70px; height: 24px; border-radius: 12px;"></div>
+            </td>
+            <td class="text-center pe-4">
+                <div class="d-flex justify-content-center gap-2">
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                </div>
+            </td>
+        </tr>
+    @endfor
+@elseif(is_object($categories) && method_exists($categories, 'count') && $categories->count())
+    @foreach ($categories as $category)
         @php
-            $statusMap = [
-                true => ['label' => 'Active', 'class' => 'bg-success-subtle text-success'],
-                false => ['label' => 'Inactive', 'class' => 'bg-danger-subtle text-danger']
-            ];
-            $status = $statusMap[$category->is_active] ?? $statusMap[true];
+            $hasScores = ($category->rating_scores_count ?? 0) > 0;
         @endphp
-
         <tr>
             <td class="ps-4">
                 <div class="fw-semibold">{{ $category->name }}</div>
             </td>
-
             <td>
                 <span class="badge rounded-pill bg-light text-dark border px-3">
-                    {{ $category->sort_order }}
+                    {{ $category->rating_scores_count ?? 0 }} usages
                 </span>
             </td>
-
             <td>
-                <span class="badge rounded-pill bg-light text-dark border px-3">
-                    {{ $category->rating_scores_count ?? 0 }} uses
-                </span>
+                <x-shared.status-badge status="{{ $category->is_active ? 'active' : 'inactive' }}" />
             </td>
-
-            <td>
-                <x-admin.status-badge :status="$status['label']" :class="$status['class']" />
-            </td>
-
             <td class="text-center pe-4">
                 <div class="d-flex justify-content-center gap-1">
-                    <x-admin.button type="edit" url="{{ route('admin.rating-categories.edit', $category->id) }}" tooltip="Edit Category" />
-
-                    <x-admin.button type="delete" onclick="openModal('deleteModal{{ $category->id }}')" tooltip="Delete Category" />
+                    <x-admin.button type="edit" url="{{ route('admin.rating-categories.edit', $category->id) }}"
+                        tooltip="Edit Category" />
+                    @if ($hasScores)
+                        <x-admin.button type="delete" disabled="true"
+                            disabledTooltip="Cannot delete - still used in {{ $category->rating_scores_count }} rating(s)"
+                            tooltip="Delete Category" />
+                    @else
+                        <x-admin.button type="delete" onclick="openModal('deleteModal{{ $category->id }}')"
+                            tooltip="Delete Category" />
+                    @endif
                 </div>
-
-                <x-admin.delete-modal-component id="deleteModal{{ $category->id }}" title="Delete Rating Category"
-                    itemName="{{ $category->name }}" itemType="rating category"
-                    deleteRoute="{{ route('admin.rating-categories.destroy', $category->id) }}" deleteMethod="DELETE" />
+                @if (!$hasScores)
+                    <x-shared.delete-modal id="deleteModal{{ $category->id }}" title="Delete Rating Category"
+                        itemName="{{ $category->name }}" itemType="rating category"
+                        deleteRoute="{{ route('admin.rating-categories.destroy', $category->id) }}"
+                        deleteMethod="DELETE" />
+                @endif
             </td>
         </tr>
     @endforeach
-@elseif(is_string($categories) || $categories === null)
-    <tr>
-        <td colspan="6" class="text-center py-5 text-muted">
-            <div style="padding: 40px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 16v-4" />
-                    <circle cx="12" cy="8" r="1" fill="currentColor" />
-                </svg>
-                <p>Error loading rating categories</p>
-                @if(config('app.debug'))
-                    <small class="text-danger">Debug: categories is {{ gettype($categories) }}</small>
-                @endif
-            </div>
-        </td>
-    </tr>
 @else
     <tr>
-        <td colspan="6" class="text-center py-5 text-muted">
-            <div style="padding: 40px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 16v-4" />
-                    <circle cx="12" cy="8" r="1" fill="currentColor" />
-                </svg>
-                <p>No rating categories found</p>
-                <a href="{{ route('admin.rating-categories.seed-defaults') }}"
-                    class="btn btn-outline-primary rounded-pill mt-3 px-4"
-                    onclick="return confirm('Tambahkan kategori default?')">
-                    Add Default Categories
+        <td colspan="4" class="text-center py-5 text-muted">
+            <div class="d-flex flex-column align-items-center justify-content-center" style="padding: 40px;">
+                <div class="bg-muted p-3 rounded-circle border"
+                    style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;">
+                    <i class="ti ti-stars" style="font-size: 30px;"></i>
+                </div>
+                <p class="text-muted mt-3 fw-medium">No rating categories found</p>
+                <a href="{{ route('admin.rating-categories.create') }}" class="btn btn-primary rounded-pill px-4 mt-2"
+                    style="background: #f8773c; border: none;">
+                    Add New Rating Category
                 </a>
             </div>
         </td>

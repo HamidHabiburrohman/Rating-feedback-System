@@ -1,7 +1,5 @@
 @extends('layouts.admin.app')
-
 @section('title', 'Edit Facility')
-
 @section('admin-content')
     <div class="page-container">
         <header class="page-header">
@@ -17,10 +15,10 @@
             </a>
         </header>
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-error" role="alert">
-                <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
+                <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -28,13 +26,14 @@
                 <div>
                     <strong>Terjadi kesalahan:</strong>
                     <ul>
-                        @foreach($errors->all() as $error)
+                        @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
                 </div>
                 <button class="alert-close" onclick="this.parentElement.remove()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
@@ -74,17 +73,47 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="icon_key" class="form-label">Ikon</label>
-                        <div class="input-wrapper">
-                            <select id="icon_key" name="icon_key"
-                                class="form-select @error('icon_key') is-invalid @enderror">
-                                <option value="">Pilih Ikon (Opsional)</option>
-                                @foreach($icons as $key => $label)
-                                    <option value="{{ $key }}" {{ old('icon_key', $facility->icon_key) == $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <label class="form-label">Pilih Ikon</label>
+                        @php
+                            $currentIconKey = old('icon_key', $facility->icon_key);
+                            $currentIconData = $icons[$currentIconKey] ?? null;
+                            $currentIconName = $currentIconData
+                                ? (is_array($currentIconData)
+                                    ? $currentIconData['name']
+                                    : $currentIconData)
+                                : 'Pilih Ikon';
+                            $currentIconSvg = $currentIconData
+                                ? (is_array($currentIconData)
+                                    ? $currentIconData['svg']
+                                    : '')
+                                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4" /><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" /></svg>';
+                        @endphp
+                        <input type="hidden" id="selected_icon_key" name="icon_key" value="{{ $currentIconKey }}">
+                        <div class="icon-picker-wrapper @error('icon_key') is-invalid @enderror" id="iconPickerWrapper">
+                            <button type="button" class="icon-picker-trigger" id="iconPickerTrigger">
+                                <span class="icon-preview" id="iconPreview">{!! $currentIconSvg !!}</span>
+                                <span class="icon-label" id="iconLabel">{{ $currentIconName }}</span>
+                                <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6" />
+                                </svg>
+                            </button>
+                            <div class="icon-picker-dropdown" id="iconPickerDropdown">
+                                <div class="icon-picker-grid">
+                                    @foreach ($icons ?? [] as $key => $iconData)
+                                        @php
+                                            $name = is_array($iconData) ? $iconData['name'] : $iconData;
+                                            $svg = is_array($iconData) ? $iconData['svg'] : '';
+                                            $isSelected = $currentIconKey === $key;
+                                        @endphp
+                                        <div class="icon-option {{ $isSelected ? 'selected' : '' }}"
+                                            data-value="{{ $key }}" data-name="{{ $name }}"
+                                            data-svg="{!! htmlspecialchars($svg) !!}">
+                                            {!! $svg !!}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                         <span class="help-text">Ikon untuk memudahkan identifikasi</span>
                         @error('icon_key')
@@ -101,7 +130,9 @@
                         <p>Fasilitas yang tidak aktif tidak akan muncul di pilihan</p>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', $facility->is_active) ? 'checked' : '' }}>
+                        <input type="hidden" name="is_active" value="0">
+                        <input type="checkbox" name="is_active" value="1"
+                            {{ old('is_active', $facility->is_active) ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -109,12 +140,12 @@
 
             <div class="form-actions">
                 <a href="{{ route('admin.facilities.index') }}" class="btn btn-secondary">Batal</a>
-                <button type="submit" class="btn btn-light" style="color:#ffff; background-color: #FF5625;" id="submitBtn">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <span class="btn-text">Update Fasilitas</span>
                     <span class="btn-loader" style="display: none;">
                         <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none"
-                                stroke-dasharray="60" stroke-dashoffset="20" />
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                fill="none" stroke-dasharray="60" stroke-dashoffset="20" />
                         </svg>
                         Menyimpan...
                     </span>
@@ -231,14 +262,8 @@
             grid-template-columns: repeat(2, 1fr);
         }
 
-        .grid-cols-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
         @media (max-width: 768px) {
-
-            .grid-cols-2,
-            .grid-cols-3 {
+            .grid-cols-2 {
                 grid-template-columns: 1fr;
             }
         }
@@ -325,281 +350,164 @@
             background-color: var(--color-error-50);
         }
 
-        .form-input.is-invalid:focus {
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-        }
-
         .form-textarea {
             padding-left: 0.875rem;
             resize: vertical;
             min-height: 100px;
         }
 
-        .code-wrapper {
+        .icon-picker-wrapper {
+            position: relative;
+        }
+
+        .icon-picker-trigger {
+            width: 100%;
             display: flex;
-            gap: 0.5rem;
-        }
-
-        .code-input {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.875rem;
-            letter-spacing: 0.05em;
-            background: var(--color-gray-50);
-            color: var(--color-gray-600);
-        }
-
-        .btn-icon {
-            padding: 0.5rem;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: white;
             border: 1px solid var(--color-gray-200);
             border-radius: var(--radius-md);
-            background: white;
-            color: var(--color-gray-500);
             cursor: pointer;
             transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-icon:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            background: var(--color-primary-50);
-        }
-
-        .badge.auto {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            background: var(--color-primary-50);
-            color: var(--color-primary);
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .time-range-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .time-range {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--color-gray-50);
-            padding: 0.5rem;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--color-gray-200);
-        }
-
-        .time-input {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .time-input input {
-            width: 100%;
-            text-align: center;
-            padding: 0.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
+            text-align: left;
+            font-family: inherit;
             font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--color-gray-700);
-            background: white;
-            transition: var(--transition);
+            color: var(--color-gray-900);
         }
 
-        .time-input input:focus {
+        .icon-picker-trigger:hover {
+            border-color: #cbd5e1;
+        }
+
+        .icon-picker-wrapper.open .icon-picker-trigger,
+        .icon-picker-trigger:focus {
             outline: none;
             border-color: var(--color-primary);
             box-shadow: 0 0 0 3px var(--color-primary-50);
         }
 
-        .time-label {
-            font-size: 0.625rem;
-            color: var(--color-gray-400);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 500;
+        .icon-picker-wrapper.is-invalid .icon-picker-trigger {
+            border-color: var(--color-error);
+            background: var(--color-error-50);
         }
 
-        .time-separator {
-            color: var(--color-gray-400);
-            font-size: 1.25rem;
-            font-weight: 300;
-        }
-
-        .time-validation {
-            font-size: 0.75rem;
-            text-align: center;
-        }
-
-        .status-options {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .status-option {
-            cursor: pointer;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .status-option input {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .status-badge {
+        .icon-preview {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.375rem;
-            padding: 0.625rem 1.25rem;
-            border-radius: var(--radius-full);
-            font-size: 0.8125rem;
+            width: 24px;
+            height: 24px;
+            color: var(--color-gray-500);
+            flex-shrink: 0;
+        }
+
+        .icon-preview svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .icon-picker-wrapper.open .icon-preview,
+        .icon-picker-wrapper.open .icon-label {
+            color: var(--color-primary);
+        }
+
+        .icon-label {
+            flex: 1;
             font-weight: 500;
-            border: 1px solid transparent;
-            transition: var(--transition);
-            text-align: center;
+            color: var(--color-gray-500);
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .status-badge.open {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
+        .chevron {
+            color: var(--color-gray-400);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-shrink: 0;
         }
 
-        .status-badge.maintenance {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
+        .icon-picker-wrapper.open .chevron {
+            transform: rotate(180deg);
+            color: var(--color-primary);
         }
 
-        .status-badge.closed {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
+        .icon-picker-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--color-gray-200);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 16px;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 320px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .status-badge.low {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
+        .icon-picker-wrapper.open .icon-picker-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
         }
 
-        .status-badge.medium {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
-        .status-badge.high {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
+        .icon-picker-grid::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .status-badge.critical {
-            background: rgba(124, 29, 8, 0.1);
-            color: #7c1d08;
-            border-color: rgba(124, 29, 8, 0.2);
+        .icon-picker-grid::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        .status-badge.new {
+        .icon-picker-grid::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .icon-option {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: var(--color-gray-500);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .icon-option svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .icon-option:hover {
+            background: var(--color-gray-50);
+            color: var(--color-gray-900);
+            transform: translateY(-2px);
+        }
+
+        .icon-option.selected {
             background: var(--color-primary-50);
             color: var(--color-primary);
             border-color: rgba(248, 119, 60, 0.2);
-        }
-
-        .status-badge.in_progress {
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
-            border-color: rgba(37, 99, 235, 0.2);
-        }
-
-        .status-badge.replied {
-            background: rgba(147, 51, 234, 0.1);
-            color: #9333ea;
-            border-color: rgba(147, 51, 234, 0.2);
-        }
-
-        .status-badge.resolved {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.rejected {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-option:hover .status-badge {
-            filter: brightness(0.95);
-        }
-
-        .status-option input:checked+.status-badge.open,
-        .status-option input:checked+.status-badge.resolved,
-        .status-option input:checked+.status-badge.low {
-            background: #10b981;
-            color: white;
-            border-color: #10b981;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.maintenance,
-        .status-option input:checked+.status-badge.medium {
-            background: #f59e0b;
-            color: white;
-            border-color: #f59e0b;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.closed,
-        .status-option input:checked+.status-badge.rejected,
-        .status-option input:checked+.status-badge.high {
-            background: #ef4444;
-            color: white;
-            border-color: #ef4444;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.critical {
-            background: #7c1d08;
-            color: white;
-            border-color: #7c1d08;
-            box-shadow: 0 2px 8px rgba(124, 29, 8, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.new {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-            box-shadow: 0 2px 8px rgba(248, 119, 60, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.in_progress {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.replied {
-            background: #9333ea;
-            color: white;
-            border-color: #9333ea;
-            box-shadow: 0 2px 8px rgba(147, 51, 234, 0.25);
+            box-shadow: 0 2px 8px rgba(248, 119, 60, 0.1);
         }
 
         .settings-section {
@@ -712,14 +620,49 @@
             .form-actions .btn {
                 width: 100%;
             }
+        }
 
-            .status-options {
-                flex-direction: column;
-            }
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
 
-            .status-option {
-                width: 100%;
-            }
+        .btn-secondary {
+            background: white;
+            color: var(--color-gray-700);
+            border-color: var(--color-gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-gray-50);
+        }
+
+        .btn-orange {
+            background: var(--color-primary);
+            color: white;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-orange:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .btn-orange:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-loader {
@@ -778,208 +721,75 @@
             padding-left: 1.25rem;
             font-size: 0.875rem;
         }
-
-        .ts-control {
-            border-color: var(--color-gray-200) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.5rem 0.75rem !important;
-            min-height: 46px;
-        }
-
-        .ts-control:focus {
-            border-color: var(--color-primary) !important;
-            box-shadow: 0 0 0 3px var(--color-primary-50) !important;
-        }
-
-        .ts-dropdown {
-            border-radius: var(--radius-md) !important;
-            border-color: var(--color-gray-200) !important;
-            box-shadow: var(--shadow-lg) !important;
-        }
-
-        .ts-dropdown .active {
-            background: var(--color-primary-50) !important;
-            color: var(--color-primary) !important;
-        }
-
-        .no-results {
-            padding: 0.5rem;
-            color: var(--color-gray-500);
-            font-size: 0.875rem;
-        }
-
-        .facilities-wrapper {
-            margin-top: 0.5rem;
-        }
-
-        .select-simple {
-            padding-left: 0.875rem;
-        }
     </style>
 @endpush
 
 @push('admin-scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeTomSelect();
-            initializeCodeGeneration();
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeIconPicker();
             initializeSlugGeneration();
-            initializeTimeValidation();
             initializeFormValidation();
             initializeAlerts();
         });
 
-        function initializeTomSelect() {
-            const facilitiesSelect = document.getElementById('facilities');
-            if (!facilitiesSelect) return;
+        function initializeIconPicker() {
+            const wrapper = document.getElementById('iconPickerWrapper');
+            const trigger = document.getElementById('iconPickerTrigger');
+            const hiddenInput = document.getElementById('selected_icon_key');
+            const preview = document.getElementById('iconPreview');
+            const label = document.getElementById('iconLabel');
+            const options = document.querySelectorAll('.icon-option');
 
-            if (typeof TomSelect !== 'undefined') {
-                new TomSelect(facilitiesSelect, {
-                    plugins: ['remove_button'],
-                    maxItems: null,
-                    hideSelected: true,
-                    create: false,
-                    render: {
-                        no_results: function () {
-                            return '<div class="no-results">Tidak ada fasilitas yang cocok</div>';
-                        }
-                    }
+            if (!wrapper || !trigger) return;
+
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                wrapper.classList.toggle('open');
+            });
+
+            options.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    options.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    hiddenInput.value = this.dataset.value;
+                    preview.innerHTML = this.dataset.svg;
+                    label.textContent = this.dataset.name;
+                    wrapper.classList.remove('open');
+                    wrapper.classList.remove('is-invalid');
                 });
-            }
-        }
+            });
 
-        function initializeCodeGeneration() {
-            const nameInput = document.getElementById('name');
-            const typeSelect = document.getElementById('unit_type_id');
-            const codeInput = document.getElementById('code');
-            const regenerateBtn = document.getElementById('regenerateCode');
-
-            if (!nameInput || !codeInput) return;
-
-            const generateCode = () => {
-                const name = nameInput.value.trim();
-                const typeOption = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
-
-                if (!name || (typeSelect && !typeSelect.value)) {
-                    codeInput.value = '';
-                    return;
-                }
-
-                const typePrefix = typeOption && typeOption.dataset.code
-                    ? typeOption.dataset.code
-                    : (typeOption ? typeOption.text.substring(0, 3).toUpperCase() : 'UNT');
-
-                const words = name.split(/\s+/);
-                let nameCode = '';
-
-                if (words.length === 1) {
-                    nameCode = words[0].substring(0, 3).toUpperCase();
-                } else {
-                    nameCode = words.map(w => w.charAt(0).toUpperCase()).join('').substring(0, 3);
-                }
-
-                const randomNum = Math.floor(Math.random() * 90 + 10);
-                codeInput.value = `${typePrefix}-${nameCode}-${randomNum}`;
-            };
-
-            nameInput.addEventListener('blur', generateCode);
-
-            if (typeSelect) {
-                typeSelect.addEventListener('change', () => {
-                    if (nameInput.value.trim()) generateCode();
-                });
-            }
-
-            if (regenerateBtn) {
-                regenerateBtn.addEventListener('click', generateCode);
-            }
+            document.addEventListener('click', function(e) {
+                if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
+            });
         }
 
         function initializeSlugGeneration() {
             const nameInput = document.getElementById('name');
             const slugInput = document.getElementById('slug');
-
             if (!nameInput || !slugInput) return;
 
-            let slugEdited = false;
+            let slugEdited = slugInput.value.length > 0;
 
-            slugInput.addEventListener('input', function () {
+            slugInput.addEventListener('input', function() {
                 slugEdited = true;
             });
 
-            nameInput.addEventListener('input', function () {
-                if (!slugEdited && (!slugInput.value || slugInput.value === '')) {
-                    slugInput.value = this.value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-|-$/g, '');
+            nameInput.addEventListener('input', function() {
+                if (!slugEdited) {
+                    slugInput.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
                 }
             });
         }
 
-        function initializeTimeValidation() {
-            const openTime = document.getElementById('open_time');
-            const closeTime = document.getElementById('close_time');
-            const timeValidation = document.getElementById('timeValidation');
-
-            if (!openTime || !closeTime) return;
-
-            const validateTime = () => {
-                const open = openTime.value;
-                const close = closeTime.value;
-
-                if (!open || !close) {
-                    if (timeValidation) timeValidation.textContent = '';
-                    return true;
-                }
-
-                if (open >= close) {
-                    if (timeValidation) {
-                        timeValidation.textContent = 'Jam tutup harus setelah jam buka';
-                        timeValidation.style.color = 'var(--color-error)';
-                    }
-                    closeTime.classList.add('is-invalid');
-                    return false;
-                }
-
-                const openDate = new Date(`2000-01-01T${open}`);
-                const closeDate = new Date(`2000-01-01T${close}`);
-                const duration = (closeDate - openDate) / (1000 * 60 * 60);
-
-                if (timeValidation) {
-                    timeValidation.textContent = `Durasi: ${duration} jam`;
-                    timeValidation.style.color = 'var(--color-success)';
-                }
-                closeTime.classList.remove('is-invalid');
-                return true;
-            };
-
-            openTime.addEventListener('change', validateTime);
-            closeTime.addEventListener('change', validateTime);
-        }
-
         function initializeFormValidation() {
-            const form = document.querySelector('form[id$="Form"]');
+            const form = document.getElementById('facilityForm');
             const submitBtn = document.getElementById('submitBtn');
-
             if (!form) return;
 
-            form.addEventListener('submit', function (e) {
-                const openTime = document.getElementById('open_time');
-                const closeTime = document.getElementById('close_time');
-
-                if (openTime && closeTime) {
-                    const open = openTime.value;
-                    const close = closeTime.value;
-
-                    if (open && close && open >= close) {
-                        e.preventDefault();
-                        closeTime.classList.add('is-invalid');
-                        closeTime.focus();
-                        return;
-                    }
-                }
-
+            form.addEventListener('submit', function(e) {
                 const requiredFields = form.querySelectorAll('[required]');
                 let isValid = true;
                 let firstError = null;
@@ -997,7 +807,10 @@
                 if (!isValid) {
                     e.preventDefault();
                     if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                         firstError.focus();
                     }
                     return;
@@ -1005,24 +818,18 @@
 
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    const btnText = submitBtn.querySelector('.btn-text');
-                    const btnLoader = submitBtn.querySelector('.btn-loader');
-                    if (btnText) btnText.style.display = 'none';
-                    if (btnLoader) btnLoader.style.display = 'inline-flex';
+                    submitBtn.querySelector('.btn-text').style.display = 'none';
+                    submitBtn.querySelector('.btn-loader').style.display = 'inline-flex';
                 }
             });
 
-            const inputs = form.querySelectorAll('.form-input, .form-select, .form-textarea');
-            inputs.forEach(input => {
-                input.addEventListener('input', function () {
-                    this.classList.remove('is-invalid');
-                });
+            form.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(input => {
+                input.addEventListener('input', () => input.classList.remove('is-invalid'));
             });
         }
 
         function initializeAlerts() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
+            document.querySelectorAll('.alert').forEach(alert => {
                 setTimeout(() => {
                     if (alert.classList.contains('show')) {
                         const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);

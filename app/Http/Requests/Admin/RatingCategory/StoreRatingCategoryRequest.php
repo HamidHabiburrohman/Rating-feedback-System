@@ -14,17 +14,22 @@ class StoreRatingCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:rating_categories,name',
-            'slug' => 'required|string|max:255|unique:rating_categories,slug',
-            'is_active' => 'sometimes|boolean',
-            'sort_order' => 'nullable|integer|min:0',
+            'name'          => 'required|string|max:255|unique:rating_categories,name',
+            'slug'          => 'nullable|string|max:255|unique:rating_categories,slug',
+            'is_active'     => 'nullable|boolean',
+            'sort_order'    => 'nullable|integer|min:0',
+            'min_score'     => 'nullable|numeric|min:0',
+            'max_score'     => 'nullable|numeric|gte:min_score',
+            'default_score' => 'nullable|numeric',
         ];
     }
 
-    protected function prepareForValidation()
+    public function messages(): array
     {
-        $this->merge([
-            'is_active' => $this->boolean('is_active', true),
-        ]);
+        return [
+            'name.required' => 'Nama kategori wajib diisi.',
+            'name.unique'   => 'Nama kategori sudah digunakan.',
+            'max_score.gte' => 'Skor maksimal harus lebih besar atau sama dengan skor minimal.',
+        ];
     }
 }

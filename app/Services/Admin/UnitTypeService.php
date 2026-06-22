@@ -17,11 +17,25 @@ class UnitTypeService extends BaseAdminService
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        if (isset($filters['status'])) {
+        if (isset($filters['status']) && $filters['status'] !== '') {
             $query->where('is_active', $filters['status'] === 'active');
         }
 
-        return $query->orderBy('sort_order')->orderBy('name')->get();
+        $sortField = $filters['sort'] ?? 'name';
+        $sortOrder = $filters['order'] ?? 'asc';
+
+        $allowedSorts = ['name', 'created_at', 'units_count'];
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'name';
+        }
+
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        $query->orderBy($sortField, $sortOrder);
+
+        $perPage = $filters['per_page'] ?? 10;
+
+        return $query->paginate($perPage);
     }
 
     public function findById(int $id): UnitType
@@ -34,12 +48,8 @@ class UnitTypeService extends BaseAdminService
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
             $data['is_active'] = $data['is_active'] ?? true;
-            $data['sort_order'] = $data['sort_order'] ?? UnitType::max('sort_order') + 1;
-
             $unitType = UnitType::create($data);
-
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
-
             return $unitType;
         });
     }
@@ -48,15 +58,11 @@ class UnitTypeService extends BaseAdminService
     {
         return DB::transaction(function () use ($id, $data) {
             $unitType = UnitType::findOrFail($id);
-
             if (isset($data['name']) && !isset($data['slug'])) {
                 $data['slug'] = Str::slug($data['name']);
             }
-
             $unitType->update($data);
-
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
-
             return $unitType->fresh();
         });
     }
@@ -65,11 +71,9 @@ class UnitTypeService extends BaseAdminService
     {
         return DB::transaction(function () use ($id) {
             $unitType = UnitType::findOrFail($id);
-
             if ($unitType->units()->count() > 0) {
                 throw new \Exception('Tipe unit tidak dapat dihapus karena masih digunakan oleh unit lain');
             }
-
             $unitType->delete();
             Cache::tags(['units', 'dropdown', 'landing'])->flush();
             return true;
@@ -78,13 +82,6 @@ class UnitTypeService extends BaseAdminService
 
     public function reorder(array $orders): bool
     {
-        return DB::transaction(function () use ($orders) {
-            foreach ($orders as $order) {
-                UnitType::where('id', $order['id'])->update(['sort_order' => $order['sort_order']]);
-            }
-
-            Cache::tags(['units', 'dropdown', 'landing'])->flush();
-            return true;
-        });
+        return true;
     }
 }

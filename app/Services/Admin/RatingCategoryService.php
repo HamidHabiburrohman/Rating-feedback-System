@@ -11,17 +11,31 @@ class RatingCategoryService extends BaseAdminService
 {
     public function getAll(array $filters = [])
     {
-        $query = RatingCategory::withCount('scores');
+        $query = RatingCategory::withCount('ratingScores');
 
         if (!empty($filters['search'])) {
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        if (isset($filters['status'])) {
+        if (isset($filters['status']) && in_array($filters['status'], ['active', 'inactive'], true)) {
             $query->where('is_active', $filters['status'] === 'active');
         }
 
-        return $query->orderBy('sort_order')->orderBy('name')->get();
+        $sortField = $filters['sort'] ?? 'sort_order';
+        $sortOrder = $filters['order'] ?? 'asc';
+
+        $allowedSorts = ['name', 'created_at', 'sort_order', 'rating_scores_count'];
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'sort_order';
+        }
+
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        $query->orderBy($sortField, $sortOrder);
+
+        $perPage = $filters['per_page'] ?? 10;
+
+        return $query->paginate($perPage);
     }
 
     public function getActive(): array
@@ -29,7 +43,7 @@ class RatingCategoryService extends BaseAdminService
         return Cache::tags(['ratings', 'dropdown'])->remember('active_rating_categories', 86400, function () {
             return RatingCategory::where('is_active', true)
                 ->orderBy('sort_order')
-                ->get(['id', 'name', 'slug', 'description', 'icon'])
+                ->get(['id', 'name', 'slug'])
                 ->toArray();
         });
     }
@@ -69,14 +83,16 @@ class RatingCategoryService extends BaseAdminService
     public function delete(int $id): bool
     {
         return DB::transaction(function () use ($id) {
-            $category = RatingCategory::findOrFail($id);
+            $category = RatingCategory::withCount('ratingScores')->findOrFail($id);
 
-            if ($category->scores()->count() > 0) {
-                throw new \Exception('Kategori tidak dapat dihapus karena masih digunakan oleh rating');
+            if ($category->rating_scores_count > 0) {
+                throw new \Exception('Kategori tidak dapat dihapus karena masih digunakan dalam penilaian (rating) untuk unit.');
             }
 
             $category->delete();
+
             Cache::tags(['ratings', 'dropdown'])->flush();
+
             return true;
         });
     }
@@ -85,6 +101,7 @@ class RatingCategoryService extends BaseAdminService
     {
         return DB::transaction(function () use ($id) {
             $category = RatingCategory::findOrFail($id);
+
             $category->update(['is_active' => !$category->is_active]);
 
             Cache::tags(['ratings', 'dropdown'])->flush();
@@ -101,6 +118,7 @@ class RatingCategoryService extends BaseAdminService
             }
 
             Cache::tags(['ratings', 'dropdown'])->flush();
+
             return true;
         });
     }

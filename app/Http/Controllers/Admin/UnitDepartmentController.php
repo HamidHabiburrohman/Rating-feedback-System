@@ -19,20 +19,24 @@ class UnitDepartmentController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', UnitDepartment::class);
-        
+
         try {
             $departments = $this->service->getAll($request->all());
-            
+
             if ($request->ajax()) {
                 return response()->json([
-                    'html' => view('admin.unit-departments.partials.rows', ['departments' => $departments])->render()
+                    'html' => view('admin.unit-departments.partials.rows', ['departments' => $departments])->render(),
+                    'pagination' => view('admin.unit-departments.partials.pagination', ['paginator' => $departments])->render()
                 ]);
             }
-            
+
             return view('admin.unit-departments.index', compact('departments'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.unit-departments.index')
-                ->with('error', 'Gagal memuat data: ' . $e->getMessage());
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Gagal memuat data: ' . $e->getMessage()], 500);
+            }
+            session()->flash('error', 'Gagal memuat data: ' . $e->getMessage());
+            return view('admin.unit-departments.index', ['departments' => collect()]);
         }
     }
 
@@ -45,17 +49,16 @@ class UnitDepartmentController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', UnitDepartment::class);
-        
         $request->validate([
             'name' => 'required|string|max:255|unique:unit_departments,name',
             'slug' => 'nullable|string|max:255|unique:unit_departments,slug',
             'description' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
         ]);
-        
+
         try {
             $department = $this->service->create($request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -63,7 +66,7 @@ class UnitDepartmentController extends Controller
                     'data' => $department
                 ]);
             }
-            
+
             return redirect()->route('admin.unit-departments.index')
                 ->with('success', 'Departemen berhasil ditambahkan');
         } catch (\Exception $e) {
@@ -73,7 +76,7 @@ class UnitDepartmentController extends Controller
                     'message' => 'Gagal menambahkan: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return back()->withInput()
                 ->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
@@ -108,23 +111,22 @@ class UnitDepartmentController extends Controller
         try {
             $department = UnitDepartment::findOrFail($id);
             $this->authorize('update', $department);
-            
             $request->validate([
                 'name' => 'required|string|max:255|unique:unit_departments,name,' . $id,
                 'slug' => 'nullable|string|max:255|unique:unit_departments,slug,' . $id,
                 'description' => 'nullable|string|max:1000',
                 'is_active' => 'boolean',
             ]);
-            
+
             $this->service->update($id, $request->all());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Departemen berhasil diperbarui'
                 ]);
             }
-            
+
             return redirect()->route('admin.unit-departments.index')
                 ->with('success', 'Departemen berhasil diperbarui');
         } catch (\Exception $e) {
@@ -134,7 +136,7 @@ class UnitDepartmentController extends Controller
                     'message' => 'Gagal memperbarui: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return back()->withInput()
                 ->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }
@@ -145,16 +147,15 @@ class UnitDepartmentController extends Controller
         try {
             $department = UnitDepartment::findOrFail($id);
             $this->authorize('delete', $department);
-            
             $this->service->delete($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Departemen berhasil dihapus'
                 ]);
             }
-            
+
             return redirect()->route('admin.unit-departments.index')
                 ->with('success', 'Departemen berhasil dihapus');
         } catch (\Exception $e) {
@@ -164,7 +165,7 @@ class UnitDepartmentController extends Controller
                     'message' => 'Gagal menghapus: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
@@ -174,9 +175,7 @@ class UnitDepartmentController extends Controller
         try {
             $department = UnitDepartment::findOrFail($id);
             $this->authorize('update', $department);
-            
             $this->service->toggleStatus($id);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Status berhasil diperbarui'
@@ -192,7 +191,6 @@ class UnitDepartmentController extends Controller
     public function stats()
     {
         $this->authorize('viewAny', UnitDepartment::class);
-        
         try {
             return response()->json([
                 'success' => true,

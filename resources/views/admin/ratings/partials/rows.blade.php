@@ -34,7 +34,7 @@
                 </div>
             </td>
             <td class="text-center">
-                <x-admin.status-badge status="{{ $rating->status }}" sizeClass="sm" />
+                <x-shared.status-badge status="{{ $rating->status }}" sizeClass="sm" />
             </td>
             <td class="text-center pe-4">
                 <div class="d-flex justify-content-center gap-1">
@@ -53,7 +53,7 @@
         <x-admin.reply-rating-modal :rating="$rating" />
 
         <!-- Delete Modal Component -->
-        <x-admin.delete-modal-component id="deleteModal{{ $rating->id }}" title="Delete Rating"
+        <x-shared.delete-modal id="deleteModal{{ $rating->id }}" title="Delete Rating"
             itemName="Rating for {{ $rating->unit->name ?? 'Unit' }} (Score: {{ number_format($rating->overall_score, 1) }})"
             itemType="rating" deleteRoute="{{ route('admin.ratings.destroy', $rating->id) }}" />
     @endforeach

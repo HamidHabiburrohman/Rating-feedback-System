@@ -131,4 +131,17 @@ class RatingController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal memuat statistik'], 500);
         }
     }
+
+    public function destroy(int $id)
+    {
+        $rating = Rating::findOrFail($id);
+        $this->authorize('delete', $rating);
+        
+        try {
+            $this->service->delete($id);
+            return response()->json(['success' => true, 'message' => 'Rating berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+        }
+    }
 }

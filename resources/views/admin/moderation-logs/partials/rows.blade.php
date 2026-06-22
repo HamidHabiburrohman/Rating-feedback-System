@@ -32,7 +32,7 @@
                     <x-admin.button type="delete" onclick="openModal('deleteModal{{ $log->id }}')" tooltip="Delete Log" />
                 </div>
             </td>
-            <x-admin.delete-modal-component id="deleteModal{{ $log->id }}" title="Delete Log"
+            <x-shared.delete-modal id="deleteModal{{ $log->id }}" title="Delete Log"
                 itemName="Log #{{ $log->id }}" deleteRoute="{{ route('admin.moderation-logs.destroy', $log->id) }}" />
         </tr>
     @endforeach

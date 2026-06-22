@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Student;
-use App\Models\Reports\Report;
+use App\Models\Report\Report;
 
 class ReportPolicy
 {

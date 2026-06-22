@@ -3,148 +3,128 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\Admin\ReportManagementService;
-use App\Models\Report\Report;
+use App\Services\Admin\ReportCategoryService;
+use App\Models\Report\ReportCategory;
 use Illuminate\Http\Request;
 
-class ReportController extends Controller
+class ReportCategoryController extends Controller
 {
-    protected ReportManagementService $service;
+    protected ReportCategoryService $service;
 
-    public function __construct(ReportManagementService $service)
+    public function __construct(ReportCategoryService $service)
     {
         $this->service = $service;
     }
 
     public function index(Request $request)
     {
-        $this->authorize('viewAny', Report::class);
-        
+        $this->authorize('viewAny', ReportCategory::class);
         try {
-            $filters = $request->only(['search', 'status', 'priority', 'unit_id', 'per_page', 'sort']);
-            $reports = $this->service->getFilteredReports($filters);
-            $stats = $this->service->getStats();
-            
+            $filters = $request->only(['search', 'status', 'page', 'sort', 'order', 'per_page']);
+            $categories = $this->service->getAll($filters);
+
             if ($request->ajax()) {
                 return response()->json([
-                    'html' => view('admin.reports.partials.rows', compact('reports'))->render(),
-                    'pagination' => view('admin.reports.partials.pagination', ['paginator' => $reports])->render()
+                    'html' => view('admin.report-categories.partials.rows', compact('categories'))->render(),
+                    'pagination' => view('admin.report-categories.partials.pagination', ['paginator' => $categories])->render()
                 ]);
             }
-            
-            return view('admin.reports.index', compact('reports', 'stats'));
+
+            return view('admin.report-categories.index', compact('categories'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.reports.index')
-                ->with('error', 'Gagal memuat data laporan');
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Gagal memuat data: ' . $e->getMessage()], 500);
+            }
+            logger()->error('Error fetching report categories: ' . $e->getMessage());
+            return redirect()->route('admin.report-categories.index')
+                ->with('error', 'Gagal memuat data: ' . $e->getMessage());
         }
     }
 
-    public function show(int $id)
+    public function store(Request $request)
     {
-        try {
-            $data = $this->service->getDetail($id);
-            $this->authorize('view', $data['report']);
-            return view('admin.reports.show', $data);
-        } catch (\Exception $e) {
-            return redirect()->route('admin.reports.index')
-                ->with('error', 'Laporan tidak ditemukan');
-        }
-    }
-
-    public function updateStatus(Request $request, int $id)
-    {
-        $report = Report::findOrFail($id);
-        $this->authorize('update', $report);
-        
+        $this->authorize('create', ReportCategory::class);
         $request->validate([
-            'status' => 'required|in:new,assigned,in_progress,replied,resolved,rejected,pending_preview',
-            'reason' => 'nullable|string|max:1000',
+            'name' => 'required|string|max:255|unique:report_categories,name',
+            'slug' => 'nullable|string|max:255|unique:report_categories,slug',
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
         ]);
-        
+
         try {
-            $this->service->updateStatus($id, $request->status, $request->reason, auth('admin')->id());
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Status laporan berhasil diperbarui'
-            ]);
+            $category = $this->service->create($request->all());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil ditambahkan', 'data' => $category]);
+            }
+
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil ditambahkan');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengubah status: ' . $e->getMessage()
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menambahkan: ' . $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
     }
 
-    public function reply(Request $request, int $id)
+    public function update(Request $request, int $id)
     {
-        $report = Report::findOrFail($id);
-        $this->authorize('reply', $report);
-        
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('update', $category);
         $request->validate([
-            'reply' => 'required|string|min:3|max:5000',
-            'is_public' => 'boolean',
+            'name' => 'required|string|max:255|unique:report_categories,name,' . $id,
+            'slug' => 'nullable|string|max:255|unique:report_categories,slug,' . $id,
+            'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
         ]);
-        
+
         try {
-            $this->service->reply(
-                $id,
-                $request->reply,
-                $request->boolean('is_public', true),
-                auth('admin')->id()
-            );
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Balasan berhasil dikirim'
-            ]);
+            $this->service->update($id, $request->all());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil diperbarui']);
+            }
+
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil diperbarui');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengirim balasan: ' . $e->getMessage()
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal memperbarui: ' . $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }
     }
 
-    public function bulkUpdateStatus(Request $request)
+    public function destroy(Request $request, int $id)
     {
-        $this->authorize('update', Report::class);
-        
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:reports,id',
-            'status' => 'required|in:new,assigned,in_progress,replied,resolved,rejected,pending_preview',
-            'reason' => 'nullable|string|max:1000',
-        ]);
-        
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('delete', $category);
+
         try {
-            $count = $this->service->bulkUpdateStatus(
-                $request->ids,
-                $request->status,
-                $request->reason,
-                auth('admin')->id()
-            );
-            
-            return response()->json([
-                'success' => true,
-                'message' => "{$count} laporan berhasil diperbarui"
-            ]);
+            $this->service->delete($id);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus']);
+            }
+
+            return redirect()->route('admin.report-categories.index')->with('success', 'Kategori berhasil dihapus');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui massal: ' . $e->getMessage()
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
 
-    public function export(Request $request)
+    public function toggleActive(Request $request, int $id)
     {
-        $this->authorize('export', Report::class);
-        
+        $category = ReportCategory::findOrFail($id);
+        $this->authorize('update', $category);
+
         try {
-            return $this->service->export($request->all());
+            $this->service->toggleActive($id);
+            return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengekspor data: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
         }
     }
 }

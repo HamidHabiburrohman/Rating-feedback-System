@@ -1,7 +1,5 @@
 @extends('layouts.admin.app')
-
 @section('title', 'Dashboard')
-
 @push('styles')
     <style>
         :root {
@@ -25,8 +23,8 @@
             --text-secondary: #6b7280;
             --text-tertiary: #9ca3af;
             --text-inverse: #ffffff;
-            --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
             --space-1: 4px;
             --space-2: 8px;
             --space-3: 12px;
@@ -46,6 +44,7 @@
 
         * {
             font-family: var(--font-body);
+            font-weight: 400;
         }
 
         .dashboard-container {
@@ -138,9 +137,6 @@
             justify-content: center;
             font-size: 24px;
             margin-bottom: var(--space-4);
-        }
-
-        .kpi-icon.accent {
             background: var(--surface);
             color: var(--text-secondary);
         }
@@ -205,17 +201,23 @@
 
         .chart-container,
         .table-section,
+        .recent-rated-section
+        {
+        background: var(--bg-surface);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-light);
+        }
+
         .recent-rated-section {
-            background: var(--bg-surface);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-light);
+            align-self: start;
+            display: flex;
+            flex-direction: column;
         }
 
         .chart-header,
-        .table-header-enhanced,
-        .recent-rated-header {
+        .table-header-enhanced {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -225,8 +227,7 @@
         }
 
         .chart-title,
-        .table-title,
-        .recent-rated-title {
+        .table-title {
             font-size: 18px;
             font-weight: 700;
             margin: 0 0 var(--space-1) 0;
@@ -235,8 +236,7 @@
         }
 
         .chart-subtitle,
-        .table-subtitle,
-        .recent-rated-subtitle {
+        .table-subtitle {
             font-size: 13px;
             font-weight: 400;
             color: var(--text-secondary);
@@ -348,7 +348,7 @@
         .unit-avatar {
             width: 40px;
             height: 40px;
-            border-radius: var(--radius);
+            border-radius: var(--radius-xl);
             background: var(--primary-light);
             color: var(--primary);
             display: flex;
@@ -364,6 +364,11 @@
             font-size: 14px;
         }
 
+        .unit-type {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
         .badge-category {
             background: var(--surface);
             color: var(--text-secondary);
@@ -371,6 +376,9 @@
             border-radius: 30px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
         }
 
         .rating-cell {
@@ -391,24 +399,19 @@
             font-weight: 600;
         }
 
-        .status-badge.open {
+        .status-badge.active {
             background: var(--success-light);
             color: var(--success);
         }
 
-        .status-badge.closed {
+        .status-badge.inactive {
             background: var(--danger-light);
             color: var(--danger);
         }
 
-        .status-badge.maintenance {
+        .status-badge.warning {
             background: var(--warning-light);
             color: var(--warning);
-        }
-
-        .status-badge.full {
-            background: var(--info-light);
-            color: var(--info);
         }
 
         .status-dot {
@@ -502,21 +505,30 @@
             display: flex;
             flex-direction: column;
             gap: var(--space-3);
+            margin: 0;
+            padding: 0;
+            flex: 1;
         }
 
         .rated-item {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: var(--space-3);
             padding: var(--space-3);
-            border-radius: var(--radius);
+            border-radius: var(--radius-lg);
             transition: background 0.2s;
-            border: 1px solid transparent;
+            border: 1px solid var(--border-light);
+            justify-content: flex-start;
+            margin-bottom: 0;
+            width: 100%;
         }
 
         .rated-item:hover {
             background: var(--bg-main);
-            border-color: var(--border-light);
+        }
+
+        .rated-item:last-child {
+            margin-bottom: 0;
         }
 
         .rated-avatar {
@@ -528,13 +540,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 14px;
+            font-weight: 700;
             flex-shrink: 0;
         }
 
         .rated-content {
             flex: 1;
             min-width: 0;
+        }
+
+        .recent-rated-list .loading-state {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
         }
 
         .rated-unit-name {
@@ -597,10 +618,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .analytics-section {
-                grid-template-columns: 1fr;
-            }
-
+            .analytics-section,
             .bottom-grid {
                 grid-template-columns: 1fr;
             }
@@ -639,7 +657,8 @@
         data-dashboard-charts="{{ route('admin.dashboard.charts') }}"
         data-audit-logs="{{ route('admin.dashboard.audit-logs') }}"
         data-recent-rated="{{ route('admin.dashboard.recent-rated') }}"
-        data-top-units="{{ route('admin.dashboard.top-units', ['type' => 'all']) }}">
+        data-top-units="{{ route('admin.dashboard.top-units', ['type' => 'all']) }}"
+        data-top-employees="{{ route('admin.dashboard.top-employees') }}">
 
         <div class="dashboard-header-row">
             <div>
@@ -655,7 +674,7 @@
 
         <div class="kpi-section">
             <div class="kpi-card">
-                <div class="kpi-icon accent"><i class="ti ti-users"></i></div>
+                <div class="kpi-icon"><i class="ti ti-users"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Active Students</span>
                     <div class="kpi-value-row">
@@ -665,8 +684,9 @@
                     <span class="kpi-comparison">vs previous period</span>
                 </div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-icon accent"><i class="ti ti-star"></i></div>
+                <div class="kpi-icon"><i class="ti ti-star"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Total Ratings</span>
                     <div class="kpi-value-row">
@@ -676,8 +696,9 @@
                     <span class="kpi-comparison">vs previous period</span>
                 </div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-icon accent"><i class="ti ti-chart-bar"></i></div>
+                <div class="kpi-icon"><i class="ti ti-chart-bar"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Average Rating</span>
                     <div class="kpi-value-row">
@@ -687,8 +708,9 @@
                     <span class="kpi-comparison">across all units</span>
                 </div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-icon accent"><i class="ti ti-building"></i></div>
+                <div class="kpi-icon"><i class="ti ti-building"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Active Units</span>
                     <div class="kpi-value-row">
@@ -712,8 +734,9 @@
                         <span class="legend-item"><span class="legend-dot primary"></span> Daily Active</span>
                     </div>
                 </div>
-                <div id="chart-students" style="min-height: 320px;"></div>
+                <div id="chart-students" style="min-height: 350px;"></div>
             </div>
+
             <div class="chart-container">
                 <div class="chart-header">
                     <div>
@@ -726,7 +749,7 @@
                         <span class="legend-item"><span class="legend-dot secondary"></span> Cumulative</span>
                     </div>
                 </div>
-                <div id="chart-units-monthly" style="min-height: 320px;"></div>
+                <div id="chart-units-monthly" style="min-height: 350px;"></div>
             </div>
         </div>
 
@@ -738,12 +761,13 @@
                         <p class="table-subtitle">Monitor and manage unit performance metrics</p>
                     </div>
                     <div class="filter-tabs">
-                        <button class="filter-tab active" data-filter="all">All Units</button>
-                        <button class="filter-tab" data-filter="popularity">Most Popular</button>
-                        <button class="filter-tab" data-filter="quality">Top Rated</button>
-                        <button class="filter-tab" data-filter="attention">Needs Attention</button>
+                        <button class="filter-tab unit-filter-tab active" data-filter="all">All Units</button>
+                        <button class="filter-tab unit-filter-tab" data-filter="popularity">Most Popular</button>
+                        <button class="filter-tab unit-filter-tab" data-filter="quality">Top Rated</button>
+                        <button class="filter-tab unit-filter-tab" data-filter="attention">Needs Attention</button>
                     </div>
                 </div>
+
                 <div class="table-responsive">
                     <table class="data-table-enhanced">
                         <thead>
@@ -768,6 +792,7 @@
                         </tbody>
                     </table>
                 </div>
+
                 <div class="table-footer">
                     <span class="showing-text">Showing <span id="showing-count">0</span> of <span
                             id="total-count">0</span> units</span>
@@ -776,18 +801,54 @@
             </div>
 
             <div class="recent-rated-section">
-                <div class="recent-rated-header">
+                <div class="table-header-enhanced">
                     <div>
-                        <h3 class="recent-rated-title">Recent Rated Units</h3>
-                        <p class="recent-rated-subtitle">Latest student feedback across all units</p>
+                        <h3 class="table-title">Recent Rated Units</h3>
+                        <p class="table-subtitle">Latest student feedback across all units</p>
                     </div>
                 </div>
                 <div class="recent-rated-list" id="recent-rated-list">
                     <div class="loading-state">
                         <div class="spinner-border text-primary" role="status"></div>
-                        <p>Loading ratings...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header-enhanced">
+                <div>
+                    <h3 class="table-title">Top Performing Employees</h3>
+                    <p class="table-subtitle">Active staff and their assigned units</p>
+                </div>
+                <div class="filter-tabs">
+                    <button class="filter-tab employee-filter-tab active" data-filter="all">All Employees</button>
+                    <button class="filter-tab employee-filter-tab" data-filter="active">Active</button>
+                    <button class="filter-tab employee-filter-tab" data-filter="inactive">Inactive</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table-enhanced">
+                    <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Assigned Units</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employees-table-body">
+                        <tr>
+                            <td colspan="4">
+                                <div class="loading-state">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p>Loading employees...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

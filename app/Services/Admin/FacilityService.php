@@ -17,11 +17,25 @@ class FacilityService extends BaseAdminService
             $query->where('name', 'like', "%{$filters['search']}%");
         }
 
-        if (isset($filters['status'])) {
+        if (isset($filters['status']) && $filters['status'] !== '') {
             $query->where('is_active', $filters['status'] === 'active');
         }
 
-        return $query->orderBy('name')->get();
+        $sortField = $filters['sort'] ?? 'name';
+        $sortOrder = $filters['order'] ?? 'asc';
+
+        $allowedSorts = ['name', 'created_at', 'units_count'];
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'name';
+        }
+
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        $query->orderBy($sortField, $sortOrder);
+
+        $perPage = $filters['per_page'] ?? 10;
+
+        return $query->paginate($perPage);
     }
 
     public function findById(int $id): Facility
@@ -34,11 +48,8 @@ class FacilityService extends BaseAdminService
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
             $data['is_active'] = $data['is_active'] ?? true;
-
             $facility = Facility::create($data);
-
             Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
-
             return $facility;
         });
     }
@@ -47,28 +58,32 @@ class FacilityService extends BaseAdminService
     {
         return DB::transaction(function () use ($id, $data) {
             $facility = Facility::findOrFail($id);
-
             if (isset($data['name']) && !isset($data['slug'])) {
                 $data['slug'] = Str::slug($data['name']);
             }
-
             $facility->update($data);
-
             Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
-
             return $facility->fresh();
         });
+    }
+
+    public function getAvailableIcons(): array
+    {
+        $iconService = app(IconService::class);
+        $icons = [];
+        foreach ($iconService->getAllIcons() as $key => $icon) {
+            $icons[$key] = $icon['name'];
+        }
+        return $icons;
     }
 
     public function delete(int $id): bool
     {
         return DB::transaction(function () use ($id) {
             $facility = Facility::findOrFail($id);
-
             if ($facility->units()->count() > 0) {
                 throw new \Exception('Fasilitas tidak dapat dihapus karena masih digunakan oleh unit lain');
             }
-
             $facility->delete();
             Cache::tags(['facilities', 'dropdown', 'landing'])->flush();
             return true;
@@ -82,7 +97,7 @@ class FacilityService extends BaseAdminService
                 ->withCount('units')
                 ->orderByDesc('units_count')
                 ->limit($limit)
-                ->get(['id', 'name', 'icon', 'units_count'])
+                ->get(['id', 'name', 'icon_key', 'units_count'])
                 ->toArray();
         });
     }

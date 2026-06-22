@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RatingCategory\StoreRatingCategoryRequest;
+use App\Http\Requests\Admin\RatingCategory\UpdateRatingCategoryRequest;
 use App\Services\Admin\RatingCategoryService;
 use App\Models\Feedback\RatingCategory;
 use Illuminate\Http\Request;
@@ -19,76 +21,92 @@ class RatingCategoryController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', RatingCategory::class);
-        
+
         try {
             $categories = $this->service->getAll($request->all());
-            
+
             if ($request->ajax()) {
                 return response()->json([
-                    'html' => view('admin.rating-categories.partials.rows', ['categories' => $categories])->render()
+                    'html' => view('admin.rating-categories.partials.rows', ['categories' => $categories])->render(),
+                    'pagination' => view('admin.rating-categories.partials.pagination', ['paginator' => $categories])->render()
                 ]);
             }
-            
+
             return view('admin.rating-categories.index', compact('categories'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.rating-categories.index')->with('error', 'Gagal memuat data');
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Gagal memuat data: ' . $e->getMessage()], 500);
+            }
+
+            session()->flash('error', 'Gagal memuat data: ' . $e->getMessage());
+            return view('admin.rating-categories.index', ['categories' => collect()]);
         }
     }
 
-    public function store(Request $request)
+    public function create()
     {
         $this->authorize('create', RatingCategory::class);
-        
-        $request->validate([
-            'name' => 'required|string|max:255|unique:rating_categories,name',
-            'slug' => 'nullable|string|max:255|unique:rating_categories,slug',
-            'description' => 'nullable|string|max:1000',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-        ]);
-        
+
+        return view('admin.rating-categories.create');
+    }
+
+    public function store(StoreRatingCategoryRequest $request)
+    {
+        $this->authorize('create', RatingCategory::class);
+
         try {
-            $category = $this->service->create($request->all());
-            
+            $category = $this->service->create($request->validated());
+
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Kategori berhasil ditambahkan', 'data' => $category]);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kategori berhasil ditambahkan',
+                    'data' => $category
+                ]);
             }
-            
-            return redirect()->route('admin.rating-categories.index')->with('success', 'Kategori berhasil ditambahkan');
+
+            return redirect()->route('admin.rating-categories.index')
+                ->with('success', 'Kategori berhasil ditambahkan');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Gagal menambahkan: ' . $e->getMessage()], 422);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menambahkan: ' . $e->getMessage()
+                ], 422);
             }
-            return back()->withInput()->with('error', 'Gagal menambahkan: ' . $e->getMessage());
+
+            return back()->withInput()
+                ->with('error', 'Gagal menambahkan: ' . $e->getMessage());
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(UpdateRatingCategoryRequest $request, int $id)
     {
         $category = RatingCategory::findOrFail($id);
         $this->authorize('update', $category);
-        
-        $request->validate([
-            'name' => 'required|string|max:255|unique:rating_categories,name,' . $id,
-            'slug' => 'nullable|string|max:255|unique:rating_categories,slug,' . $id,
-            'description' => 'nullable|string|max:1000',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-        ]);
-        
+
         try {
-            $this->service->update($id, $request->all());
-            
+            $this->service->update($id, $request->validated());
+
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Kategori berhasil diperbarui']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kategori berhasil diperbarui'
+                ]);
             }
-            
-            return redirect()->route('admin.rating-categories.index')->with('success', 'Kategori berhasil diperbarui');
+
+            return redirect()->route('admin.rating-categories.index')
+                ->with('success', 'Kategori berhasil diperbarui');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Gagal memperbarui: ' . $e->getMessage()], 422);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui: ' . $e->getMessage()
+                ], 422);
             }
-            return back()->withInput()->with('error', 'Gagal memperbarui: ' . $e->getMessage());
+
+            return back()->withInput()
+                ->with('error', 'Gagal memperbarui: ' . $e->getMessage());
         }
     }
 
@@ -96,19 +114,27 @@ class RatingCategoryController extends Controller
     {
         $category = RatingCategory::findOrFail($id);
         $this->authorize('delete', $category);
-        
+
         try {
             $this->service->delete($id);
-            
+
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Kategori berhasil dihapus']);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kategori berhasil dihapus'
+                ]);
             }
-            
-            return redirect()->route('admin.rating-categories.index')->with('success', 'Kategori berhasil dihapus');
+
+            return redirect()->route('admin.rating-categories.index')
+                ->with('success', 'Kategori berhasil dihapus');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus: ' . $e->getMessage()
+                ], 422);
             }
+
             return back()->with('error', 'Gagal menghapus: ' . $e->getMessage());
         }
     }
@@ -117,30 +143,44 @@ class RatingCategoryController extends Controller
     {
         $category = RatingCategory::findOrFail($id);
         $this->authorize('update', $category);
-        
+
         try {
             $this->service->toggleActive($id);
-            return response()->json(['success' => true, 'message' => 'Status berhasil diubah']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status berhasil diubah'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status: ' . $e->getMessage()
+            ], 422);
         }
     }
 
     public function reorder(Request $request)
     {
         $this->authorize('update', RatingCategory::class);
-        
+
         $request->validate([
             'orders' => 'required|array',
             'orders.*.id' => 'required|exists:rating_categories,id',
             'orders.*.sort_order' => 'required|integer|min:0',
         ]);
-        
+
         try {
             $this->service->reorder($request->orders);
-            return response()->json(['success' => true, 'message' => 'Urutan berhasil diperbarui']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Urutan berhasil diperbarui'
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengurutkan: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengurutkan: ' . $e->getMessage()
+            ], 422);
         }
     }
 
@@ -148,9 +188,16 @@ class RatingCategoryController extends Controller
     {
         try {
             $categories = $this->service->getActive();
-            return response()->json(['success' => true, 'data' => $categories]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $categories
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal memuat data'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data'
+            ], 500);
         }
     }
 }

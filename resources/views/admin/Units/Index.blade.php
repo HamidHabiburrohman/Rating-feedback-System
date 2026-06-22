@@ -11,35 +11,34 @@
         </div>
 
         <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center gap-3">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                 <x-admin.search-button placeholder="Search by name, code or location..." />
 
-                <div class="d-flex align-items-center gap-2">
-                    @if (!($hidePerPage ?? false))
-                        <div class="dropdown">
-                            <button
-                                class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
-                                type="button" data-bs-toggle="dropdown"
-                                style="height: 44px; background-color: white; border-color: #d1d5db;">
-                                <span class="fw-medium">{{ request('per_page', 10) }}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
-                                    style="transition:.3s">
-                                    <path d="M6 9l6 6 6-6" />
-                                </svg>
-                            </button>
-                            <ul class="dropdown-menu border-0 shadow-lg rounded-3">
-                                @foreach ([10, 25, 50, 100] as $size)
-                                    <li>
-                                        <a class="dropdown-item py-2 px-3 {{ request('per_page', 10) == $size ? 'active bg-light text-primary fw-bold' : '' }}"
-                                            href="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}">
-                                            {{ $size }} Rows
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
+                            type="button" data-bs-toggle="dropdown"
+                            style="height: 44px; background-color: white; border-color: #d1d5db;">
+                            <span class="fw-medium">{{ request('per_page', 10) }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
+                                style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                        <ul class="dropdown-menu border-0 shadow-lg rounded-3">
+                            @foreach ([10, 25, 50, 100] as $size)
+                                <li>
+                                    <a class="dropdown-item py-2 px-3 {{ request('per_page', 10) == $size ? 'active fw-bold' : '' }}"
+                                        href="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}"
+                                        style="{{ request('per_page', 10) == $size ? 'background: #f8773c; color: white;' : '' }}">
+                                        {{ $size }} Rows
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
 
                     <div class="dropdown" id="filterContainer">
                         <button
@@ -58,7 +57,7 @@
                             </svg>
                         </button>
 
-                        <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 overflow-hidden mt-2"
+                        <div class="dropdown-menu border-0 shadow-lg rounded-4 mt-2"
                             style="min-width: 350px; background-color: #ffffff;">
                             <div class="p-3">
                                 <div class="mb-3">
@@ -67,9 +66,9 @@
                                     <div class="d-flex flex-wrap gap-2" id="typeFilter">
                                         @php
                                             $activeStyle =
-                                                'background: #f8773c !important; border: none !important; color: white !important; background-image: none !important;';
+                                                'background: #f8773c !important; border: none !important; color: white !important;';
                                             $inactiveStyle =
-                                                'background: white !important; border: 1px solid #d1d5db !important; color: #6b7280 !important; background-image: none !important;';
+                                                'background: white !important; border: 1px solid #d1d5db !important; color: #6b7280 !important;';
                                             $currentTypes = request('type') ? explode(',', request('type')) : [];
                                         @endphp
 
@@ -79,17 +78,14 @@
                                             All
                                         </button>
 
-                                        @foreach ($unitTypes as $type)
+                                        @foreach ($unitTypes as $unitType)
                                             <button type="button"
                                                 class="btn btn-sm rounded-pill px-3 fw-medium filter-type"
-                                                data-value="{{ $type->name }}"
-                                                style="{{ in_array($type->name, $currentTypes) ? $activeStyle : $inactiveStyle }}">
-                                                {{ $type->name }}
+                                                data-value="{{ $unitType->id }}"
+                                                style="{{ in_array((string) $unitType->id, $currentTypes) ? $activeStyle : $inactiveStyle }}">
+                                                {{ $unitType->name }}
                                             </button>
                                         @endforeach
-
-                                        <input type="hidden" name="selected_types" id="selectedTypes"
-                                            value="{{ request('type', '') }}">
                                     </div>
                                 </div>
 
@@ -144,14 +140,11 @@
                     </div>
 
                     <x-admin.sort-button :sortOptions="[
-                        'name_asc' => 'Name A-Z',
-                        'name_desc' => 'Name Z-A',
-                        'created_at_desc' => 'Newest First',
-                        'created_at_asc' => 'Oldest First',
-                        'avg_rating_desc' => 'Highest Rating',
-                        'avg_rating_asc' => 'Lowest Rating',
-                        'total_ratings_desc' => 'Most Rated',
-                    ]" defaultSort="name" defaultOrder="asc" />
+                        'name' => 'Name A-Z',
+                        'rating' => 'Highest Rating',
+                        'latest' => 'Newest First',
+                        'oldest' => 'Oldest First',
+                    ]" defaultSort="latest" defaultOrder="desc" />
 
                     <x-admin.button-create url="{{ route('admin.units.create') }}" tooltip="Add New Unit"
                         size="md">
@@ -192,11 +185,11 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="bg-transparent">
-                        <tr class="text-muted text-uppercase" style="font-size: .75rem;">
-                            <th class="ps-4 py-3 fw-semibold">Unit</th>
-                            <th class="py-3 fw-semibold">Type</th>
-                            <th class="py-3 fw-semibold">Status</th>
-                            <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
+                        <tr class="text-muted" style="font-size: .75rem;">
+                            <th class="ps-4 py-3 fw-light">Unit</th>
+                            <th class="py-3 fw-light">Type</th>
+                            <th class="py-3 fw-light">Status</th>
+                            <th class="pe-4 py-3 fw-light text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="unitsTable">
@@ -213,97 +206,5 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterButtons = document.querySelectorAll('.filter-type, .filter-status');
-            const applyFilterBtn = document.getElementById('applyFilter');
-            const resetFilterBtn = document.getElementById('resetFilter');
-            const selectedTypesInput = document.getElementById('selectedTypes');
-
-            let selectedTypes = selectedTypesInput.value ? selectedTypesInput.value.split(',') : [];
-            let selectedStatus = new URLSearchParams(window.location.search).get('status') || '';
-
-            filterButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const value = this.dataset.value;
-                    const filterType = this.classList.contains('filter-type') ? 'type' : 'status';
-
-                    if (filterType === 'type') {
-                        if (value === '') {
-                            selectedTypes = [];
-                            document.querySelectorAll('.filter-type').forEach(b => {
-                                b.style.background = 'white';
-                                b.style.border = '1px solid #d1d5db';
-                                b.style.color = '#6b7280';
-                            });
-                            this.style.background = '#f8773c';
-                            this.style.border = 'none';
-                            this.style.color = 'white';
-                        } else {
-                            const idx = selectedTypes.indexOf(value);
-                            if (idx > -1) {
-                                selectedTypes.splice(idx, 1);
-                                this.style.background = 'white';
-                                this.style.border = '1px solid #d1d5db';
-                                this.style.color = '#6b7280';
-                            } else {
-                                selectedTypes.push(value);
-                                this.style.background = '#f8773c';
-                                this.style.border = 'none';
-                                this.style.color = 'white';
-                            }
-                            document.querySelector('.filter-type[data-value=""]').style.background =
-                                selectedTypes.length === 0 ? '#f8773c' : 'white';
-                            document.querySelector('.filter-type[data-value=""]').style.border =
-                                selectedTypes.length === 0 ? 'none' : '1px solid #d1d5db';
-                            document.querySelector('.filter-type[data-value=""]').style.color =
-                                selectedTypes.length === 0 ? 'white' : '#6b7280';
-                        }
-                    } else {
-                        selectedStatus = value;
-                        document.querySelectorAll('.filter-status').forEach(b => {
-                            b.style.background = 'white';
-                            b.style.border = '1px solid #d1d5db';
-                            b.style.color = '#6b7280';
-                        });
-                        this.style.background = '#f8773c';
-                        this.style.border = 'none';
-                        this.style.color = 'white';
-                    }
-                });
-            });
-
-            applyFilterBtn?.addEventListener('click', function() {
-                const params = new URLSearchParams(window.location.search);
-                if (selectedTypes.length > 0) {
-                    params.set('type', selectedTypes.join(','));
-                } else {
-                    params.delete('type');
-                }
-                if (selectedStatus) {
-                    params.set('status', selectedStatus);
-                } else {
-                    params.delete('status');
-                }
-                params.set('page', 1);
-                window.location.href = window.location.pathname + '?' + params.toString();
-            });
-
-            resetFilterBtn?.addEventListener('click', function() {
-                selectedTypes = [];
-                selectedStatus = '';
-                document.querySelectorAll('.filter-type, .filter-status').forEach(b => {
-                    b.style.background = 'white';
-                    b.style.border = '1px solid #d1d5db';
-                    b.style.color = '#6b7280';
-                });
-                document.querySelector('.filter-type[data-value=""]').style.background = '#f8773c';
-                document.querySelector('.filter-type[data-value=""]').style.border = 'none';
-                document.querySelector('.filter-type[data-value=""]').style.color = 'white';
-                document.querySelector('.filter-status[data-value=""]').style.background = '#f8773c';
-                document.querySelector('.filter-status[data-value=""]').style.border = 'none';
-                document.querySelector('.filter-status[data-value=""]').style.color = 'white';
-            });
-        });
-    </script>
+    <script src="{{ asset('assets/admin/js/unit.js') }}"></script>
 @endpush

@@ -1,5 +1,5 @@
-@if(is_object($units) && method_exists($units, 'count') && $units->count())
-    @foreach($units as $unit)
+@if (is_object($units) && method_exists($units, 'count') && $units->count())
+    @foreach ($units as $unit)
         <tr>
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3">
@@ -19,53 +19,32 @@
                 <div class="d-flex justify-content-center gap-1">
                     <x-admin.button type="show" url="{{ route('admin.units.show', $unit->id) }}" tooltip="View Unit" />
                     <x-admin.button type="edit" url="{{ route('admin.units.edit', $unit->id) }}" tooltip="Edit Unit" />
-                    <x-admin.button type="delete" onclick="openModal('deleteModal{{ $unit->id }}')" tooltip="Delete Unit" />
+                    <x-admin.button type="delete" onclick="openModal('deleteModal{{ $unit->id }}')"
+                        tooltip="Delete Unit" />
                 </div>
 
-                <x-shared.delete-modal 
-                    :id="'deleteModal' . $unit->id" 
-                    title="Delete Unit" 
-                    :item-name="$unit->name"
-                    itemType="unit" 
-                    :delete-route="route('admin.units.destroy', $unit->id)" 
-                    deleteMethod="DELETE" 
-                />
+                <x-shared.delete-modal :id="'deleteModal' . $unit->id" title="Delete Unit" :item-name="$unit->name" itemType="unit"
+                    :delete-route="route('admin.units.destroy', $unit->id)" deleteMethod="DELETE" />
             </td>
         </tr>
     @endforeach
-@elseif(is_string($units) || $units === null)
-    <tr>
-        <td colspan="4" class="text-center py-5 text-muted">
-            <div style="padding: 40px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
-                    <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
-                    <line x1="8" y1="2" x2="8" y2="22"></line>
-                    <line x1="16" y1="2" x2="16" y2="22"></line>
-                    <line x1="2" y1="8" x2="22" y2="8"></line>
-                    <line x1="2" y1="16" x2="22" y2="16"></line>
-                </svg>
-                <p>Error loading units</p>
-                @if(config('app.debug'))
-                    <small class="text-danger">Debug: units is {{ gettype($units) }}</small>
-                @endif
-            </div>
-        </td>
-    </tr>
 @else
     <tr>
         <td colspan="4" class="text-center py-5 text-muted">
-            <div style="padding: 40px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 16px;">
-                    <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
-                    <line x1="8" y1="2" x2="8" y2="22"></line>
-                    <line x1="16" y1="2" x2="16" y2="22"></line>
-                    <line x1="2" y1="8" x2="22" y2="8"></line>
-                    <line x1="2" y1="16" x2="22" y2="16"></line>
-                </svg>
-                <p>No units found</p>
-                <a href="{{ route('admin.units.create') }}" class="btn btn-primary rounded-pill mt-3 px-4"
+            <div class="d-flex flex-column align-items-center justify-content-center" style="padding: 40px;">
+                <div class="bg-muted p-3 rounded-circle border" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24">
+                        <g fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M17 11.805c0-.346 0-.519.052-.673c.151-.448.55-.621.95-.803c.448-.205.672-.307.895-.325c.252-.02.505.034.721.155c.286.16.486.466.69.714c.943 1.146 1.415 1.719 1.587 2.35c.14.51.14 1.044 0 1.553c-.251.922-1.046 1.694-1.635 2.41c-.301.365-.452.548-.642.655a1.27 1.27 0 0 1-.721.155c-.223-.018-.447-.12-.896-.325c-.4-.182-.798-.355-.949-.803c-.052-.154-.052-.327-.052-.672zm-10 0c0-.436-.012-.827-.364-1.133c-.128-.111-.298-.188-.637-.343c-.449-.204-.673-.307-.896-.325c-.667-.054-1.026.402-1.41.87c-.944 1.145-1.416 1.718-1.589 2.35a2.94 2.94 0 0 0 0 1.553c.252.921 1.048 1.694 1.636 2.409c.371.45.726.861 1.363.81c.223-.018.447-.12.896-.325c.34-.154.509-.232.637-.343c.352-.306.364-.697.364-1.132z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M20 10.5V9c0-3.866-3.582-7-8-7S4 5.134 4 9v1.5m16 7c0 4.5-4 4.5-8 4.5" />
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-muted mt-1">No units found</p>
+                <a href="{{ route('admin.units.create') }}" class="btn btn-primary rounded-pill px-4"
                     style="background: #f8773c; border: none;">
                     Add New Unit
                 </a>

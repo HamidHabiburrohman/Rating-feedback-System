@@ -2,533 +2,681 @@
 
 @section('title', $unit->name . ' — Detail Unit')
 
-@section('admin-content')
-
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+@push('styles')
 <style>
-    :root {
-        --primary: #f8773c;
-        --primary-light: rgba(248, 119, 60, 0.08);
-        --primary-medium: rgba(248, 119, 60, 0.15);
-        --primary-hover: #e5652a;
-        
-        --secondary: #2d3748;
-        --secondary-light: #4a5568;
-        --secondary-medium: #718096;
-        
-        --surface: #f8fafc;
-        --surface-secondary: #ffffff;
-        --surface-elevated: #ffffff;
-        
-        --text-primary: #1e293b;
-        --text-secondary: #475569;
-        --text-tertiary: #94a3b8;
-        --text-inverse: #ffffff;
-        
-        --border-light: #e2e8f0;
-        --border-medium: #cbd5e1;
-        
-        --success: #10b981;
-        --success-light: rgba(16, 185, 129, 0.08);
-        --danger: #ef4444;
-        --danger-light: rgba(239, 68, 68, 0.08);
-        
-        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.03);
-        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.04);
-        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.05);
-        --shadow-inner-top: inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        
-        --radius-sm: 10px;
-        --radius-md: 16px;
-        --radius-lg: 24px;
-        --radius-xl: 32px;
-        --radius-full: 9999px;
-    }
+:root {
+    --primary: #f8773c;
+    --primary-light: rgba(248, 119, 60, 0.08);
+    --primary-dark: #e56a2e;
+    --bg-main: #f8fafc;
+    --bg-surface: #ffffff;
+    --surface: #f3f4f6;
+    --border: rgba(15, 23, 42, 0.06);
+    --border-medium: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+    --text-inverse: #ffffff;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
 
-    * {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+.show-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    font-family: var(--font-body);
+    color: var(--text-primary);
+}
 
-    body {
-        background: var(--surface);
-    }
+.hero-section {
+    position: relative;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    height: 480px;
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    background: var(--surface);
+}
 
-    .unit-show-container {
-        max-width: 1280px;
-        margin: 0 auto;
-    }
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-    .bento-card {
-        background: var(--surface-elevated);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        transition: all 0.2s ease;
-        box-shadow: var(--shadow-xs);
-    }
+.hero-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
 
-    .bento-card:hover {
-        box-shadow: var(--shadow-md);
-        border-color: var(--border-medium);
-    }
+.hero-placeholder i {
+    font-size: 80px;
+    color: var(--text-tertiary);
+    opacity: 0.3;
+}
 
-    .hero-section {
-        position: relative;
-        border-radius: var(--radius-xl);
-        overflow: hidden;
-        height: 580px;
-        margin-bottom: 1.75rem;
-        border: 1px solid var(--border-light);
-        box-shadow: var(--shadow-sm);
-    }
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.6) 100%);
+    pointer-events: none;
+}
 
-    .hero-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, 
-            rgba(0, 0, 0, 0) 0%, 
-            rgba(0, 0, 0, 0.1) 45%,
-            rgba(0, 0, 0, 0.5) 100%);
-    }
+.hero-top-bar {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+}
 
-    .hero-back-btn {
-        position: absolute;
-        top: 1.25rem;
-        left: 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border-radius: var(--radius-full);
-        color: var(--text-inverse);
-        text-decoration: none;
-        transition: all 0.2s ease;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 10;
-    }
+.glass-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    color: var(--text-inverse);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
 
-    .hero-back-btn:hover {
-        background: rgba(255, 255, 255, 0.25);
-        color: var(--text-inverse);
-        transform: scale(1.05);
-    }
+.glass-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
 
-    .hero-back-btn i {
-        font-size: 1.25rem;
-    }
+.glass-btn-icon {
+    width: 40px;
+    padding: 0;
+}
 
-    .hero-content {
-        position: absolute;
-        bottom: 1.75rem;
-        left: 1.75rem;
-        right: 1.75rem;
-        color: var(--text-inverse);
-    }
+.hero-actions {
+    display: flex;
+    gap: 8px;
+}
 
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.875rem;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        color: var(--text-inverse);
-        border-radius: var(--radius-full);
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+.hero-content {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    z-index: 10;
+    color: var(--text-inverse);
+}
 
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        background: var(--surface-secondary);
-        border: 1px solid var(--border-light);
-    }
+.hero-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
 
-    .stat-label {
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: var(--text-tertiary);
-        margin-bottom: 0.25rem;
-    }
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-inverse);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 1.2;
-        color: var(--text-primary);
-        letter-spacing: -0.02em;
-    }
+.hero-badge.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+}
 
-    .stat-unit {
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: var(--text-tertiary);
-        margin-left: 0.125rem;
-    }
+.hero-title {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 12px 0;
+    font-family: var(--font-display);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
 
-    .facility-item {
-        transition: all 0.2s ease;
-    }
+.hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+}
 
-    .facility-item:hover {
-        background: var(--primary-light) !important;
-        border-color: var(--primary) !important;
-    }
+.hero-code {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-    .facility-item:hover .facility-icon-wrapper {
-        transform: scale(1.05);
-    }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+}
 
-    .facility-icon-wrapper {
-        transition: transform 0.2s ease;
-    }
+.stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
 
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-    }
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
 
-    .status-dot-pulse {
-        position: relative;
-    }
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
 
-    .status-dot-pulse::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: inherit;
-        animation: pulse 1.8s ease-out infinite;
-    }
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 
-    @keyframes pulse {
-        0% { transform: scale(1); opacity: 0.5; }
-        100% { transform: scale(2.8); opacity: 0; }
-    }
+.stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
-    .section-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        letter-spacing: -0.01em;
-    }
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    line-height: 1.2;
+}
 
-    .section-title i {
-        color: var(--primary);
-        font-size: 1.25rem;
-    }
+.stat-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
 
-    .schedule-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.625rem 0;
-        border-bottom: 1px solid var(--border-light);
-    }
+.bento-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
 
-    .schedule-row:last-child {
-        border-bottom: none;
-    }
+.bento-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
 
-    .schedule-day {
-        font-weight: 500;
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-    }
+.bento-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 28px;
+    box-shadow: var(--shadow-sm);
+}
 
-    .schedule-time {
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 0.875rem;
-    }
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
 
-    .schedule-closed {
-        color: var(--danger);
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
+.card-header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
 
-    .map-placeholder {
-        background: var(--surface-secondary);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        text-align: center;
-        border: 1px solid var(--border-light);
-    }
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+}
 
-    .action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
-        border-radius: var(--radius-full);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: all 0.2s ease;
-        letter-spacing: -0.01em;
-    }
+.card-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0;
+}
 
-    .action-btn-primary {
-        background: var(--primary);
-        color: var(--text-inverse);
-        border: none;
-        box-shadow: var(--shadow-inner-top), 0 4px 12px rgba(248, 119, 60, 0.25);
-    }
+.facilities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
 
-    .action-btn-primary:hover {
-        background: var(--primary-hover);
-        color: var(--text-inverse);
-        box-shadow: var(--shadow-inner-top), 0 6px 16px rgba(248, 119, 60, 0.35);
-        transform: translateY(-1px);
-    }
+.facility-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+}
 
-    .action-btn-secondary {
-        background: transparent;
-        color: var(--text-secondary);
-        border: 1px solid var(--border-medium);
-    }
+.facility-item:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
 
-    .action-btn-secondary:hover {
-        background: var(--surface-secondary);
-        border-color: var(--border-medium);
-        color: var(--text-primary);
-    }
+.facility-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
 
-    .action-btn i {
-        font-size: 1.125rem;
-    }
+.facility-item:hover .facility-icon {
+    background: var(--primary);
+    color: var(--text-inverse);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
 
-    .grid {
-        display: grid;
-    }
+.facility-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
 
-    .grid-cols-1 {
-        grid-template-columns: repeat(1, 1fr);
-    }
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
-    .gap-4 {
-        gap: 1rem;
-    }
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
 
-    .rounded-4 {
-        border-radius: 1rem;
-    }
+.info-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius);
+    background: var(--bg-main);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
 
-    .tracking-tight { 
-        letter-spacing: -0.02em; 
-    }
+.info-content {
+    flex: 1;
+    min-width: 0;
+}
 
-    @media (min-width: 768px) {
-        .md\:grid-cols-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
+.info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+}
 
-    @media (max-width: 768px) {
-        .hero-section {
-            height: 300px;
-            border-radius: var(--radius-lg);
-        }
-        
-        .hero-content {
-            bottom: 1.25rem;
-            left: 1.25rem;
-            right: 1.25rem;
-        }
-        
-        .bento-card {
-            padding: 1.25rem;
-        }
+.info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-word;
+    text-decoration: none;
+    transition: color 0.2s;
+}
 
-        .hero-back-btn {
-            top: 1rem;
-            left: 1rem;
-            width: 36px;
-            height: 36px;
-        }
-    }
+a.info-value:hover {
+    color: var(--primary);
+}
+
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-row:last-child {
+    border-bottom: none;
+}
+
+.schedule-day {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.schedule-time {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'SF Mono', 'Menlo', monospace;
+}
+
+.schedule-closed {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--danger);
+    background: var(--danger-light);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: var(--bg-main);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-dot.open {
+    background: var(--success);
+}
+
+.status-dot.open::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--success);
+    opacity: 0.3;
+    animation: pulse-ring 2s infinite;
+}
+
+.status-dot.closed {
+    background: var(--danger);
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.status-text {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status-text.open { color: var(--success); }
+.status-text.closed { color: var(--danger); }
+
+.map-placeholder {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(135deg, var(--bg-main) 0%, #e2e8f0 100%);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+}
+
+.map-placeholder i {
+    font-size: 40px;
+    color: var(--primary);
+    opacity: 0.4;
+}
+
+@media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .bento-grid { grid-template-columns: 1fr; }
+    .hero-section { height: 360px; }
+    .hero-title { font-size: 32px; }
+}
+
+@media (max-width: 640px) {
+    .show-container { padding: 16px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .facilities-grid { grid-template-columns: 1fr; }
+    .hero-section { height: 280px; border-radius: var(--radius-xl); }
+    .hero-content { bottom: 20px; left: 20px; right: 20px; }
+    .hero-title { font-size: 24px; }
+    .hero-top-bar { top: 16px; left: 16px; right: 16px; }
+    .bento-card { padding: 20px; }
+}
 </style>
+@endpush
 
+@section('admin-content')
 @php
     $imageUrl = asset('assets/images/UnitPlaceholder.png');
-
     if ($unit->primaryPhoto) {
-        $photo = $unit->primaryPhoto;
-        $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
-        if ($url) {
-            $imageUrl = $url;
-        }
+        $url = $unit->primaryPhoto->thumbnail_url ?? $unit->primaryPhoto->original_url ?? null;
+        if ($url) $imageUrl = $url;
     } elseif ($unit->photos->isNotEmpty()) {
-        $photo = $unit->photos->first();
-        $url = $photo->thumbnail_url ?? $photo->original_url ?? null;
-        if ($url) {
-            $imageUrl = $url;
-        }
+        $url = $unit->photos->first()->thumbnail_url ?? $unit->photos->first()->original_url ?? null;
+        if ($url) $imageUrl = $url;
     }
 
     $schedule = $unit->operational_schedule ?? [];
     $isOpen = $unit->is_open ?? null;
 @endphp
 
-<div class="unit-show-container">
-    
+<div class="show-container">
     <div class="hero-section">
-        @if($imageUrl)
-            <img src="{{ $imageUrl }}" alt="{{ $unit->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+        @if($imageUrl && !str_contains($imageUrl, 'UnitPlaceholder.png'))
+            <img src="{{ $imageUrl }}" alt="{{ $unit->name }}" class="hero-image">
         @else
-            <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--surface), var(--surface-secondary)); display: flex; align-items: center; justify-content: center;">
-                <i class="ti ti-building" style="font-size: 64px; color: var(--text-tertiary); opacity: 0.2;"></i>
+            <div class="hero-placeholder">
+                <i class="ti ti-building"></i>
             </div>
         @endif
         <div class="hero-overlay"></div>
         
-        <a href="{{ route('admin.units.index') }}" class="hero-back-btn">
-            <i class="ti ti-arrow-left"></i>
-        </a>
-        
-        <div style="position: absolute; top: 1.25rem; right: 1.25rem; display: flex; gap: 0.5rem;">
-            <span class="hero-badge" style="{{ !$unit->is_active ? 'background: rgba(100, 116, 139, 0.3);' : '' }}">
-                {{ $unit->is_active ? 'Active' : 'Inactive' }}
-            </span>
-            @if($unit->operational_status)
-                <span class="hero-badge">
-                    {{ ucfirst($unit->operational_status) }}
-                </span>
-            @endif
+        <div class="hero-top-bar">
+            <a href="{{ route('admin.units.index') }}" class="glass-btn glass-btn-icon">
+                <i class="ti ti-arrow-left"></i>
+            </a>
+            <div class="hero-actions">
+                <a href="{{ route('admin.units.edit', $unit->id) }}" class="glass-btn">
+                    <i class="ti ti-edit"></i> Edit Unit
+                </a>
+            </div>
         </div>
-        
+
         <div class="hero-content">
-            <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
-                <span class="hero-badge" style="background: var(--primary); border: none;">
-                    {{ $unit->type->name ?? 'Unit' }}
+            <div class="hero-badges">
+                <span class="hero-badge primary">
+                    <i class="ti ti-tag"></i> {{ $unit->unitType->name ?? 'Unit' }}
                 </span>
-                @if($unit->department)
-                    <span style="color: rgba(255,255,255,0.75); font-size: 0.8125rem; font-weight: 500;">
-                        {{ $unit->department->name }}
+                @if($unit->unitDepartment)
+                    <span class="hero-badge">
+                        <i class="ti ti-sitemap"></i> {{ $unit->unitDepartment->name }}
+                    </span>
+                @endif
+                <span class="hero-badge" style="{{ !$unit->is_active ? 'background: rgba(239, 68, 68, 0.8); border-color: rgba(239, 68, 68, 0.8);' : '' }}">
+                    {{ $unit->is_active ? 'Active' : 'Inactive' }}
+                </span>
+            </div>
+            <h1 class="hero-title">{{ $unit->name }}</h1>
+            <div class="hero-meta">
+                @if($unit->code)
+                    <span class="hero-code">{{ $unit->code }}</span>
+                @endif
+                @if($unit->operational_status)
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <i class="ti ti-circle-dot"></i> {{ ucfirst($unit->operational_status) }}
                     </span>
                 @endif
             </div>
-            <h1 style="font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 700; line-height: 1.2; margin-bottom: 0.5rem; color: var(--text-inverse); letter-spacing: -0.02em;">
-                {{ $unit->name }}
-            </h1>
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-family: 'SF Mono', 'Menlo', monospace; background: rgba(255,255,255,0.1); padding: 0.2rem 0.75rem; border-radius: var(--radius-full); font-size: 0.75rem; color: rgba(255,255,255,0.85); font-weight: 500; backdrop-filter: blur(4px);">
-                    {{ $unit->code }}
-                </span>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ti ti-star"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Rating</span>
+                <span class="stat-value">{{ $unit->avg_rating > 0 ? number_format($unit->avg_rating, 1) : '—' }}</span>
+                <span class="stat-sub">{{ $unit->total_ratings > 0 ? number_format($unit->total_ratings) . ' reviews' : 'No reviews yet' }}</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ti ti-users"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Capacity</span>
+                <span class="stat-value">{{ $unit->capacity ? number_format($unit->capacity) : '—' }}</span>
+                <span class="stat-sub">Max pax</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ti ti-alert-triangle"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Reports</span>
+                <span class="stat-value">{{ $unit->reports_count ?? $unit->reports()->count() }}</span>
+                <span class="stat-sub">Total submitted</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ti ti-user-check"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Employees</span>
+                <span class="stat-value">{{ $unit->employeeAssignments()->where('is_active', true)->count() }}</span>
+                <span class="stat-sub">Assigned staff</span>
             </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="bento-card" style="padding: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="stat-icon">
-                    <i class="ti ti-users" style="font-size: 1.5rem; color: var(--primary);"></i>
-                </div>
-                <div>
-                    <div class="stat-label">Capacity</div>
-                    <div class="stat-value">{{ number_format($unit->capacity) }}<span class="stat-unit">pax</span></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bento-card" style="padding: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="stat-icon">
-                    <i class="ti ti-star" style="font-size: 1.5rem; color: var(--primary);"></i>
-                </div>
-                <div>
-                    <div class="stat-label">Rating</div>
-                    <div class="stat-value">
-                        {{ $unit->avg_rating > 0 ? number_format($unit->avg_rating, 1) : '—' }}
-                        <span class="stat-unit">{{ $unit->avg_rating > 0 ? '/5.0' : '' }}</span>
-                    </div>
-                    @if($unit->total_ratings > 0)
-                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-top: 0.125rem;">{{ number_format($unit->total_ratings) }} reviews</div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        
-        <div class="bento-card" style="padding: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="stat-icon">
-                    <i class="ti ti-building" style="font-size: 1.5rem; color: var(--primary);"></i>
-                </div>
-                <div>
-                    <div class="stat-label">Department</div>
-                    <div class="stat-value" style="font-size: 1.1rem;">
-                        {{ $unit->department->name ?? '—' }}
-                    </div>
-                    @if($unit->type)
-                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-top: 0.125rem;">{{ $unit->type->name }}</div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; align-items: start;">
-        
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            
+    <div class="bento-grid">
+        <div class="bento-col">
             <div class="bento-card">
-                <div class="section-title">
-                    <i class="ti ti-align-left"></i>
-                    <span>Description</span>
+                <div class="card-header">
+                    <div class="card-header-icon"><i class="ti ti-align-left"></i></div>
+                    <h3 class="card-title">Description</h3>
                 </div>
-                <p style="color: var(--text-secondary); line-height: 1.7; font-size: 0.9375rem; margin-bottom: 0;">
+                <p class="card-text">
                     {{ $unit->description ?: 'No description provided for this unit.' }}
                 </p>
             </div>
 
-            @if($unit->facilities->isNotEmpty())
+            @if($unit->facilities && $unit->facilities->isNotEmpty())
                 <div class="bento-card">
-                    <div class="section-title">
-                        <i class="ti ti-apps"></i>
-                        <span>Facilities</span>
+                    <div class="card-header">
+                        <div class="card-header-icon"><i class="ti ti-apps"></i></div>
+                        <h3 class="card-title">Facilities</h3>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="facilities-grid">
                         @foreach($unit->facilities as $facility)
-                            <div class="facility-item d-flex align-items-start gap-3 p-4 rounded-4 border">
-                                <div class="facility-icon-wrapper d-flex align-items-center justify-content-center rounded-circle shrink-0" style="width: 48px; height: 48px; background: var(--surface-elevated); border: 1px solid var(--border-medium);">
+                            <div class="facility-item">
+                                <div class="facility-icon">
                                     @if(method_exists($facility, 'getIconSvg'))
-                                        <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
-                                            {!! $facility->getIconSvg() !!}
-                                        </div>
+                                        {!! $facility->getIconSvg() !!}
                                     @else
-                                        <i class="ti ti-check" style="font-size: 1.5rem; color: var(--primary);"></i>
+                                        <i class="ti ti-check"></i>
                                     @endif
                                 </div>
-                                <div class="d-flex align-items-center" style="min-height: 48px;">
-                                    <h4 class="fw-bold mb-0" style="font-size: 1rem; color: var(--text-primary);">{{ $facility->name }}</h4>
-                                </div>
+                                <h4 class="facility-name">{{ $facility->name }}</h4>
                             </div>
                         @endforeach
                     </div>
@@ -536,30 +684,29 @@
             @endif
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            
+        <div class="bento-col">
             @if($unit->email || $unit->phone)
                 <div class="bento-card">
-                    <div class="section-title">
-                        <i class="ti ti-mail"></i>
-                        <span>Contact</span>
+                    <div class="card-header">
+                        <div class="card-header-icon"><i class="ti ti-mail"></i></div>
+                        <h3 class="card-title">Contact Info</h3>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="info-list">
                         @if($unit->email)
-                            <div style="display: flex; align-items: center; gap: 0.875rem;">
-                                <i class="ti ti-mail" style="color: var(--primary); font-size: 1.125rem;"></i>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.3px;">Email</div>
-                                    <a href="mailto:{{ $unit->email }}" style="color: var(--text-primary); text-decoration: none; font-weight: 500; font-size: 0.875rem; word-break: break-all;">{{ $unit->email }}</a>
+                            <div class="info-item">
+                                <div class="info-icon"><i class="ti ti-mail"></i></div>
+                                <div class="info-content">
+                                    <div class="info-label">Email Address</div>
+                                    <a href="mailto:{{ $unit->email }}" class="info-value">{{ $unit->email }}</a>
                                 </div>
                             </div>
                         @endif
                         @if($unit->phone)
-                            <div style="display: flex; align-items: center; gap: 0.875rem;">
-                                <i class="ti ti-phone" style="color: var(--primary); font-size: 1.125rem;"></i>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.3px;">Phone</div>
-                                    <a href="tel:{{ $unit->phone }}" style="color: var(--text-primary); text-decoration: none; font-weight: 500; font-size: 0.875rem;">{{ $unit->phone }}</a>
+                            <div class="info-item">
+                                <div class="info-icon"><i class="ti ti-phone"></i></div>
+                                <div class="info-content">
+                                    <div class="info-label">Phone Number</div>
+                                    <a href="tel:{{ $unit->phone }}" class="info-value">{{ $unit->phone }}</a>
                                 </div>
                             </div>
                         @endif
@@ -568,13 +715,13 @@
             @endif
 
             <div class="bento-card">
-                <div class="section-title">
-                    <i class="ti ti-clock"></i>
-                    <span>Hours</span>
+                <div class="card-header">
+                    <div class="card-header-icon"><i class="ti ti-clock"></i></div>
+                    <h3 class="card-title">Operating Hours</h3>
                 </div>
                 
                 @if(!empty($schedule))
-                    <div style="margin-bottom: 0.75rem;">
+                    <div class="schedule-list">
                         @foreach($schedule as $item)
                             <div class="schedule-row">
                                 <span class="schedule-day">{{ $item['days'] ?? '—' }}</span>
@@ -587,7 +734,7 @@
                         @endforeach
                     </div>
                 @elseif($unit->open_time || $unit->close_time)
-                    <div style="margin-bottom: 0.75rem;">
+                    <div class="schedule-list">
                         @if($unit->open_time)
                             <div class="schedule-row">
                                 <span class="schedule-day">Open</span>
@@ -602,61 +749,55 @@
                         @endif
                     </div>
                 @else
-                    <p style="color: var(--text-tertiary); font-size: 0.875rem; margin-bottom: 0;">Hours not set.</p>
+                    <p class="card-text" style="color: var(--text-tertiary);">Operating hours not configured.</p>
                 @endif
-                
+
                 @if($isOpen !== null)
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span class="status-dot status-dot-pulse" style="background: {{ $isOpen ? 'var(--success)' : 'var(--danger)' }};"></span>
-                            <span style="font-weight: 600; font-size: 0.8125rem; color: {{ $isOpen ? 'var(--success)' : 'var(--danger)' }};">
-                                {{ $isOpen ? 'Currently open' : 'Currently closed' }}
-                            </span>
-                        </div>
+                    <div class="status-indicator">
+                        <span class="status-dot {{ $isOpen ? 'open' : 'closed' }}"></span>
+                        <span class="status-text {{ $isOpen ? 'open' : 'closed' }}">
+                            {{ $isOpen ? 'Currently Open' : 'Currently Closed' }}
+                        </span>
                     </div>
                 @endif
             </div>
 
             @if($unit->location || $unit->building || $unit->floor)
                 <div class="bento-card">
-                    <div class="section-title">
-                        <i class="ti ti-map-pin"></i>
-                        <span>Location</span>
+                    <div class="card-header">
+                        <div class="card-header-icon"><i class="ti ti-map-pin"></i></div>
+                        <h3 class="card-title">Location Details</h3>
                     </div>
-                    
-                    <div class="map-placeholder" style="margin-bottom: 1rem;">
-                        <i class="ti ti-map-2" style="font-size: 2rem; color: var(--primary); opacity: 0.3;"></i>
+                    <div class="map-placeholder">
+                        <i class="ti ti-map-2"></i>
                     </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 0.375rem;">
+                    <div class="info-list">
                         @if($unit->location)
-                            <p style="font-weight: 600; color: var(--text-primary); font-size: 0.9375rem; margin-bottom: 0.125rem;">{{ $unit->location }}</p>
+                            <div class="info-item">
+                                <div class="info-icon"><i class="ti ti-map-pin"></i></div>
+                                <div class="info-content">
+                                    <div class="info-label">Address / Area</div>
+                                    <div class="info-value">{{ $unit->location }}</div>
+                                </div>
+                            </div>
                         @endif
-                        <p style="color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.875rem;">
-                            <i class="ti ti-building" style="color: var(--primary); margin-top: 0.125rem;"></i>
-                            <span>
-                                @if($unit->building)Building {{ $unit->building }}@endif
-                                @if($unit->floor), Floor {{ $unit->floor }}@endif
-                                @if(!$unit->building && !$unit->floor)Location details not specified
-                                @endif
-                            </span>
-                        </p>
+                        @if($unit->building || $unit->floor)
+                            <div class="info-item">
+                                <div class="info-icon"><i class="ti ti-building"></i></div>
+                                <div class="info-content">
+                                    <div class="info-label">Building Details</div>
+                                    <div class="info-value">
+                                        @if($unit->building) Building {{ $unit->building }} @endif
+                                        @if($unit->building && $unit->floor) • @endif
+                                        @if($unit->floor) Floor {{ $unit->floor }} @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             @endif
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            document.querySelectorAll('.toast').forEach(function(toast) {
-                var bsToast = bootstrap.Toast.getInstance(toast);
-                if (bsToast) bsToast.hide();
-                toast.remove();
-            });
-        }, 5000);
-    });
-</script>
 @endsection

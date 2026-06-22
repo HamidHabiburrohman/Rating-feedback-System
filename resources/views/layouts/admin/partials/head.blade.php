@@ -1,11 +1,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap"
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet">
+
 <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.png') }}">
+
 <title>@yield('title', 'Itenas Unit - Admin Panel')</title>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -28,6 +31,7 @@
     body {
         height: 100%;
         font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 400;
     }
 
     body {
@@ -94,7 +98,6 @@
         flex: 1;
         padding: 24px;
         background-color: #f8fafc;
-        overflow-y: auto;
     }
 
     .footer {

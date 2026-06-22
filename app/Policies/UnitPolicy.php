@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Student;
-use App\Models\Units\Unit;
+use App\Models\Unit\Unit;
 
 class UnitPolicy
 {

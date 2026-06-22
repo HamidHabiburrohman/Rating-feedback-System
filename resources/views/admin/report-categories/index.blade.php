@@ -1,20 +1,17 @@
 @extends('layouts.admin.app')
 
-@section('title', 'Unit Types Management')
+@section('title', 'Report Categories Management')
 
 @section('admin-content')
     <div class="container-fluid px-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h2 fw-bold mb-0" style="color: #1a1a1a;">Unit Types Management</h1>
-            </div>
+            <h1 class="h2 fw-bold mb-0" style="color: #1a1a1a;">Report Categories Management</h1>
         </div>
 
         <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
-                <x-admin.search-button placeholder="Search by name or description..." />
-
-                <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+                <x-admin.search-button-component placeholder="Search by name or slug..." id="searchInput" />
+                <div class="d-flex align-items-center gap-2">
                     <div class="dropdown" id="filterContainer">
                         <button
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
@@ -86,10 +83,8 @@
                         'created_at_asc' => 'Oldest First',
                     ]" defaultSort="name" defaultOrder="asc" />
 
-                    <x-admin.button-create url="{{ route('admin.unit-types.create') }}" tooltip="Add New Unit Type"
-                        size="md">
-                        Add Type
-                    </x-admin.button-create>
+                    <x-admin.button-create url="{{ route('admin.report-categories.create') }}"
+                        tooltip="Add New Report Category" size="md">Add Category</x-admin.button-create>
                 </div>
             </div>
         </div>
@@ -127,19 +122,22 @@
                     <thead class="bg-transparent">
                         <tr class="text-muted" style="font-size: .75rem;">
                             <th class="ps-4 py-3 fw-semibold">Name</th>
-                            <th class="py-3 fw-semibold">Units Count</th>
+                            <th class="py-3 fw-semibold">Usage Count</th>
                             <th class="py-3 fw-semibold">Status</th>
                             <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="unitTypesTable">
-                        @include('admin.unit-types.partials.rows', ['types' => $types])
+                    <tbody id="categoriesTable">
+                        @include('admin.report-categories.partials.rows', [
+                            'categories' => $categories ?? collect(),
+                        ])
                     </tbody>
                 </table>
             </div>
-
-            <div class="px-4 py-3" id="unitTypesPaginationContainer">
-                @include('admin.unit-types.partials.pagination', ['paginator' => $types])
+            <div class="px-4 py-3" id="categoriesPaginationContainer">
+                @include('admin.report-categories.partials.pagination', [
+                    'paginator' => $categories ?? collect(),
+                ])
             </div>
         </div>
     </div>
@@ -152,10 +150,6 @@
             background-size: 200% 100%;
             animation: skeleton-shimmer 1.5s infinite ease-in-out;
             border-radius: 6px;
-        }
-
-        .skeleton-circle {
-            border-radius: 50%;
         }
 
         @keyframes skeleton-shimmer {
@@ -175,11 +169,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeSearch();
             initializeFilters();
-            initializeStatusToggle();
-            initializeAlerts();
-            initializeDropdowns();
             initializePagination();
             initializeSort();
+            initializeAlerts();
+            initializeDropdowns();
         });
 
         function generateSkeletonRows(count) {
@@ -241,7 +234,7 @@
         }
 
         function initializeSearch() {
-            const searchInput = document.getElementById('searchInput') || document.querySelector('input[name="search"]');
+            const searchInput = document.getElementById('searchInput');
             if (!searchInput) return;
 
             let searchTimeout;
@@ -276,7 +269,7 @@
             if (!filterContainer) return;
 
             const params = new URLSearchParams(window.location.search);
-            let selectedStatus = (params.get('status') || '').split(',').filter(s => s !== '');
+            let selectedStatus = params.get('status') ? [params.get('status')] : [];
 
             const activeStyle = 'background:#f8773c;border:none;color:white;';
             const inactiveStyle = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
@@ -285,7 +278,9 @@
                 filterContainer.querySelectorAll('.filter-status').forEach(btn => {
                     const value = btn.dataset.value;
                     btn.style.cssText = (value === '' && selectedStatus.length === 0) || selectedStatus.includes(
-                        value) ? activeStyle : inactiveStyle;
+                            value) ?
+                        activeStyle :
+                        inactiveStyle;
                 });
 
                 const filterText = document.getElementById('filterText');
@@ -318,8 +313,7 @@
                     if (value === '') {
                         selectedStatus = [];
                     } else {
-                        const index = selectedStatus.indexOf(value);
-                        index === -1 ? selectedStatus.push(value) : selectedStatus.splice(index, 1);
+                        selectedStatus = [value];
                     }
                     updateUI();
                 });
@@ -329,8 +323,11 @@
                 e.preventDefault();
                 e.stopPropagation();
                 const url = new URL(window.location.href);
-                selectedStatus.length > 0 ? url.searchParams.set('status', selectedStatus.join(',')) : url
-                    .searchParams.delete('status');
+                if (selectedStatus.length > 0) {
+                    url.searchParams.set('status', selectedStatus[0]);
+                } else {
+                    url.searchParams.delete('status');
+                }
                 url.searchParams.set('page', '1');
                 window.history.pushState({}, '', url);
                 fetchData(url);
@@ -354,74 +351,6 @@
 
             filterContainer.querySelector('.dropdown-menu')?.addEventListener('click', e => e.stopPropagation());
             updateUI();
-        }
-
-        function initializeStatusToggle() {
-            document.querySelectorAll('.status-toggle').forEach(button => {
-                button.addEventListener('click', function() {
-                    const typeId = this.dataset.id;
-                    const isActive = this.dataset.active === 'true';
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-                    fetch(`/admin/unit-types/${typeId}/toggle-status`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(res => {
-                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                            return res.json();
-                        })
-                        .then(data => {
-                            if (!data.success) return;
-                            const newActive = !isActive;
-                            this.dataset.active = String(newActive);
-                            const badge = document.getElementById(`status_badge_${typeId}`);
-
-                            if (newActive) {
-                                this.classList.replace('btn--secondary', 'btn-success');
-                                this.textContent = 'Active';
-                                if (badge) {
-                                    badge.className =
-                                        'badge rounded-pill px-3 ms-2 bg-success-subtle text-success';
-                                    badge.textContent = 'Active';
-                                }
-                            } else {
-                                this.classList.replace('btn-success', 'btn--secondary');
-                                this.textContent = 'Inactive';
-                                if (badge) {
-                                    badge.className =
-                                        'badge rounded-pill px-3 ms-2 bg-danger-subtle text-danger';
-                                    badge.textContent = 'Inactive';
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Toggle status error:', err));
-                });
-            });
-        }
-
-        function initializeDropdowns() {
-            initializeTooltips();
-            document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
-                const icon = btn.querySelector('.dropdown-icon');
-                if (!icon) return;
-                btn.addEventListener('show.bs.dropdown', () => icon.style.transform = 'rotate(180deg)');
-                btn.addEventListener('hide.bs.dropdown', () => icon.style.transform = 'rotate(0)');
-            });
-        }
-
-        function initializeAlerts() {
-            document.querySelectorAll('.alert').forEach(alert => {
-                setTimeout(() => {
-                    if (alert.classList.contains('show')) {
-                        bootstrap.Alert.getOrCreateInstance(alert)?.close();
-                    }
-                }, 5000);
-            });
         }
 
         function initializePagination() {
@@ -460,6 +389,25 @@
                     const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
                     if (bsDropdown) bsDropdown.hide();
                 }
+            });
+        }
+
+        function initializeDropdowns() {
+            document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
+                const icon = btn.querySelector('.dropdown-icon');
+                if (!icon) return;
+                btn.addEventListener('show.bs.dropdown', () => icon.style.transform = 'rotate(180deg)');
+                btn.addEventListener('hide.bs.dropdown', () => icon.style.transform = 'rotate(0)');
+            });
+        }
+
+        function initializeAlerts() {
+            document.querySelectorAll('.alert').forEach(alert => {
+                setTimeout(() => {
+                    if (alert.classList.contains('show')) {
+                        bootstrap.Alert.getOrCreateInstance(alert)?.close();
+                    }
+                }, 5000);
             });
         }
     </script>

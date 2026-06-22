@@ -26,19 +26,17 @@ class UnitService extends BaseAdminService
         }
 
         if (!empty($filters['type'])) {
-            $query->where('unit_type_id', $filters['type']);
+            $typeIds = is_array($filters['type']) ? $filters['type'] : explode(',', $filters['type']);
+            $query->whereIn('unit_type_id', $typeIds);
         }
 
         if (!empty($filters['department'])) {
             $query->where('unit_department_id', $filters['department']);
         }
 
-        if (isset($filters['status'])) {
-            if ($filters['status'] === 'active') {
-                $query->where('is_active', true);
-            } elseif ($filters['status'] === 'inactive') {
-                $query->where('is_active', false);
-            }
+        if (!empty($filters['status'])) {
+            $statuses = is_array($filters['status']) ? $filters['status'] : explode(',', $filters['status']);
+            $query->whereIn('operational_status', $statuses);
         }
 
         $sort = $filters['sort'] ?? 'latest';
@@ -52,11 +50,13 @@ class UnitService extends BaseAdminService
             case 'oldest':
                 $query->oldest();
                 break;
+            case 'latest':
             default:
                 $query->latest();
+                break;
         }
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        return $query->paginate($filters['per_page'] ?? 10);
     }
 
     public function getFormData(): array
@@ -65,7 +65,7 @@ class UnitService extends BaseAdminService
             return [
                 'unit_types' => UnitType::where('is_active', true)->orderBy('name')->get(['id', 'name']),
                 'departments' => UnitDepartment::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-                'facilities' => Facility::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+                'facilities' => Facility::where('is_active', true)->orderBy('name')->get(['id', 'name', 'icon']),
             ];
         });
     }
@@ -75,16 +75,11 @@ class UnitService extends BaseAdminService
         return UnitType::where('is_active', true)->orderBy('name')->get();
     }
 
-    public function getDepartmentsForFilter()
-    {
-        return UnitDepartment::where('is_active', true)->orderBy('name')->get();
-    }
     public function create(array $data): Unit
     {
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name'] . '-' . uniqid());
             $data['is_active'] = $data['is_active'] ?? true;
-
             $facilities = $data['facilities'] ?? [];
             unset($data['facilities']);
 
@@ -95,7 +90,6 @@ class UnitService extends BaseAdminService
             }
 
             Cache::tags(['units', 'landing', 'dashboard'])->flush();
-
             return $unit->fresh(['unitType', 'unitDepartment', 'facilities']);
         });
     }
@@ -103,7 +97,6 @@ class UnitService extends BaseAdminService
     public function getDetail(int $id): array
     {
         $cacheKey = "admin_unit_detail_{$id}";
-
         return Cache::tags(['units', "unit_{$id}"])->remember($cacheKey, 300, function () use ($id) {
             $unit = Unit::with([
                 'unitType',
@@ -123,7 +116,7 @@ class UnitService extends BaseAdminService
                     'total_reports' => $unit->reports()->count(),
                     'pending_reports' => $unit->reports()->whereIn('status', ['new', 'in_progress'])->count(),
                     'total_employees' => $unit->employeeAssignments()->where('is_active', true)->count(),
-                    'total_visits' => $unit->visits()->count(),
+                    'total_visits' => $unit->unitVisits()->count(),
                 ],
                 'recent_ratings' => $unit->ratings()->with('student')->latest()->limit(5)->get(),
                 'recent_reports' => $unit->reports()->with('student')->latest()->limit(5)->get(),
@@ -164,7 +157,6 @@ class UnitService extends BaseAdminService
             }
 
             Cache::tags(['units', "unit_{$id}", 'landing', 'dashboard'])->flush();
-
             return $unit->fresh(['unitType', 'unitDepartment', 'facilities']);
         });
     }
@@ -174,7 +166,6 @@ class UnitService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $unit = Unit::findOrFail($id);
             $unit->delete();
-
             Cache::tags(['units', "unit_{$id}", 'landing', 'dashboard'])->flush();
             return true;
         });
@@ -191,7 +182,7 @@ class UnitService extends BaseAdminService
             });
         }
 
-        return $query->latest('deleted_at')->paginate($filters['per_page'] ?? 15);
+        return $query->latest('deleted_at')->paginate($filters['per_page'] ?? 10);
     }
 
     public function restore(int $id): Unit
@@ -199,7 +190,6 @@ class UnitService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $unit = Unit::onlyTrashed()->findOrFail($id);
             $unit->restore();
-
             Cache::tags(['units', "unit_{$id}", 'landing', 'dashboard'])->flush();
             return $unit;
         });
@@ -210,7 +200,6 @@ class UnitService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $unit = Unit::onlyTrashed()->findOrFail($id);
             $unit->forceDelete();
-
             Cache::tags(['units', "unit_{$id}", 'landing', 'dashboard'])->flush();
             return true;
         });
@@ -221,7 +210,6 @@ class UnitService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $unit = Unit::findOrFail($id);
             $unit->update(['is_active' => !$unit->is_active]);
-
             Cache::tags(['units', "unit_{$id}", 'landing', 'dashboard'])->flush();
             return $unit->fresh();
         });
@@ -232,7 +220,6 @@ class UnitService extends BaseAdminService
         return DB::transaction(function () use ($id, $facilityIds) {
             $unit = Unit::findOrFail($id);
             $unit->facilities()->sync($facilityIds);
-
             Cache::tags(['units', "unit_{$id}"])->flush();
             return $unit->fresh(['facilities']);
         });

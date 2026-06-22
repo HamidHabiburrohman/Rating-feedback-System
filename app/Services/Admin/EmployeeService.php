@@ -24,7 +24,7 @@ class EmployeeService extends BaseAdminService
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('employee_code', 'like', "%{$search}%");
+                    ->orWhere('employee_id', 'like', "%{$search}%");
             });
         }
 
@@ -90,7 +90,8 @@ class EmployeeService extends BaseAdminService
             $temporaryPassword = $data['password'] ?? $this->generateTemporaryPassword();
             $data['password'] = Hash::make($temporaryPassword);
             $data['is_active'] = $data['is_active'] ?? true;
-            $data['employee_code'] = $data['employee_code'] ?? 'EMP-' . strtoupper(Str::random(8));
+            $data['employee_id'] = $data['employee_id'] ?? 'EMP-' . strtoupper(Str::random(8));
+
             $unitId = $data['unit_id'] ?? null;
             $roleInUnit = $data['role_in_unit'] ?? null;
             unset($data['unit_id'], $data['role_in_unit']);
@@ -199,8 +200,16 @@ class EmployeeService extends BaseAdminService
         return DB::transaction(function () use ($employeeId, $unitId, $roleInUnit) {
             Employee::findOrFail($employeeId);
             Unit::findOrFail($unitId);
-            $existing = EmployeeUnitAssignment::where('employee_id', $employeeId)->where('unit_id', $unitId)->where('is_active', true)->first();
-            if ($existing) throw new \Exception('Karyawan sudah ditugaskan ke unit ini');
+
+            $existing = EmployeeUnitAssignment::where('employee_id', $employeeId)
+                ->where('unit_id', $unitId)
+                ->where('is_active', true)
+                ->first();
+
+            if ($existing) {
+                throw new \Exception('Karyawan sudah ditugaskan ke unit ini');
+            }
+
             $assignment = EmployeeUnitAssignment::create([
                 'employee_id' => $employeeId,
                 'unit_id' => $unitId,
@@ -208,6 +217,7 @@ class EmployeeService extends BaseAdminService
                 'is_active' => true,
                 'started_at' => now(),
             ]);
+
             Cache::tags(['employees', "employee_{$employeeId}", 'units', "unit_{$unitId}"])->flush();
             return $assignment;
         });
@@ -216,8 +226,15 @@ class EmployeeService extends BaseAdminService
     public function removeFromUnit(int $employeeId, int $unitId): bool
     {
         return DB::transaction(function () use ($employeeId, $unitId) {
-            $assignment = EmployeeUnitAssignment::where('employee_id', $employeeId)->where('unit_id', $unitId)->where('is_active', true)->first();
-            if (!$assignment) throw new \Exception('Karyawan tidak ditugaskan ke unit ini');
+            $assignment = EmployeeUnitAssignment::where('employee_id', $employeeId)
+                ->where('unit_id', $unitId)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$assignment) {
+                throw new \Exception('Karyawan tidak ditugaskan ke unit ini');
+            }
+
             $assignment->update(['is_active' => false, 'ended_at' => now()]);
             Cache::tags(['employees', "employee_{$employeeId}", 'units', "unit_{$unitId}"])->flush();
             return true;
@@ -228,12 +245,15 @@ class EmployeeService extends BaseAdminService
     {
         $cacheKey = "admin_employee_assigned_units_{$employeeId}";
         return Cache::tags(['employees', "employee_{$employeeId}"])->remember($cacheKey, 300, function () use ($employeeId) {
-            return Employee::findOrFail($employeeId)->unitAssignments()
+            return Employee::findOrFail($employeeId)
+                ->unitAssignments()
                 ->where('is_active', true)
                 ->where(function ($q) {
                     $q->whereNull('ended_at')->orWhere('ended_at', '>', now());
                 })
-                ->with('unit')->get()->toArray();
+                ->with('unit')
+                ->get()
+                ->toArray();
         });
     }
 }

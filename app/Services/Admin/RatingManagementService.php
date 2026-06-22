@@ -225,4 +225,17 @@ class RatingManagementService extends BaseAdminService
             'user_agent' => request()->userAgent(),
         ]);
     }
+
+    public function delete(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $rating = Rating::findOrFail($id);
+            $unitId = $rating->unit_id;
+            $rating->delete();
+
+            Cache::tags(['ratings', "rating_{$id}", "unit_{$unitId}", 'landing', 'dashboard'])->flush();
+
+            return true;
+        });
+    }
 }

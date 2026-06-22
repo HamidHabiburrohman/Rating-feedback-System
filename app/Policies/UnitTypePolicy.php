@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Student;
-use App\Models\Units\UnitType;
+use App\Models\Unit\UnitType;
 
 class UnitTypePolicy
 {
@@ -17,7 +17,7 @@ class UnitTypePolicy
         return null;
     }
 
-    
+
     public function viewAny($user): bool
     {
         if ($this->isAdmin($user)) {
@@ -51,7 +51,7 @@ class UnitTypePolicy
             if ($unitType instanceof \App\Models\Feedback\Rating) {
                 return $unitType->student_id === $user->id;
             }
-            if ($unitType instanceof \App\Models\Reports\Report) {
+            if ($unitType instanceof \App\Models\Report\Report) {
                 return $unitType->student_id === $user->id;
             }
             return true;
@@ -81,9 +81,9 @@ class UnitTypePolicy
             if ($unitType instanceof \App\Models\Feedback\Rating) {
                 return $unitType->student_id === $user->id && $unitType->status !== 'archived';
             }
-            if ($unitType instanceof \App\Models\Reports\Report) {
+            if ($unitType instanceof \App\Models\Report\Report) {
                 return $unitType->student_id === $user->id &&
-                       in_array($unitType->status, ['new', 'assigned', 'in_progress']);
+                    in_array($unitType->status, ['new', 'assigned', 'in_progress']);
             }
             return false;
         }
@@ -104,9 +104,9 @@ class UnitTypePolicy
             if ($unitType instanceof \App\Models\Feedback\Rating) {
                 return $unitType->student_id === $user->id && $unitType->status !== 'archived';
             }
-            if ($unitType instanceof \App\Models\Reports\Report) {
+            if ($unitType instanceof \App\Models\Report\Report) {
                 return $unitType->student_id === $user->id &&
-                       in_array($unitType->status, ['new', 'assigned', 'in_progress']);
+                    in_array($unitType->status, ['new', 'assigned', 'in_progress']);
             }
             return false;
         }
@@ -138,7 +138,7 @@ class UnitTypePolicy
         return $employee->unitAssignments()
             ->where('unit_id', $unitId)
             ->where('is_active', true)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('ended_at')->orWhere('ended_at', '>', now());
             })
             ->exists();

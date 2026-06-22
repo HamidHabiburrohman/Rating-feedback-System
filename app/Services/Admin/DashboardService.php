@@ -18,6 +18,8 @@ class DashboardService extends BaseAdminService
             $totalStudents = Student::where('is_active', true)->count();
             $totalRatings = Rating::whereIn('status', ['active', 'edited'])->count();
             $activeUnits = Unit::where('is_active', true)->count();
+            $totalEmployees = Employee::count();
+            $activeEmployees = Employee::where('is_active', true)->count();
 
             $yesterday = now()->subDay()->startOfDay();
             $studentsToday = Student::whereDate('created_at', today())->count();
@@ -44,48 +46,40 @@ class DashboardService extends BaseAdminService
                 'avg_rating' => $avgRating,
                 'active_units' => $activeUnits,
                 'total_units' => Unit::count(),
+                'total_employees' => $totalEmployees,
+                'active_employees' => $activeEmployees,
             ];
         });
     }
 
-    public function getChartData(string $period = 'week'): array
+        public function getChartData(string $period = 'week'): array
     {
-        $cacheKey = "admin_chart_{$period}";
-        return Cache::tags(['dashboard'])->remember($cacheKey, 300, function () use ($period) {
+        $cacheKey = "admin_chart_dummy_{$period}";
+        
+        return Cache::tags(['dashboard'])->remember($cacheKey, 60, function () use ($period) {
             $days = match ($period) {
                 'month' => 30,
                 'year' => 365,
                 default => 7,
             };
 
-            $start = now()->subDays($days);
-
-            $studentLogins = Student::where('created_at', '>=', $start)
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as students')
-                ->groupBy('date')
-                ->get()
-                ->mapWithKeys(fn($item) => [$item->date => $item->students]);
-
-            $unitGrowth = Unit::where('created_at', '>=', $start)
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->get()
-                ->mapWithKeys(fn($item) => [$item->date => $item->count]);
-
             $labels = [];
             $studentData = [];
             $newUnits = [];
             $cumulativeUnits = [];
-            $totalUnits = Unit::where('created_at', '<', $start)->count();
+            
+            $baseTotalUnits = rand(450, 800);
 
             for ($i = $days - 1; $i >= 0; $i--) {
-                $date = now()->subDays($i)->format('Y-m-d');
                 $labels[] = now()->subDays($i)->format('M d');
-                $studentData[] = $studentLogins[$date] ?? 0;
-                $dayNewUnits = $unitGrowth[$date] ?? 0;
+                
+                $studentData[] = rand(1200, 3500    );
+                
+                $dayNewUnits = ($i % 3000 === 0) ? rand(100, 140) : rand(300, 200);
                 $newUnits[] = $dayNewUnits;
-                $totalUnits += $dayNewUnits;
-                $cumulativeUnits[] = $totalUnits;
+                
+                $baseTotalUnits += $dayNewUnits;
+                $cumulativeUnits[] = $baseTotalUnits;
             }
 
             return [
@@ -103,7 +97,7 @@ class DashboardService extends BaseAdminService
         });
     }
 
-    public function getTopUnits(string $type = 'all', int $limit = 5): array
+    public function getTopUnits(string $type = 'all', int $limit = 50): array
     {
         $cacheKey = "admin_top_units_{$type}_{$limit}";
         return Cache::tags(['dashboard', 'units'])->remember($cacheKey, 300, function () use ($type, $limit) {
@@ -136,7 +130,7 @@ class DashboardService extends BaseAdminService
         });
     }
 
-    public function getAttentionUnits(int $limit = 5): array
+    public function getAttentionUnits(int $limit = 50): array
     {
         return Cache::tags(['dashboard', 'units'])->remember('admin_attention_units_' . $limit, 300, function () use ($limit) {
             return Unit::with(['unitType', 'reports'])
@@ -162,7 +156,7 @@ class DashboardService extends BaseAdminService
         });
     }
 
-    public function getRecentRated(int $limit = 5): array
+    public function getRecentRated(int $limit = 10): array
     {
         return Cache::tags(['dashboard', 'ratings'])->remember('admin_recent_rated_units_' . $limit, 300, function () use ($limit) {
             return Rating::with(['student', 'unit.unitType'])
@@ -187,10 +181,31 @@ class DashboardService extends BaseAdminService
         });
     }
 
+    public function getTopEmployees(string $filter = 'all', int $limit = 5): array
+    {
+        $query = Employee::with(['unitAssignments.unit']);
+
+        if ($filter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($filter === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        return $query->latest()->limit($limit)->get()->map(function ($emp) {
+            $units = $emp->unitAssignments->where('is_active', true)->pluck('unit.name')->filter()->values();
+            return [
+                'id' => $emp->id,
+                'name' => $emp->name,
+                'position' => $emp->position ?? 'Staff',
+                'assigned_units' => $units->toArray(),
+                'status' => $emp->is_active ? 'active' : 'inactive',
+            ];
+        })->toArray();
+    }
+
     public function getAuditLogs(array $filters = []): array
     {
         $query = ModerationLog::with(['admin']);
-
         if (!empty($filters['action'])) $query->where('action', $filters['action']);
         if (!empty($filters['target_type'])) $query->where('target_type', $filters['target_type']);
         if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);

@@ -14,30 +14,17 @@ class UpdateRatingCategoryRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('rating_category') ?? $this->route('id');
-
+        $categoryId = $this->route('rating_category') ?? $this->route('id'); 
+        
         return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('rating_categories')->ignore($id),
-            ],
-            'slug' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('rating_categories')->ignore($id),
-            ],
-            'is_active' => 'sometimes|boolean',
-            'sort_order' => 'nullable|integer|min:0',
+            'name'          => ['required', 'string', 'max:255', Rule::unique('rating_categories', 'name')->ignore($categoryId)],
+            'slug'          => ['nullable', 'string', 'max:255', Rule::unique('rating_categories', 'slug')->ignore($categoryId)],
+            'description'   => 'nullable|string|max:1000',
+            'is_active'     => 'nullable|boolean',
+            'sort_order'    => 'nullable|integer|min:0',
+            'min_score'     => 'nullable|numeric|min:0',
+            'max_score'     => 'nullable|numeric|gte:min_score',
+            'default_score' => 'nullable|numeric',
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        $this->merge([
-            'is_active' => $this->boolean('is_active', true),
-        ]);
     }
 }

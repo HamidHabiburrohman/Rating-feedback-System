@@ -2,6 +2,7 @@
 
 namespace App\Models\Feedback;
 
+use App\Models\Unit\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,8 +14,13 @@ class RatingCategory extends Model
     protected $table = 'rating_categories';
 
     protected $fillable = [
-        'name', 'slug', 'is_active', 'sort_order',
-        'min_score', 'max_score', 'default_score'
+        'name',
+        'slug',
+        'is_active',
+        'sort_order',
+        'min_score',
+        'max_score',
+        'default_score'
     ];
 
     protected $casts = [
@@ -29,6 +35,10 @@ class RatingCategory extends Model
     public function ratingScores()
     {
         return $this->hasMany(RatingScore::class);
+    }
+    public function units()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     protected static function newFactory()

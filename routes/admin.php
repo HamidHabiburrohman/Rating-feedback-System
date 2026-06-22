@@ -42,8 +42,8 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::get('dashboard/audit-logs', [DashboardController::class, 'auditLogs'])->name('dashboard.audit-logs');
     Route::get('dashboard/recent-rated', [DashboardController::class, 'recentRated'])->name('dashboard.recent-rated');
     Route::get('dashboard/top-units/{type?}', [DashboardController::class, 'topUnits'])->name('dashboard.top-units');
-    Route::get('dashboard/recent-activities', [DashboardController::class, 'recentActivities'])->name('dashboard.recent-activities');
     Route::get('dashboard/attention-units', [DashboardController::class, 'attentionUnits'])->name('dashboard.attention-units');
+    Route::get('dashboard/top-employees', [DashboardController::class, 'topEmployees'])->name('dashboard.top-employees');
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -96,7 +96,7 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::post('employees/{id}/remove-from-unit', [EmployeeController::class, 'removeFromUnit'])->name('employees.remove-from-unit');
     Route::get('employees/{id}/assigned-units', [EmployeeController::class, 'getAssignedUnits'])->name('employees.assigned-units');
 
-    Route::resource('rating-categories', RatingCategoryController::class)->except(['create', 'show', 'edit']);
+    Route::resource('rating-categories', RatingCategoryController::class)->except(['show']);
     Route::post('rating-categories/{id}/toggle-active', [RatingCategoryController::class, 'toggleActive'])->name('rating-categories.toggle-active');
     Route::post('rating-categories/reorder', [RatingCategoryController::class, 'reorder'])->name('rating-categories.reorder');
     Route::get('rating-categories/active', [RatingCategoryController::class, 'active'])->name('rating-categories.active');
@@ -108,8 +108,9 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::post('ratings/bulk-action', [RatingController::class, 'bulkAction'])->name('ratings.bulk-action');
     Route::get('ratings/export', [RatingController::class, 'export'])->name('ratings.export');
     Route::get('ratings/stats', [RatingController::class, 'stats'])->name('ratings.stats');
+    Route::delete('ratings/{id}', [RatingController::class, 'destroy'])->name('ratings.destroy');
 
-    Route::resource('report-categories', ReportCategoryController::class)->except(['create', 'show', 'edit']);
+    Route::resource('report-categories', ReportCategoryController::class)->except(['show']);
     Route::post('report-categories/{id}/toggle-active', [ReportCategoryController::class, 'toggleActive'])->name('report-categories.toggle-active');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

@@ -110,7 +110,6 @@ class Unit extends Model
     {
         return $this->hasMany(EmployeeUnitAssignment::class);
     }
-
     protected static function newFactory()
     {
         return \Database\Factories\UnitFactory::new();

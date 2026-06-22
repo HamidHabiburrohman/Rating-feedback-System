@@ -6,8 +6,8 @@
     <div class="page-container">
         <header class="page-header">
             <div>
-                <h1>Edit Departemen</h1>
-                <p class="subtitle">Perbarui informasi departemen: {{ $department->name }}</p>
+                <h1 class="page-title">Edit Departemen</h1>
+                <p class="page-subtitle">Perbarui informasi departemen: <strong>{{ $department->name }}</strong></p>
             </div>
             <a href="{{ route('admin.unit-departments.index') }}" class="btn-ghost">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -17,24 +17,45 @@
             </a>
         </header>
 
-        @if($errors->any())
+        @if (session('error'))
             <div class="alert alert-error" role="alert">
-                <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
+                <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 <div>
-                    <strong>Terjadi kesalahan:</strong>
+                    <strong>Error:</strong> {{ session('error') }}
+                </div>
+                <button class="alert-close" onclick="this.parentElement.remove()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-error" role="alert">
+                <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <div>
+                    <strong>Terjadi kesalahan validasi:</strong>
                     <ul>
-                        @foreach($errors->all() as $error)
+                        @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
                 </div>
                 <button class="alert-close" onclick="this.parentElement.remove()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
@@ -56,9 +77,6 @@
                     <div class="form-group">
                         <label for="name" class="form-label">Nama Departemen <span class="required">*</span></label>
                         <div class="input-wrapper">
-                            <input type="text" id="name" name="name" value="{{ old('name', $department->name) }}"
-                                placeholder="Contoh: Fakultas Teknik" class="form-input @error('name') is-invalid @enderror"
-                                required>
                             <span class="input-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -67,6 +85,10 @@
                                     <line x1="9" y1="21" x2="9" y2="9" />
                                 </svg>
                             </span>
+                            <input type="text" id="name" name="name"
+                                value="{{ old('name', $department->name) }}"
+                                placeholder="Contoh: Fakultas Teknik, Departemen IT"
+                                class="form-input @error('name') is-invalid @enderror" required>
                         </div>
                         @error('name')
                             <span class="error-message">{{ $message }}</span>
@@ -76,17 +98,18 @@
                     <div class="form-group">
                         <label for="code" class="form-label">Kode Departemen</label>
                         <div class="input-wrapper">
-                            <input type="text" id="code" name="code" value="{{ old('code', $department->code) }}"
-                                placeholder="Contoh: FT, FE" class="form-input @error('code') is-invalid @enderror">
                             <span class="input-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                    <text x="6" y="18" font-size="10" fill="currentColor">A</text>
+                                    <text x="6" y="16" font-size="10" fill="currentColor" font-weight="bold">A</text>
                                 </svg>
                             </span>
+                            <input type="text" id="code" name="code"
+                                value="{{ old('code', $department->code) }}" placeholder="Contoh: FT, IT"
+                                class="form-input code-input @error('code') is-invalid @enderror" maxlength="10">
                         </div>
-                        <span class="help-text">Kode unik untuk departemen (opsional)</span>
+                        <span class="help-text">Kode unik singkat untuk departemen (otomatis kapital)</span>
                         @error('code')
                             <span class="error-message">{{ $message }}</span>
                         @enderror
@@ -94,7 +117,8 @@
 
                     <div class="form-group full-width">
                         <label for="description" class="form-label">Deskripsi</label>
-                        <textarea id="description" name="description" rows="4" placeholder="Deskripsikan departemen ini..."
+                        <textarea id="description" name="description" rows="4"
+                            placeholder="Deskripsikan fungsi dan ruang lingkup departemen ini..."
                             class="form-textarea @error('description') is-invalid @enderror">{{ old('description', $department->description) }}</textarea>
                         @error('description')
                             <span class="error-message">{{ $message }}</span>
@@ -103,27 +127,30 @@
                 </div>
             </section>
 
-            <div class="settings-section">
+            <section class="form-card settings-section">
                 <div class="settings-row">
                     <div class="settings-info">
-                        <h3>Status Aktif</h3>
-                        <p>Departemen yang tidak aktif tidak akan ditampilkan</p>
+                        <h3 class="settings-title">Status Aktif</h3>
+                        <p class="settings-desc">Departemen yang tidak aktif tidak akan ditampilkan dalam pemilihan unit.
+                        </p>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', $department->is_active) ? 'checked' : '' }}>
+                        <input type="hidden" name="is_active" value="0">
+                        <input type="checkbox" name="is_active" value="1"
+                            {{ old('is_active', $department->is_active) ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
-            </div>
+            </section>
 
             <div class="form-actions">
                 <a href="{{ route('admin.unit-departments.index') }}" class="btn btn-secondary">Batal</a>
-                <button type="submit" class="btn btn-light" style="color:#ffff; background-color: #FF5625;" id="submitBtn">
-                    <span class="btn-text">Update Departemen</span>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="btn-text">Perbarui Departemen</span>
                     <span class="btn-loader" style="display: none;">
                         <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="4" fill="none" stroke-dasharray="60"
-                                stroke-dashoffset="20" />
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                fill="none" stroke-dasharray="60" stroke-dashoffset="20" />
                         </svg>
                         Menyimpan...
                     </span>
@@ -137,32 +164,20 @@
     <style>
         :root {
             --color-primary: #f8773c;
-            --color-primary-light: #f1c3ae;
             --color-primary-dark: #e55a2b;
             --color-primary-50: #fff5f0;
-            --color-gray-50: #f9fafb;
-            --color-gray-100: #f3f4f6;
-            --color-gray-200: #e5e7eb;
-            --color-gray-300: #d1d5db;
-            --color-gray-400: #9ca3af;
-            --color-gray-500: #6b7280;
-            --color-gray-600: #4b5563;
-            --color-gray-700: #374151;
-            --color-gray-900: #111827;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-border: rgba(15, 23, 42, 0.06);
+            --color-text-primary: #0f172a;
+            --color-text-secondary: #64748b;
             --color-error: #ef4444;
             --color-error-50: #fef2f2;
-            --color-success: #10b981;
-            --color-success-50: #d1fae5;
-            --color-warning: #f59e0b;
-            --color-warning-50: #fef3c7;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 14px;
-            --radius-xl: 18px;
-            --radius-full: 9999px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --radius-card: 24px;
+            --radius-input: 12px;
+            --radius-pill: 9999px;
+            --shadow-resting: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
             --shadow-primary: 0 4px 14px rgba(248, 119, 60, 0.25);
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -171,39 +186,43 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 2rem 1.5rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--color-text-primary);
         }
 
         .page-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
         }
 
-        .page-header h1 {
+        .page-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--color-gray-900);
-            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.25rem 0;
         }
 
-        .page-header .subtitle {
-            color: var(--color-gray-500);
+        .page-subtitle {
+            color: var(--color-text-secondary);
             font-size: 0.875rem;
+            font-weight: 400;
+            margin: 0;
         }
 
         .form-layout {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            gap: 1.5rem;
         }
 
         .form-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--color-gray-200);
+            background: var(--color-surface);
+            border-radius: var(--radius-card);
+            padding: 2rem;
+            box-shadow: var(--shadow-resting);
+            border: 1px solid var(--color-border);
         }
 
         .section-title {
@@ -212,42 +231,35 @@
             gap: 0.75rem;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--color-gray-900);
-            margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--color-gray-100);
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--color-border);
         }
 
         .section-number {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background: var(--color-primary-50);
             color: var(--color-primary);
             font-size: 0.75rem;
             font-weight: 700;
-            border-radius: 50%;
+            border-radius: var(--radius-pill);
         }
 
         .grid {
             display: grid;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .grid-cols-2 {
             grid-template-columns: repeat(2, 1fr);
         }
 
-        .grid-cols-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
         @media (max-width: 768px) {
-
-            .grid-cols-2,
-            .grid-cols-3 {
+            .grid-cols-2 {
                 grid-template-columns: 1fr;
             }
         }
@@ -255,7 +267,7 @@
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.375rem;
+            gap: 0.5rem;
         }
 
         .form-group.full-width {
@@ -265,10 +277,10 @@
         .form-label {
             font-size: 0.875rem;
             font-weight: 500;
-            color: var(--color-gray-700);
+            color: var(--color-text-primary);
             display: flex;
             align-items: center;
-            gap: 0.375rem;
+            gap: 0.5rem;
         }
 
         .required {
@@ -277,7 +289,7 @@
 
         .help-text {
             font-size: 0.75rem;
-            color: var(--color-gray-400);
+            color: var(--color-text-secondary);
             margin-top: 0.25rem;
         }
 
@@ -294,354 +306,85 @@
         }
 
         .form-input,
-        .form-select,
         .form-textarea {
             width: 100%;
-            padding: 0.625rem 0.875rem;
-            padding-left: 2.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-input);
             font-size: 0.875rem;
-            color: var(--color-gray-900);
-            background: white;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            background: var(--color-surface);
             transition: var(--transition);
         }
 
+        .form-textarea {
+            padding-left: 1rem;
+            resize: vertical;
+            min-height: 120px;
+        }
+
         .form-input:focus,
-        .form-select:focus,
         .form-textarea:focus {
             outline: none;
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px var(--color-primary-50);
-        }
-
-        .form-input::placeholder,
-        .form-textarea::placeholder {
-            color: var(--color-gray-400);
+            box-shadow: 0 0 0 4px rgba(248, 119, 60, 0.1);
         }
 
         .input-icon {
             position: absolute;
-            left: 0.75rem;
-            color: var(--color-gray-400);
+            left: 0.875rem;
+            color: var(--color-text-secondary);
             pointer-events: none;
+            display: flex;
+            align-items: center;
         }
 
         .form-input.is-invalid,
-        .form-select.is-invalid,
         .form-textarea.is-invalid {
             border-color: var(--color-error);
             background-color: var(--color-error-50);
         }
 
-        .form-input.is-invalid:focus {
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-        }
-
-        .form-textarea {
-            padding-left: 0.875rem;
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .code-wrapper {
-            display: flex;
-            gap: 0.5rem;
+        .form-input.is-invalid:focus,
+        .form-textarea.is-invalid:focus {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
         }
 
         .code-input {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.875rem;
+            font-family: 'SF Mono', ui-monospace, monospace;
             letter-spacing: 0.05em;
-            background: var(--color-gray-50);
-            color: var(--color-gray-600);
-        }
-
-        .btn-icon {
-            padding: 0.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
-            background: white;
-            color: var(--color-gray-500);
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-icon:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            background: var(--color-primary-50);
-        }
-
-        .badge.auto {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            background: var(--color-primary-50);
-            color: var(--color-primary);
-            border-radius: var(--radius-sm);
-            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .time-range-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .time-range {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--color-gray-50);
-            padding: 0.5rem;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--color-gray-200);
-        }
-
-        .time-input {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .time-input input {
-            width: 100%;
-            text-align: center;
-            padding: 0.5rem;
-            border: 1px solid var(--color-gray-200);
-            border-radius: var(--radius-md);
-            font-size: 0.875rem;
             font-weight: 600;
-            color: var(--color-gray-700);
-            background: white;
-            transition: var(--transition);
-        }
-
-        .time-input input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px var(--color-primary-50);
-        }
-
-        .time-label {
-            font-size: 0.625rem;
-            color: var(--color-gray-400);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 500;
-        }
-
-        .time-separator {
-            color: var(--color-gray-400);
-            font-size: 1.25rem;
-            font-weight: 300;
-        }
-
-        .time-validation {
-            font-size: 0.75rem;
-            text-align: center;
-        }
-
-        .status-options {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .status-option {
-            cursor: pointer;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .status-option input {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.375rem;
-            padding: 0.625rem 1.25rem;
-            border-radius: var(--radius-full);
-            font-size: 0.8125rem;
-            font-weight: 500;
-            border: 1px solid transparent;
-            transition: var(--transition);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        .status-badge.open {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.maintenance {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
-        }
-
-        .status-badge.closed {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-badge.low {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.medium {
-            background: var(--color-warning-50);
-            color: #d97706;
-            border-color: rgba(245, 158, 11, 0.2);
-        }
-
-        .status-badge.high {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-badge.critical {
-            background: rgba(124, 29, 8, 0.1);
-            color: #7c1d08;
-            border-color: rgba(124, 29, 8, 0.2);
-        }
-
-        .status-badge.new {
-            background: var(--color-primary-50);
-            color: var(--color-primary);
-            border-color: rgba(248, 119, 60, 0.2);
-        }
-
-        .status-badge.in_progress {
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
-            border-color: rgba(37, 99, 235, 0.2);
-        }
-
-        .status-badge.replied {
-            background: rgba(147, 51, 234, 0.1);
-            color: #9333ea;
-            border-color: rgba(147, 51, 234, 0.2);
-        }
-
-        .status-badge.resolved {
-            background: var(--color-success-50);
-            color: #059669;
-            border-color: rgba(16, 185, 129, 0.2);
-        }
-
-        .status-badge.rejected {
-            background: var(--color-error-50);
-            color: #dc2626;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-
-        .status-option:hover .status-badge {
-            filter: brightness(0.95);
-        }
-
-        .status-option input:checked+.status-badge.open,
-        .status-option input:checked+.status-badge.resolved,
-        .status-option input:checked+.status-badge.low {
-            background: #10b981;
-            color: white;
-            border-color: #10b981;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.maintenance,
-        .status-option input:checked+.status-badge.medium {
-            background: #f59e0b;
-            color: white;
-            border-color: #f59e0b;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.closed,
-        .status-option input:checked+.status-badge.rejected,
-        .status-option input:checked+.status-badge.high {
-            background: #ef4444;
-            color: white;
-            border-color: #ef4444;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.critical {
-            background: #7c1d08;
-            color: white;
-            border-color: #7c1d08;
-            box-shadow: 0 2px 8px rgba(124, 29, 8, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.new {
-            background: var(--color-primary);
-            color: white;
-            border-color: var(--color-primary);
-            box-shadow: 0 2px 8px rgba(248, 119, 60, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.in_progress {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
-        }
-
-        .status-option input:checked+.status-badge.replied {
-            background: #9333ea;
-            color: white;
-            border-color: #9333ea;
-            box-shadow: 0 2px 8px rgba(147, 51, 234, 0.25);
         }
 
         .settings-section {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.25rem 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--color-gray-200);
+            padding: 1.5rem 2rem;
         }
 
         .settings-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
-        .settings-info h3 {
+        .settings-title {
             font-size: 0.9375rem;
             font-weight: 600;
-            color: var(--color-gray-900);
-            margin-bottom: 0.25rem;
+            margin: 0 0 0.25rem 0;
         }
 
-        .settings-info p {
+        .settings-desc {
             font-size: 0.8125rem;
-            color: var(--color-gray-500);
+            color: var(--color-text-secondary);
+            margin: 0;
         }
 
         .toggle-switch {
             position: relative;
-            width: 52px;
-            height: 28px;
+            width: 48px;
+            height: 26px;
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -658,22 +401,22 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: var(--color-gray-300);
-            border-radius: var(--radius-full);
+            background: #cbd5e1;
+            border-radius: var(--radius-pill);
             transition: var(--transition);
         }
 
         .toggle-slider:before {
             content: '';
             position: absolute;
-            height: 22px;
-            width: 22px;
+            height: 20px;
+            width: 20px;
             left: 3px;
             bottom: 3px;
             background: white;
             border-radius: 50%;
             transition: var(--transition);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .toggle-switch input:checked+.toggle-slider {
@@ -681,12 +424,12 @@
         }
 
         .toggle-switch input:checked+.toggle-slider:before {
-            transform: translateX(24px);
+            transform: translateX(22px);
         }
 
         .btn-ghost {
             background: transparent;
-            color: var(--color-gray-600);
+            color: var(--color-text-secondary);
             padding: 0.5rem 0.75rem;
             display: inline-flex;
             align-items: center;
@@ -694,7 +437,7 @@
             gap: 0.5rem;
             font-size: 0.875rem;
             font-weight: 500;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-input);
             border: 1px solid transparent;
             cursor: pointer;
             transition: var(--transition);
@@ -702,8 +445,8 @@
         }
 
         .btn-ghost:hover {
-            background: var(--color-gray-100);
-            color: var(--color-gray-900);
+            background: #f1f5f9;
+            color: var(--color-text-primary);
         }
 
         .form-actions {
@@ -721,14 +464,53 @@
             .form-actions .btn {
                 width: 100%;
             }
+        }
 
-            .status-options {
-                flex-direction: column;
-            }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-input);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
 
-            .status-option {
-                width: 100%;
-            }
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            border-color: var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-loader {
@@ -751,15 +533,15 @@
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
-            padding: 1rem;
-            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-input);
             margin-bottom: 1.5rem;
         }
 
         .alert-error {
             background: var(--color-error-50);
             border: 1px solid rgba(239, 68, 68, 0.2);
-            color: var(--color-error);
+            color: #b91c1c;
         }
 
         .alert-icon {
@@ -776,6 +558,8 @@
             opacity: 0.5;
             cursor: pointer;
             line-height: 1;
+            display: flex;
+            align-items: center;
         }
 
         .alert-close:hover {
@@ -787,208 +571,35 @@
             padding-left: 1.25rem;
             font-size: 0.875rem;
         }
-
-        .ts-control {
-            border-color: var(--color-gray-200) !important;
-            border-radius: var(--radius-md) !important;
-            padding: 0.5rem 0.75rem !important;
-            min-height: 46px;
-        }
-
-        .ts-control:focus {
-            border-color: var(--color-primary) !important;
-            box-shadow: 0 0 0 3px var(--color-primary-50) !important;
-        }
-
-        .ts-dropdown {
-            border-radius: var(--radius-md) !important;
-            border-color: var(--color-gray-200) !important;
-            box-shadow: var(--shadow-lg) !important;
-        }
-
-        .ts-dropdown .active {
-            background: var(--color-primary-50) !important;
-            color: var(--color-primary) !important;
-        }
-
-        .no-results {
-            padding: 0.5rem;
-            color: var(--color-gray-500);
-            font-size: 0.875rem;
-        }
-
-        .facilities-wrapper {
-            margin-top: 0.5rem;
-        }
-
-        .select-simple {
-            padding-left: 0.875rem;
-        }
     </style>
 @endpush
 
-@push('admin-scripts')
+@push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeTomSelect();
-            initializeCodeGeneration();
-            initializeSlugGeneration();
-            initializeTimeValidation();
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCodeInput();
             initializeFormValidation();
-            initializeAlerts();
         });
 
-        function initializeTomSelect() {
-            const facilitiesSelect = document.getElementById('facilities');
-            if (!facilitiesSelect) return;
-
-            if (typeof TomSelect !== 'undefined') {
-                new TomSelect(facilitiesSelect, {
-                    plugins: ['remove_button'],
-                    maxItems: null,
-                    hideSelected: true,
-                    create: false,
-                    render: {
-                        no_results: function () {
-                            return '<div class="no-results">Tidak ada fasilitas yang cocok</div>';
-                        }
-                    }
-                });
-            }
-        }
-
-        function initializeCodeGeneration() {
-            const nameInput = document.getElementById('name');
-            const typeSelect = document.getElementById('unit_type_id');
+        function initializeCodeInput() {
             const codeInput = document.getElementById('code');
-            const regenerateBtn = document.getElementById('regenerateCode');
+            if (!codeInput) return;
 
-            if (!nameInput || !codeInput) return;
-
-            const generateCode = () => {
-                const name = nameInput.value.trim();
-                const typeOption = typeSelect ? typeSelect.options[typeSelect.selectedIndex] : null;
-
-                if (!name || (typeSelect && !typeSelect.value)) {
-                    codeInput.value = '';
-                    return;
-                }
-
-                const typePrefix = typeOption && typeOption.dataset.code
-                    ? typeOption.dataset.code
-                    : (typeOption ? typeOption.text.substring(0, 3).toUpperCase() : 'UNT');
-
-                const words = name.split(/\s+/);
-                let nameCode = '';
-
-                if (words.length === 1) {
-                    nameCode = words[0].substring(0, 3).toUpperCase();
-                } else {
-                    nameCode = words.map(w => w.charAt(0).toUpperCase()).join('').substring(0, 3);
-                }
-
-                const randomNum = Math.floor(Math.random() * 90 + 10);
-                codeInput.value = `${typePrefix}-${nameCode}-${randomNum}`;
-            };
-
-            nameInput.addEventListener('blur', generateCode);
-
-            if (typeSelect) {
-                typeSelect.addEventListener('change', () => {
-                    if (nameInput.value.trim()) generateCode();
-                });
-            }
-
-            if (regenerateBtn) {
-                regenerateBtn.addEventListener('click', generateCode);
-            }
-        }
-
-        function initializeSlugGeneration() {
-            const nameInput = document.getElementById('name');
-            const slugInput = document.getElementById('slug');
-
-            if (!nameInput || !slugInput) return;
-
-            let slugEdited = false;
-
-            slugInput.addEventListener('input', function () {
-                slugEdited = true;
+            codeInput.addEventListener('input', function() {
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
             });
-
-            nameInput.addEventListener('input', function () {
-                if (!slugEdited && (!slugInput.value || slugInput.value === '')) {
-                    slugInput.value = this.value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-|-$/g, '');
-                }
-            });
-        }
-
-        function initializeTimeValidation() {
-            const openTime = document.getElementById('open_time');
-            const closeTime = document.getElementById('close_time');
-            const timeValidation = document.getElementById('timeValidation');
-
-            if (!openTime || !closeTime) return;
-
-            const validateTime = () => {
-                const open = openTime.value;
-                const close = closeTime.value;
-
-                if (!open || !close) {
-                    if (timeValidation) timeValidation.textContent = '';
-                    return true;
-                }
-
-                if (open >= close) {
-                    if (timeValidation) {
-                        timeValidation.textContent = 'Jam tutup harus setelah jam buka';
-                        timeValidation.style.color = 'var(--color-error)';
-                    }
-                    closeTime.classList.add('is-invalid');
-                    return false;
-                }
-
-                const openDate = new Date(`2000-01-01T${open}`);
-                const closeDate = new Date(`2000-01-01T${close}`);
-                const duration = (closeDate - openDate) / (1000 * 60 * 60);
-
-                if (timeValidation) {
-                    timeValidation.textContent = `Durasi: ${duration} jam`;
-                    timeValidation.style.color = 'var(--color-success)';
-                }
-                closeTime.classList.remove('is-invalid');
-                return true;
-            };
-
-            openTime.addEventListener('change', validateTime);
-            closeTime.addEventListener('change', validateTime);
         }
 
         function initializeFormValidation() {
-            const form = document.querySelector('form[id$="Form"]');
+            const form = document.getElementById('departmentForm');
             const submitBtn = document.getElementById('submitBtn');
 
             if (!form) return;
 
-            form.addEventListener('submit', function (e) {
-                const openTime = document.getElementById('open_time');
-                const closeTime = document.getElementById('close_time');
-
-                if (openTime && closeTime) {
-                    const open = openTime.value;
-                    const close = closeTime.value;
-
-                    if (open && close && open >= close) {
-                        e.preventDefault();
-                        closeTime.classList.add('is-invalid');
-                        closeTime.focus();
-                        return;
-                    }
-                }
-
+            form.addEventListener('submit', function(e) {
                 const requiredFields = form.querySelectorAll('[required]');
                 let isValid = true;
                 let firstError = null;
@@ -1006,7 +617,10 @@
                 if (!isValid) {
                     e.preventDefault();
                     if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                         firstError.focus();
                     }
                     return;
@@ -1021,23 +635,11 @@
                 }
             });
 
-            const inputs = form.querySelectorAll('.form-input, .form-select, .form-textarea');
+            const inputs = form.querySelectorAll('.form-input, .form-textarea');
             inputs.forEach(input => {
-                input.addEventListener('input', function () {
+                input.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
                 });
-            });
-        }
-
-        function initializeAlerts() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    if (alert.classList.contains('show')) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        if (bsAlert) bsAlert.close();
-                    }
-                }, 5000);
             });
         }
     </script>

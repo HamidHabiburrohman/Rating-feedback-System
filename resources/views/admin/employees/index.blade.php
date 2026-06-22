@@ -52,7 +52,7 @@
                 <x-admin.search-button placeholder="Search employees..." />
 
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <div class="dropdown">
+                    <div class="dropdown" id="perPageDropdown">
                         <button
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown"
@@ -94,7 +94,7 @@
                             </svg>
                         </button>
 
-                        <div class="dropdown-menu p-0 border-0 shadow-lg rounded-4 mt-2"
+                        <div class="dropdown-menu border-0 shadow-lg rounded-4 mt-2"
                             style="min-width: 380px; background-color: #ffffff;">
                             <div class="p-3">
                                 <div class="mb-3">
@@ -127,6 +127,7 @@
                                                 class="btn btn-sm rounded-pill px-3 fw-medium filter-unit unit-btn {{ empty($currentUnits) ? 'filter-active' : '' }}"
                                                 data-value="" data-name="all"
                                                 style="{{ empty($currentUnits) ? $activeStyle : $inactiveStyle }}">All</button>
+
                                             @foreach ($units as $unit)
                                                 <button type="button"
                                                     class="btn btn-sm rounded-pill px-3 fw-medium filter-unit unit-btn {{ in_array($unit->id, $currentUnits) ? 'filter-active' : '' }}"
@@ -137,6 +138,7 @@
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="mb-1">
                                     <label class="small fw-bold text-uppercase mb-2 mt-2 d-block"
                                         style="color: #6b7280; letter-spacing: 0.05em;">Status</label>
@@ -157,6 +159,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div class="p-3 border-top d-flex gap-2 bg-white">
                                 <button type="button" id="resetFilter"
                                     class="btn btn-sm rounded-pill w-100 fw-semibold d-flex align-items-center justify-content-center"
@@ -168,7 +171,7 @@
                         </div>
                     </div>
 
-                    <div class="dropdown">
+                    <div class="dropdown" id="sortDropdown">
                         <button
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown"
@@ -179,6 +182,11 @@
                             </svg>
                             <span class="fw-medium"
                                 id="sortText">{{ request('sort', 'Name A-Z') == 'name_asc' ? 'Name A-Z' : (request('sort') == 'name_desc' ? 'Name Z-A' : (request('sort') == 'created_at_desc' ? 'Newest First' : (request('sort') == 'created_at_asc' ? 'Oldest First' : 'Name A-Z'))) }}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
+                                style="transition:.3s">
+                                <path d="M6 9l6 6 6-6" />
+                            </svg>
                         </button>
                         <ul class="dropdown-menu border-0 shadow-lg rounded-3">
                             <li><a class="dropdown-item sort-option" data-sort="name_asc" href="javascript:void(0)">Name
@@ -229,12 +237,12 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="bg-transparent">
-                        <tr class="text-muted text-uppercase" style="font-size: .75rem;">
-                            <th class="ps-4 py-3 fw-semibold">Employee</th>
-                            <th class="py-3 fw-semibold">Email</th>
-                            <th class="py-3 fw-semibold">Assigned Units</th>
-                            <th class="py-3 fw-semibold">Status</th>
-                            <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
+                        <tr class="text-muted" style="font-size: .75rem;">
+                            <th class="ps-4 py-3 fw-light">Employee</th>
+                            <th class="py-3 fw-light">Email</th>
+                            <th class="py-3 fw-light">Assigned Units</th>
+                            <th class="py-3 fw-light">Status</th>
+                            <th class="pe-4 py-3 fw-light text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="employeesTable">
@@ -258,6 +266,7 @@
             const unitSearchInput = document.getElementById('unitSearchInput');
             const applyFilterBtn = document.getElementById('applyFilter');
             const resetFilterBtn = document.getElementById('resetFilter');
+            const searchInput = document.getElementById('searchInput');
             const tbody = document.getElementById('employeesTable');
             const paginationWrapper = document.getElementById('paginationWrapper');
 
@@ -266,6 +275,7 @@
                 'background: white !important; border: 1px solid #d1d5db !important; color: #6b7280 !important;';
 
             let filters = {
+                search: new URLSearchParams(window.location.search).get('search') || '',
                 unit_id: '{{ request('unit_id', '') }}',
                 status: '{{ request('status', '') }}',
                 sort: '{{ request('sort', 'name_asc') }}',
@@ -273,9 +283,12 @@
                 page: 1
             };
 
+            let searchTimeout;
+
             function showSkeleton() {
                 let skeleton = '';
-                for (let i = 0; i < parseInt(filters.per_page); i++) {
+                const rows = parseInt(filters.per_page) || 10;
+                for (let i = 0; i < rows; i++) {
                     skeleton += `
                 <tr>
                     <td class="ps-4"><div class="d-flex align-items-center gap-3"><div class="skeleton-avatar" style="width:40px;height:40px;"></div><div class="skeleton-text" style="width: 120px;"></div></div></td>
@@ -291,14 +304,10 @@
             function fetchEmployees() {
                 showSkeleton();
                 const params = new URLSearchParams();
-
-                const urlSearch = new URLSearchParams(window.location.search);
-                if (urlSearch.get('search')) {
-                    params.append('search', urlSearch.get('search'));
-                }
-
                 Object.keys(filters).forEach(key => {
-                    if (filters[key] !== '' && filters[key] !== null) params.append(key, filters[key]);
+                    if (filters[key] !== '' && filters[key] !== null) {
+                        params.append(key, filters[key]);
+                    }
                 });
 
                 fetch(`{{ route('admin.employees.index') }}?${params.toString()}`, {
@@ -312,7 +321,11 @@
                         paginationWrapper.innerHTML = data.pagination;
                         bindPaginationEvents();
                     })
-                    .catch(err => console.error(err));
+                    .catch(err => {
+                        console.error('Error fetching employees:', err);
+                        tbody.innerHTML =
+                            `<tr><td colspan="5" class="text-center py-5 text-danger">Failed to load data</td></tr>`;
+                    });
             }
 
             function bindPaginationEvents() {
@@ -323,6 +336,10 @@
                         if (page && page != filters.page) {
                             filters.page = page;
                             fetchEmployees();
+                            window.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
                         }
                     });
                 });
@@ -361,6 +378,25 @@
                 });
             }
 
+            function setupDropdownIconRotation(dropdownId) {
+                const dropdown = document.getElementById(dropdownId);
+                if (!dropdown) return;
+                const btn = dropdown.querySelector('.dropdown-toggle-btn');
+                const icon = dropdown.querySelector('.dropdown-icon');
+                if (!btn || !icon) return;
+
+                dropdown.addEventListener('show.bs.dropdown', () => {
+                    icon.style.transform = 'rotate(180deg)';
+                });
+                dropdown.addEventListener('hide.bs.dropdown', () => {
+                    icon.style.transform = 'rotate(0)';
+                });
+            }
+
+            setupDropdownIconRotation('perPageDropdown');
+            setupDropdownIconRotation('filterContainer');
+            setupDropdownIconRotation('sortDropdown');
+
             if (filterContainer) {
                 filterContainer.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -391,11 +427,11 @@
                             this.style.cssText = activeStyle;
                             this.classList.add('filter-active');
                         } else {
-                            document.querySelector('.filter-unit[data-value=""]').style.cssText =
-                                inactiveStyle;
-                            document.querySelector('.filter-unit[data-value=""]').classList.remove(
-                                'filter-active');
-
+                            const allBtn = document.querySelector('.filter-unit[data-value=""]');
+                            if (allBtn) {
+                                allBtn.style.cssText = inactiveStyle;
+                                allBtn.classList.remove('filter-active');
+                            }
                             let selected = filters.unit_id ? filters.unit_id.split(',').filter(
                                 Boolean) : [];
                             const idx = selected.indexOf(value);
@@ -422,44 +458,59 @@
                 });
             });
 
-            applyFilterBtn?.addEventListener('click', function(e) {
-                e.stopPropagation();
-                filters.page = 1;
-                fetchEmployees();
-                const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
-                if (dropdownInstance) dropdownInstance.hide();
-            });
-
-            resetFilterBtn?.addEventListener('click', function(e) {
-                e.stopPropagation();
-                filters.unit_id = '';
-                filters.status = '';
-                filters.page = 1;
-
-                document.querySelectorAll('.filter-unit, .filter-status').forEach(b => {
-                    b.style.cssText = inactiveStyle;
-                    b.classList.remove('filter-active');
+            if (applyFilterBtn) {
+                applyFilterBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    filters.page = 1;
+                    fetchEmployees();
+                    const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
+                    if (dropdownInstance) dropdownInstance.hide();
                 });
-                const allUnitBtn = document.querySelector('.filter-unit[data-value=""]');
-                if (allUnitBtn) {
-                    allUnitBtn.style.cssText = activeStyle;
-                    allUnitBtn.classList.add('filter-active');
-                }
-                const allStatusBtn = document.querySelector('.filter-status[data-value=""]');
-                if (allStatusBtn) {
-                    allStatusBtn.style.cssText = activeStyle;
-                    allStatusBtn.classList.add('filter-active');
-                }
+            }
 
-                if (unitSearchInput) {
-                    unitSearchInput.value = '';
-                    updateUnitVisibility();
-                }
+            if (resetFilterBtn) {
+                resetFilterBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    filters.unit_id = '';
+                    filters.status = '';
+                    filters.page = 1;
 
-                fetchEmployees();
-                const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
-                if (dropdownInstance) dropdownInstance.hide();
-            });
+                    document.querySelectorAll('.filter-unit, .filter-status').forEach(b => {
+                        b.style.cssText = inactiveStyle;
+                        b.classList.remove('filter-active');
+                    });
+                    const allUnitBtn = document.querySelector('.filter-unit[data-value=""]');
+                    if (allUnitBtn) {
+                        allUnitBtn.style.cssText = activeStyle;
+                        allUnitBtn.classList.add('filter-active');
+                    }
+                    const allStatusBtn = document.querySelector('.filter-status[data-value=""]');
+                    if (allStatusBtn) {
+                        allStatusBtn.style.cssText = activeStyle;
+                        allStatusBtn.classList.add('filter-active');
+                    }
+
+                    if (unitSearchInput) {
+                        unitSearchInput.value = '';
+                        updateUnitVisibility();
+                    }
+
+                    fetchEmployees();
+                    const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
+                    if (dropdownInstance) dropdownInstance.hide();
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        filters.search = this.value;
+                        filters.page = 1;
+                        fetchEmployees();
+                    }, 500);
+                });
+            }
 
             document.querySelectorAll('.sort-option').forEach(opt => {
                 opt.addEventListener('click', function(e) {
@@ -469,6 +520,16 @@
                     document.getElementById('sortText').textContent = this.textContent;
                     fetchEmployees();
                 });
+            });
+
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert.classList.contains('show')) {
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                        if (bsAlert) bsAlert.close();
+                    }
+                }, 5000);
             });
 
             bindPaginationEvents();

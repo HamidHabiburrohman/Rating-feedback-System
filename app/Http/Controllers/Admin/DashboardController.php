@@ -31,10 +31,13 @@ class DashboardController extends Controller
         try {
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getStats(),
+                'data' => $this->service->getStats()
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil statistik'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik'
+            ], 500);
         }
     }
 
@@ -44,61 +47,79 @@ class DashboardController extends Controller
             $period = $request->get('period', 'week');
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getChartData($period),
+                'data' => $this->service->getChartData($period)
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil data chart'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data chart'
+            ], 500);
         }
     }
 
     public function topUnits(Request $request, string $type = 'all')
     {
         try {
-            $limit = (int) $request->get('limit', 5);
+            $limit = (int) $request->get('limit', 50);
+            $units = $this->service->getTopUnits($type, $limit);
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getTopUnits($type, $limit),
+                'data' => $units
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil top units'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil top units'
+            ], 500);
         }
     }
 
     public function attentionUnits(Request $request)
     {
         try {
-            $limit = (int) $request->get('limit', 5);
+            $limit = (int) $request->get('limit', 50);
+            $units = $this->service->getAttentionUnits($limit);
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getAttentionUnits($limit),
+                'data' => $units
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil units yang perlu perhatian'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil units yang perlu perhatian'
+            ], 500);
         }
     }
 
     public function recentRated(Request $request)
     {
         try {
-            $limit = (int) $request->get('limit', 5);
+            $limit = (int) $request->get('limit', 4);
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getRecentRated($limit),
+                'data' => $this->service->getRecentRated($limit)
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil data rating terbaru'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data rating terbaru'
+            ], 500);
         }
     }
 
     public function auditLogs(Request $request)
     {
         try {
+            $logs = $this->service->getAuditLogs($request->all());
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getAuditLogs($request->all()),
+                'data' => $logs
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil audit logs'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil audit logs'
+            ], 500);
         }
     }
 
@@ -107,10 +128,31 @@ class DashboardController extends Controller
         try {
             return response()->json([
                 'success' => true,
-                'data' => $this->service->getOverview(),
+                'data' => $this->service->getOverview()
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengambil overview'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil overview'
+            ], 500);
+        }
+    }
+
+    public function topEmployees(Request $request)
+    {
+        try {
+            $filter = $request->get('filter', 'all');
+            $limit = (int) $request->get('limit', 5);
+            $employees = $this->service->getTopEmployees($filter, $limit);
+            return response()->json([
+                'success' => true,
+                'data' => $employees
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data employee'
+            ], 500);
         }
     }
 }
