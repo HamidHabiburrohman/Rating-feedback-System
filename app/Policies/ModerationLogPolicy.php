@@ -6,6 +6,7 @@ use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Student;
 use App\Models\System\ModerationLog;
+use SebastianBergmann\Type\FalseType;
 
 class ModerationLogPolicy
 {
@@ -29,7 +30,7 @@ class ModerationLogPolicy
         }
 
         if ($this->isStudent($user)) {
-            return true;
+            return false;
         }
 
         return false;
@@ -51,7 +52,7 @@ class ModerationLogPolicy
             if ($moderationLog instanceof \App\Models\Feedback\Rating) {
                 return $moderationLog->student_id === $user->id;
             }
-            if ($moderationLog instanceof \App\Models\Reports\Report) {
+            if ($moderationLog instanceof \App\Models\Report\Report) {
                 return $moderationLog->student_id === $user->id;
             }
             return true;

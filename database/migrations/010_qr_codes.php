@@ -12,14 +12,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
             $table->string('code')->unique();
-            $table->string('path')->nullable();
+            $table->string('qr_image_path')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('expires_at')->nullable();
-            $table->timestamp('last_generated_at')->nullable();
-            $table->foreignId('generated_by_admin_id')->constrained('admins');
+            $table->foreignId('generated_by_admin_id')->constrained('admins')->cascadeOnDelete();
             $table->timestamps();
-            $table->softDeletes();
-            $table->index('code');
         });
     }
 

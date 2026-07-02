@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Authentication\Employee;
-use App\Models\Unit\Unit;
 use App\Models\Authentication\Admin;
+use App\Models\Authentication\Employee;
+use App\Models\Employee\EmployeeUnitAssignment;
+use App\Models\Unit\Unit;
 use Illuminate\Database\Seeder;
 
 class EmployeeUnitAssignmentSeeder extends Seeder
@@ -16,7 +17,7 @@ class EmployeeUnitAssignmentSeeder extends Seeder
         $admin = Admin::first();
 
         if ($employees->isEmpty() || $units->isEmpty()) {
-            $this->command->info('No employees or units found.');
+            $this->command?->info('No employees or units found. Skipping EmployeeUnitAssignment seeding.');
             return;
         }
 
@@ -24,21 +25,22 @@ class EmployeeUnitAssignmentSeeder extends Seeder
             $assignedUnits = $units->random(min(rand(1, 3), $units->count()));
 
             foreach ($assignedUnits as $unit) {
-                \App\Models\Employee\EmployeeUnitAssignment::create([
-                    'employee_id' => $employee->id,
-                    'unit_id' => $unit->id,
-                    'assigned_by_admin_id' => $admin?->id,
-                    'role_in_unit' => $this->getRandomRole(),
-                    'assigned_at' => now(),
-                    'is_active' => true,
-                ]);
+                $exists = EmployeeUnitAssignment::where('employee_id', $employee->id)
+                    ->where('unit_id', $unit->id)
+                    ->where('is_active', true)
+                    ->exists();
+
+                if ($exists) {
+                    continue;
+                }
+
+                EmployeeUnitAssignment::factory()
+                    ->forEmployee($employee)
+                    ->forUnit($unit)
+                    ->create([
+                        'assigned_by_admin_id' => $admin?->id,
+                    ]);
             }
         }
-    }
-
-    private function getRandomRole(): string
-    {
-        $roles = ['Kepala', 'Koordinator', 'Staff', 'Teknisi', 'Asisten'];
-        return $roles[array_rand($roles)];
     }
 }

@@ -1,4 +1,4 @@
-@extends('layouts.errors')
+@extends('layouts.base.errors')
 
 @section('code', '403')
 @section('title', 'Akses Ditolak')

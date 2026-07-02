@@ -27,15 +27,15 @@
                 <div>{{ Str::limit($report->unit->name, 20) ?? '-' }}</div>
             </td>
             <td>
-                <x-admin.status-badge status="{{ $report->priority }}" sizeClass="sm" />
+                <x-shared.status-badge status="{{ $report->priority }}" sizeClass="sm" />
             </td>
             <td>
-                <x-admin.status-badge status="{{ $report->status }}" sizeClass="sm" />
+                <x-shared.status-badge status="{{ $report->status }}" sizeClass="sm" />
             </td>
             <td class="text-center pe-4">
                 <div class="d-flex justify-content-center gap-1">
                     <x-admin.button type="show" url="{{ route('admin.reports.show', $report->id) }}" tooltip="View Report" />
-                    <x-admin.button type="edit" url="{{ route('admin.reports.edit', $report->id) }}" tooltip="Edit Report" />
+                    {{-- <x-admin.button type="edit" url="{{ route('admin.reports.edit', $report->id) }}" tooltip="Edit Report" /> --}}
                     @if(in_array($report->status, ['new', 'in_progress']))
                         <x-admin.button 
                             type="reply" 
@@ -56,13 +56,13 @@
         </tr>
 
         <!-- Delete Modal -->
-        <x-admin.delete-modal-component id="deleteModal{{ $report->id }}" title="Hapus Laporan"
+        <x-shared.delete-modal id="deleteModal{{ $report->id }}" title="Hapus Laporan"
             :item-name="'Report #' . $report->id . ' - ' . $report->title" item-type="laporan"
             :delete-route="route('admin.reports.destroy', $report->id)" />
 
         <!-- Reply Modal for Report -->
-        <x-admin.reply-modal :reportId="$report->id" :reportTitle="$report->title" :trackingCode="$report->tracking_code"
-            :reportDescription="$report->description" :priority="$report->priority" :priorityClass="$priorityClass" />
+        {{-- <x-admin.reply-modal :reportId="$report->id" :reportTitle="$report->title" :trackingCode="$report->tracking_code"
+            :reportDescription="$report->description" :priority="$report->priority" :priorityClass="$priorityClass" /> --}}
     @endforeach
 @elseif(is_string($reports) || $reports === null)
     <tr>

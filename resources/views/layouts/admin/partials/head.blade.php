@@ -43,11 +43,11 @@
         overflow-x: hidden;
     }
 
-    .page-wrapper {
-        display: flex;
-        min-height: 100vh;
-        width: 100%;
-    }
+        .page-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
 
     .left-sidebar {
         width: 270px;

@@ -9,15 +9,20 @@ use App\Models\Unit\QrCode;
 
 class QrCodePolicy
 {
-    public function before($user, string $ability): bool|null
+    public function before($user, string $ability): ?bool
     {
         if ($this->isSuperAdmin($user)) {
             return true;
         }
+
         return null;
     }
 
-    
+    public function viewAny($user): bool
+    {
+        return $this->isAdmin($user);
+    }
+
     public function view($user, QrCode $qrCode): bool
     {
         if ($this->isAdmin($user)) {
@@ -25,40 +30,27 @@ class QrCodePolicy
         }
 
         if ($this->isEmployee($user)) {
-            if (isset($qrCode->unit_id)) {
-                return $this->isAssignedToUnit($user, $qrCode->unit_id);
-            }
-            return false;
-        }
-
-        if ($this->isStudent($user)) {
-            if ($qrCode instanceof \App\Models\Feedback\Rating) {
-                return $qrCode->student_id === $user->id;
-            }
-            if ($qrCode instanceof \App\Models\Reports\Report) {
-                return $qrCode->student_id === $user->id;
-            }
-            return true;
+            return $this->isAssignedToUnit($user, $qrCode->unit_id);
         }
 
         return false;
     }
+
     public function create($user): bool
-    {
-        if ($this->isAdmin($user)) {
-            return true;
-        }
-
-        if ($this->isStudent($user)) {
-            return true;
-        }
-
-        return false;
-    }
-    public function regenerate($user): bool
     {
         return $this->isAdmin($user);
     }
+
+    public function update($user, QrCode $qrCode): bool
+    {
+        return $this->isAdmin($user);
+    }
+
+    public function delete($user, QrCode $qrCode): bool
+    {
+        return $this->isAdmin($user);
+    }
+
     protected function isAdmin($user): bool
     {
         return $user instanceof Admin && in_array($user->role, ['super_admin', 'admin']);
@@ -84,7 +76,7 @@ class QrCodePolicy
         return $employee->unitAssignments()
             ->where('unit_id', $unitId)
             ->where('is_active', true)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('ended_at')->orWhere('ended_at', '>', now());
             })
             ->exists();

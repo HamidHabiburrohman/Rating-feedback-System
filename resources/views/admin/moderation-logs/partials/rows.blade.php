@@ -3,8 +3,8 @@
         <tr>
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
-                        style="width: 36px; height: 36px;">
+                    <div class="rounded-circle border d-flex align-items-center justify-content-center"
+                        style="width: 36px; height: 36px; margin-right: 10px;">
                         <span class="fw-bold" style="color: #f8773c;">
                             {{ substr($log->admin->nama ?? 'S', 0, 1) }}
                         </span>

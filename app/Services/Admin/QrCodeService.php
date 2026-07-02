@@ -1,136 +1,258 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Admin;
 
-use App\Models\Unit\Unit;
 use App\Models\Unit\QrCode;
+use Endroid\QrCode\QrCode as EndroidQrCode;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Writer\PngWriter;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode as QrCodeGenerator;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-class QrCodeService extends BaseAdminService
+class QrCodeService
 {
-    public function getByUnit(int $unitId)
-    {
-        $cacheKey = "admin_qr_codes_unit_{$unitId}";
+    protected array $searchableColumns = ['code'];
+    protected array $filterableColumns = ['status', 'unit_id'];
+    protected array $perPageOptions = [10, 25, 50, 100];
 
-        return Cache::tags(['units', "unit_{$unitId}", 'qr_codes'])->remember($cacheKey, 300, function () use ($unitId) {
+    public function __construct(
+        protected string $disk = 'public',
+        protected string $directory = 'qr-codes'
+    ) {}
+
+    public function getAllQrCodes(array $filters = []): LengthAwarePaginator
+    {
+        $query = QrCode::with(['unit', 'generatedByAdmin'])
+            ->withCount(['unitVisits', 'ratings']);
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'LIKE', "%{$search}%")
+                    ->orWhereHas('unit', fn($u) => $u->where('name', 'LIKE', "%{$search}%"));
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'active') {
+                $query->where('is_active', true)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    });
+            } elseif ($filters['status'] === 'inactive') {
+                $query->where('is_active', false);
+            } elseif ($filters['status'] === 'expired') {
+                $query->where('expires_at', '<=', now());
+            }
+        }
+
+        if (!empty($filters['unit_id'])) {
+            $query->where('unit_id', $filters['unit_id']);
+        }
+
+        $sort = $filters['sort'] ?? 'created_at';
+        $order = $filters['order'] ?? 'desc';
+        
+        $allowedSorts = ['created_at', 'code', 'expires_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+        
+        $order = in_array(strtolower($order), ['asc', 'desc']) ? strtolower($order) : 'desc';
+        
+        $query->orderBy($sort, $order);
+
+        $perPage = (int) ($filters['per_page'] ?? 10);
+        if (!in_array($perPage, $this->perPageOptions)) {
+            $perPage = 10;
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    public function getQrCodeStats(): array
+    {
+        return Cache::tags(['qr-codes', 'stats'])->remember('qr_code_stats', 300, function () {
+            $total = QrCode::count();
+            $active = QrCode::where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
+                ->count();
+            $inactive = QrCode::where('is_active', false)->count();
+            $expired = QrCode::where('expires_at', '<=', now())->count();
+
+            return [
+                'total' => $total,
+                'active' => $active,
+                'inactive' => $inactive,
+                'expired' => $expired,
+            ];
+        });
+    }
+
+    public function getByUnit(int $unitId): ?QrCode
+    {
+        return Cache::remember("unit_qr_{$unitId}", 3600, function () use ($unitId): ?QrCode {
             return QrCode::where('unit_id', $unitId)
-                ->with(['unit', 'generatorAdmin'])
-                ->latest()
-                ->get();
+                ->where('is_active', true)
+                ->first();
         });
     }
 
     public function generate(int $unitId, int $adminId): QrCode
     {
-        return DB::transaction(function () use ($unitId, $adminId) {
-            $unit = Unit::findOrFail($unitId);
-            $code = $this->generateUniqueCode($unit);
+        $exists = QrCode::where('unit_id', $unitId)
+            ->where('is_active', true)
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'qr_code' => ['This unit already has an active QR Code. Please regenerate it instead.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($unitId, $adminId): QrCode {
+            $code = $this->generateUniqueCode();
+            $path = $this->generateQrCodeImage($code, $unitId);
 
             $qrCode = QrCode::create([
                 'unit_id' => $unitId,
                 'code' => $code,
-                'path' => $this->generateQrCodeImage($code, $unitId),
+                'qr_image_path' => $path,
                 'is_active' => true,
                 'expires_at' => now()->addYear(),
-                'last_generated_at' => now(),
                 'generated_by_admin_id' => $adminId,
             ]);
 
-            Cache::tags(['units', "unit_{$unitId}", 'qr_codes'])->flush();
+            $this->clearCache($unitId);
+            Cache::tags(['qr-codes', 'stats'])->flush();
 
-            return $qrCode->fresh(['unit', 'generatorAdmin']);
+            return $qrCode;
         });
     }
 
     public function regenerate(int $id, int $adminId): QrCode
     {
-        return DB::transaction(function () use ($id, $adminId) {
-            $oldQrCode = QrCode::findOrFail($id);
-            $unit = $oldQrCode->unit;
-
-            $oldQrCode->update([
-                'is_active' => false,
-                'expires_at' => now(),
-            ]);
-
-            $newCode = $this->generateUniqueCode($unit);
-
-            $newQrCode = QrCode::create([
-                'unit_id' => $unit->id,
-                'code' => $newCode,
-                'path' => $this->generateQrCodeImage($newCode, $unit->id),
-                'is_active' => true,
-                'expires_at' => now()->addYear(),
-                'last_generated_at' => now(),
-                'generated_by_admin_id' => $adminId,
-            ]);
-
-            Cache::tags(['units', "unit_{$unit->id}", 'qr_codes'])->flush();
-
-            return $newQrCode->fresh(['unit', 'generatorAdmin']);
-        });
-    }
-
-    public function toggleActive(int $id): QrCode
-    {
-        return DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id, $adminId): QrCode {
             $qrCode = QrCode::findOrFail($id);
-            $qrCode->update(['is_active' => !$qrCode->is_active]);
+            $this->deleteOldImage($qrCode->qr_image_path);
 
-            Cache::tags(['units', "unit_{$qrCode->unit_id}", 'qr_codes'])->flush();
+            $code = $this->generateUniqueCode();
+            $path = $this->generateQrCodeImage($code, $qrCode->unit_id);
+
+            $qrCode->update([
+                'code' => $code,
+                'qr_image_path' => $path,
+                'generated_by_admin_id' => $adminId,
+                'expires_at' => now()->addYear(),
+            ]);
+
+            $this->clearCache($qrCode->unit_id);
+            Cache::tags(['qr-codes', 'stats'])->flush();
 
             return $qrCode->fresh();
         });
     }
 
-    public function delete(int $id): bool
+    public function activate(int $id): QrCode
     {
-        return DB::transaction(function () use ($id) {
+        return DB::transaction(function () use ($id): QrCode {
             $qrCode = QrCode::findOrFail($id);
-            $unitId = $qrCode->unit_id;
 
-            $qrCode->delete();
+            $conflict = QrCode::where('unit_id', $qrCode->unit_id)
+                ->where('id', '!=', $id)
+                ->where('is_active', true)
+                ->exists();
 
-            Cache::tags(['units', "unit_{$unitId}", 'qr_codes'])->flush();
-            return true;
+            if ($conflict) {
+                throw ValidationException::withMessages([
+                    'qr_code' => ['Another active QR Code already exists for this unit.'],
+                ]);
+            }
+
+            $qrCode->update(['is_active' => true]);
+            $this->clearCache($qrCode->unit_id);
+            Cache::tags(['qr-codes', 'stats'])->flush();
+
+            return $qrCode->fresh();
         });
     }
 
-    protected function generateUniqueCode(Unit $unit): string
+    public function deactivate(int $id): QrCode
     {
-        do {
-            $code = strtoupper($unit->code . '-' . Str::random(8));
-        } while (QrCode::where('code', $code)->exists());
+        return DB::transaction(function () use ($id): QrCode {
+            $qrCode = QrCode::findOrFail($id);
+            $qrCode->update(['is_active' => false]);
+            $this->clearCache($qrCode->unit_id);
+            Cache::tags(['qr-codes', 'stats'])->flush();
 
-        return $code;
+            return $qrCode->fresh();
+        });
     }
 
-    protected function generateQrCodeImage(string $code, int $unitId): ?string
+    public function preview(int $id): string
     {
-        try {
-            if (!class_exists(QrCodeGenerator::class)) {
-                return null;
-            }
+        $qrCode = QrCode::findOrFail($id);
+        return asset('storage/' . $qrCode->qr_image_path);
+    }
 
-            $qrData = url("/student/qr/scan?code={$code}");
-            $fileName = "qr_codes/unit_{$unitId}_{$code}.svg";
-            $path = storage_path('app/public/' . $fileName);
+    public function download(int $id): BinaryFileResponse
+    {
+        $qrCode = QrCode::findOrFail($id);
+        $path = Storage::disk($this->disk)->path($qrCode->qr_image_path);
+        return response()->download($path, "unit-{$qrCode->unit_id}-qr.png");
+    }
 
-            $directory = dirname($path);
-            if (!is_dir($directory)) {
-                mkdir($directory, 0755, true);
-            }
+    private function generateUniqueCode(): string
+    {
+        return Str::uuid()->toString();
+    }
 
-            QrCodeGenerator::size(300)
-                ->format('svg')
-                ->generate($qrData, $path);
+    private function generateQrCodeImage(string $code, int $unitId): string
+    {
+        $path = $this->getStoragePath($unitId);
+        $data = url("/student/qr/scan?code={$code}");
 
-            return $fileName;
-        } catch (\Exception $e) {
-            return null;
+        $qrCode = new EndroidQrCode(
+            data: $data,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            size: 300,
+            margin: 10
+        );
+
+        $writer = new PngWriter();
+        $result = $writer->write($qrCode);
+        Storage::disk($this->disk)->put($path, $result->getString());
+
+        return $path;
+    }
+
+    private function deleteOldImage(?string $path): void
+    {
+        if ($path && Storage::disk($this->disk)->exists($path)) {
+            Storage::disk($this->disk)->delete($path);
         }
+    }
+
+    private function clearCache(int $unitId): void
+    {
+        Cache::forget("unit_qr_{$unitId}");
+    }
+
+    private function getStoragePath(int $unitId): string
+    {
+        return "{$this->directory}/unit-{$unitId}.png";
     }
 }

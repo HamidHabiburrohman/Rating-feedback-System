@@ -48,22 +48,17 @@ class EmployeeService extends BaseAdminService
             }
         }
 
-        $sort = $filters['sort'] ?? 'name_asc';
-        switch ($sort) {
-            case 'name_desc':
-                $query->orderBy('name', 'desc');
-                break;
-            case 'created_at_desc':
-                $query->latest();
-                break;
-            case 'created_at_asc':
-                $query->oldest();
-                break;
-            case 'name_asc':
-            default:
-                $query->orderBy('name', 'asc');
-                break;
+        $sortField = $filters['sort'] ?? 'name';
+        $sortOrder = $filters['order'] ?? 'asc';
+
+        $allowedSorts = ['name', 'created_at']; 
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'name';
         }
+
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+
+        $query->orderBy($sortField, $sortOrder);
 
         return $query->paginate($filters['per_page'] ?? 10);
     }

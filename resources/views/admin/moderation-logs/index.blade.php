@@ -151,12 +151,12 @@
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="bg-transparent">
-                        <tr class="text-muted text-uppercase" style="font-size: .75rem;">
-                            <th class="ps-4 py-3 fw-semibold">Admin</th>
-                            <th class="py-3 fw-semibold">Action</th>
-                            <th class="py-3 fw-semibold">Target</th>
-                            <th class="py-3 fw-semibold">Date</th>
-                            <th class="pe-4 py-3 fw-semibold text-center">Actions</th>
+                        <tr class="text-muted" style="font-size: .75rem;">
+                            <th class="ps-4 py-3 fw-Regular">Employee</th>
+                            <th class="py-3 fw-Regular">Action</th>
+                            <th class="py-3 fw-Regular">Target</th>
+                            <th class="py-3 fw-Regular">Date</th>
+                            <th class="pe-4 py-3 fw-Regular text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="logsTable">

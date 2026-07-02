@@ -73,6 +73,65 @@ function initEventListeners(routes) {
     });
 }
 
+function generateSkeletonRows(count, type) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        if (type === 'units') {
+            html += `
+                <tr class="skeleton-row">
+                    <td>
+                        <div class="skeleton-cell">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text w-80" style="margin-bottom: 4px;"></div>
+                                <div class="skeleton skeleton-text w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><div class="skeleton skeleton-badge"></div></td>
+                    <td><div class="skeleton skeleton-rating"></div></td>
+                    <td><div class="skeleton skeleton-text w-40"></div></td>
+                    <td><div class="skeleton skeleton-status"></div></td>
+                    <td>
+                        <div class="skeleton-actions">
+                            <div class="skeleton skeleton-action"></div>
+                            <div class="skeleton skeleton-action"></div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else if (type === 'employees') {
+            html += `
+                <tr class="skeleton-row">
+                    <td>
+                        <div class="skeleton-cell">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text w-80" style="margin-bottom: 4px;"></div>
+                                <div class="skeleton skeleton-text w-40"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px;">
+                            <div class="skeleton skeleton-badge"></div>
+                            <div class="skeleton skeleton-badge"></div>
+                        </div>
+                    </td>
+                    <td><div class="skeleton skeleton-status"></div></td>
+                    <td>
+                        <div class="skeleton-actions">
+                            <div class="skeleton skeleton-action"></div>
+                            <div class="skeleton skeleton-action"></div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    return html;
+}
+
 function initCharts() {
     const studentOptions = {
         series: [{ name: 'Students', data: [] }],
@@ -81,12 +140,23 @@ function initCharts() {
             height: 350,
             fontFamily: THEME.font,
             toolbar: { show: false },
-            animations: { enabled: true, easing: 'easeinout', speed: 1000 }
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 1000,
+                animateGradually: { enabled: true, delay: 150 },
+                dynamicAnimation: { enabled: true, speed: 350 }
+            }
         },
         colors: [THEME.primary],
         fill: {
             type: 'gradient',
-            gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1, stops: [0, 90, 100] }
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.5,
+                opacityTo: 0.1,
+                stops: [0, 90, 100]
+            }
         },
         stroke: { curve: 'smooth', width: 3 },
         grid: { borderColor: '#f3f4f6', strokeDashArray: 4 },
@@ -103,7 +173,12 @@ function initCharts() {
             intersect: false,
             y: { formatter: (val) => val + ' students' }
         },
-        markers: { size: 4, colors: [THEME.primary], strokeColors: '#fff', strokeWidth: 2 }
+        markers: {
+            size: 4,
+            colors: [THEME.primary],
+            strokeColors: '#fff',
+            strokeWidth: 2
+        }
     };
 
     const chartStudentsEl = document.querySelector('#chart-students');
@@ -122,7 +197,13 @@ function initCharts() {
             height: 350,
             fontFamily: THEME.font,
             toolbar: { show: false },
-            animations: { enabled: true, easing: 'easeinout', speed: 1000 }
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 1000,
+                animateGradually: { enabled: true, delay: 150 },
+                dynamicAnimation: { enabled: true, speed: 350 }
+            }
         },
         colors: [THEME.primary, THEME.primaryDark],
         plotOptions: {
@@ -210,16 +291,7 @@ function loadTopUnits(filter, routes) {
     const tbody = document.querySelector('#units-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center py-5">
-                <div class="loading-state">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p>Loading units...</p>
-                </div>
-            </td>
-        </tr>
-    `;
+    tbody.innerHTML = generateSkeletonRows(5, 'units');
 
     let url;
     switch (filter) {
@@ -281,16 +353,21 @@ function renderTable(units) {
         const opStatus = unit.operational_status || 'open';
         const statusLabel = opStatus.charAt(0).toUpperCase() + opStatus.slice(1);
 
-        let statusClass = 'active';
-        if (opStatus === 'closed') statusClass = 'inactive';
-        else if (opStatus === 'maintenance') statusClass = 'warning';
+        let statusClass = 'open';
+        if (opStatus === 'closed') statusClass = 'closed';
+        else if (opStatus === 'maintenance') statusClass = 'maintenance';
+        else if (opStatus === 'full') statusClass = 'full';
 
         return `
             <tr>
                 <td>
                     <div class="unit-cell">
+                        <div class="unit-avatar">
+                            <i class="ti ti-building"></i>
+                        </div>
                         <div class="unit-info">
                             <div class="unit-name">${unit.name || 'Unknown'}</div>
+                            <div class="unit-type">${unit.type?.name || 'General'}</div>
                         </div>
                     </div>
                 </td>
@@ -374,6 +451,7 @@ function loadRecentRated(routes) {
     container.innerHTML = `
         <div class="loading-state">
             <div class="spinner-border text-primary" role="status"></div>
+            <p>Loading ratings...</p>
         </div>
     `;
 
@@ -423,7 +501,7 @@ function renderRecentRated(ratings) {
                         <i class="ti ti-star-filled"></i>
                         <span>${rating.overall_score}</span>
                     </div>
-                    <span class="rated-time">${rating.time_ago}</span>
+                    <span class="rated-time">${rating.time}</span>
                 </div>
             </div>
         `;
@@ -434,16 +512,7 @@ function loadTopEmployees(filter, routes) {
     const tbody = document.querySelector('#employees-table-body');
     if (!tbody || !routes.topEmployees) return;
 
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="4" class="text-center py-5">
-                <div class="loading-state">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p>Loading employees...</p>
-                </div>
-            </td>
-        </tr>
-    `;
+    tbody.innerHTML = generateSkeletonRows(5, 'employees');
 
     fetch(`${routes.topEmployees}?filter=${filter}&limit=5`)
         .then(res => res.json())
@@ -488,11 +557,11 @@ function renderEmployeesTable(employees) {
     }
 
     tbody.innerHTML = employees.map((emp) => {
-        const statusClass = emp.status === 'active' ? 'active' : 'inactive';
+        const statusClass = emp.status === 'active' ? 'open' : 'closed';
         const statusLabel = emp.status === 'active' ? 'Active' : 'Inactive';
         const unitsHtml = emp.assigned_units && emp.assigned_units.length > 0
             ? emp.assigned_units.slice(0, 2).map(u => `<span class="badge-category">${u}</span>`).join(' ') +
-            (emp.assigned_units.length > 2 ? `<span class="badge-category">+${emp.assigned_units.length - 2}</span>` : '')
+              (emp.assigned_units.length > 2 ? `<span class="badge-category">+${emp.assigned_units.length - 2}</span>` : '')
             : '<span class="text-muted">No units</span>';
 
         return `

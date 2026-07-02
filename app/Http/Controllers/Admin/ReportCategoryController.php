@@ -19,24 +19,23 @@ class ReportCategoryController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', ReportCategory::class);
-
         try {
-            // Ambil hanya parameter filter yang valid untuk dikirim ke Service
-            $filters = $request->only(['search', 'status', 'page']);
-
+            $filters = $request->only(['search', 'status', 'page', 'sort', 'order', 'per_page']);
             $categories = $this->service->getAll($filters);
 
             if ($request->ajax()) {
                 return response()->json([
-                    'html' => view('admin.report-categories.partials.rows', compact('categories'))->render()
+                    'html' => view('admin.report-categories.partials.rows', compact('categories'))->render(),
+                    'pagination' => view('admin.report-categories.partials.pagination', ['paginator' => $categories])->render()
                 ]);
             }
 
             return view('admin.report-categories.index', compact('categories'));
         } catch (\Exception $e) {
-            // Disarankan log error untuk mempermudah debugging internal
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Gagal memuat data: ' . $e->getMessage()], 500);
+            }
             logger()->error('Error fetching report categories: ' . $e->getMessage());
-
             return redirect()->route('admin.report-categories.index')
                 ->with('error', 'Gagal memuat data: ' . $e->getMessage());
         }
@@ -45,7 +44,6 @@ class ReportCategoryController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', ReportCategory::class);
-
         $request->validate([
             'name' => 'required|string|max:255|unique:report_categories,name',
             'slug' => 'nullable|string|max:255|unique:report_categories,slug',
@@ -73,7 +71,6 @@ class ReportCategoryController extends Controller
     {
         $category = ReportCategory::findOrFail($id);
         $this->authorize('update', $category);
-
         $request->validate([
             'name' => 'required|string|max:255|unique:report_categories,name,' . $id,
             'slug' => 'nullable|string|max:255|unique:report_categories,slug,' . $id,

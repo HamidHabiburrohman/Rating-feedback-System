@@ -2,6 +2,7 @@
 
 namespace App\Models\Unit;
 
+use App\Models\Authentication\Admin;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,12 +30,10 @@ class UnitPhoto extends Model
     {
         return $this->belongsTo(Unit::class);
     }
-
     public function uploadedByAdmin()
     {
-        return $this->belongsTo(\App\Models\Authentication\Admin::class, 'uploaded_by_admin_id');
+        return $this->belongsTo(Admin::class, 'uploaded_by_admin_id');
     }
-
     protected static function newFactory()
     {
         return \Database\Factories\UnitPhotoFactory::new();

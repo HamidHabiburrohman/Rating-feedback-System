@@ -1,5 +1,7 @@
 @extends('layouts.admin.app')
+
 @section('title', 'Dashboard')
+
 @push('styles')
     <style>
         :root {
@@ -44,7 +46,6 @@
 
         * {
             font-family: var(--font-body);
-            font-weight: 400;
         }
 
         .dashboard-container {
@@ -72,6 +73,9 @@
             letter-spacing: -0.02em;
             font-family: var(--font-display);
             line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .dashboard-subtitle {
@@ -79,6 +83,47 @@
             font-weight: 400;
             color: var(--text-secondary);
             margin: var(--space-2) 0 0 0;
+        }
+
+        .welcome-emoji {
+            display: inline-block;
+            font-size: 32px;
+            line-height: 1;
+            animation: wave 2.5s ease-in-out infinite;
+            transform-origin: 70% 70%;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            10% {
+                transform: rotate(14deg);
+            }
+
+            20% {
+                transform: rotate(-8deg);
+            }
+
+            30% {
+                transform: rotate(14deg);
+            }
+
+            40% {
+                transform: rotate(-4deg);
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
+
+            60%,
+            100% {
+                transform: rotate(0deg);
+            }
         }
 
         .time-filter-group {
@@ -201,23 +246,29 @@
 
         .chart-container,
         .table-section,
-        .recent-rated-section
-        {
-        background: var(--bg-surface);
-        border-radius: var(--radius-xl);
-        padding: var(--space-6);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-light);
+        .recent-rated-section {
+            background: var(--bg-surface);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-light);
         }
 
-        .recent-rated-section {
-            align-self: start;
+        .table-section {
+            max-height: 600px;
             display: flex;
             flex-direction: column;
         }
 
+        .recent-rated-section {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
         .chart-header,
-        .table-header-enhanced {
+        .table-header-enhanced,
+        .recent-rated-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -227,7 +278,8 @@
         }
 
         .chart-title,
-        .table-title {
+        .table-title,
+        .recent-rated-title {
             font-size: 18px;
             font-weight: 700;
             margin: 0 0 var(--space-1) 0;
@@ -236,7 +288,8 @@
         }
 
         .chart-subtitle,
-        .table-subtitle {
+        .table-subtitle,
+        .recent-rated-subtitle {
             font-size: 13px;
             font-weight: 400;
             color: var(--text-secondary);
@@ -281,6 +334,7 @@
             grid-template-columns: 1.6fr 1fr;
             gap: var(--space-6);
             margin-bottom: var(--space-8);
+            align-items: start;
         }
 
         .filter-tabs {
@@ -309,6 +363,36 @@
             color: var(--text-inverse);
         }
 
+        .table-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            margin: 0 calc(var(--space-6) * -1);
+            padding: 0 var(--space-6);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .recent-rated-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin: 0;
+            padding: 0;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 500px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .recent-rated-list::-webkit-scrollbar {
+            display: none;
+        }
+
         .data-table-enhanced {
             width: 100%;
             border-collapse: separate;
@@ -325,6 +409,9 @@
             letter-spacing: 0.05em;
             border-bottom: 2px solid var(--border);
             background: var(--bg-main);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .data-table-enhanced tbody td {
@@ -348,7 +435,7 @@
         .unit-avatar {
             width: 40px;
             height: 40px;
-            border-radius: var(--radius-xl);
+            border-radius: var(--radius);
             background: var(--primary-light);
             color: var(--primary);
             display: flex;
@@ -399,19 +486,24 @@
             font-weight: 600;
         }
 
-        .status-badge.active {
+        .status-badge.open {
             background: var(--success-light);
             color: var(--success);
         }
 
-        .status-badge.inactive {
+        .status-badge.closed {
             background: var(--danger-light);
             color: var(--danger);
         }
 
-        .status-badge.warning {
+        .status-badge.maintenance {
             background: var(--warning-light);
             color: var(--warning);
+        }
+
+        .status-badge.full {
+            background: var(--info-light);
+            color: var(--info);
         }
 
         .status-dot {
@@ -472,16 +564,6 @@
             cursor: not-allowed;
         }
 
-        .loading-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-4);
-            color: var(--text-secondary);
-            padding: var(--space-12);
-        }
-
         .btn-action {
             width: 36px;
             height: 36px;
@@ -501,34 +583,19 @@
             color: var(--primary);
         }
 
-        .recent-rated-list {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-            margin: 0;
-            padding: 0;
-            flex: 1;
-        }
-
         .rated-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: var(--space-3);
             padding: var(--space-3);
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius);
             transition: background 0.2s;
-            border: 1px solid var(--border-light);
-            justify-content: flex-start;
-            margin-bottom: 0;
-            width: 100%;
+            border: 1px solid transparent;
         }
 
         .rated-item:hover {
             background: var(--bg-main);
-        }
-
-        .rated-item:last-child {
-            margin-bottom: 0;
+            border-color: var(--border-light);
         }
 
         .rated-avatar {
@@ -548,14 +615,6 @@
         .rated-content {
             flex: 1;
             min-width: 0;
-        }
-
-        .recent-rated-list .loading-state {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
         }
 
         .rated-unit-name {
@@ -613,6 +672,86 @@
             font-size: 14px;
         }
 
+        .skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite ease-in-out;
+            border-radius: 6px;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-row td {
+            padding: var(--space-4);
+        }
+
+        .skeleton-cell {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .skeleton-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+        }
+
+        .skeleton-text {
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        .skeleton-text.w-40 {
+            width: 40%;
+        }
+
+        .skeleton-text.w-60 {
+            width: 60%;
+        }
+
+        .skeleton-text.w-80 {
+            width: 80%;
+        }
+
+        .skeleton-badge {
+            width: 80px;
+            height: 24px;
+            border-radius: 12px;
+        }
+
+        .skeleton-rating {
+            width: 60px;
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        .skeleton-status {
+            width: 90px;
+            height: 24px;
+            border-radius: 12px;
+        }
+
+        .skeleton-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .skeleton-action {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius);
+        }
+
         @media (max-width: 1200px) {
             .kpi-section {
                 grid-template-columns: repeat(2, 1fr);
@@ -621,6 +760,10 @@
             .analytics-section,
             .bottom-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .recent-rated-section {
+                max-height: none;
             }
         }
 
@@ -647,6 +790,27 @@
                 overflow-x: auto;
                 width: 100%;
             }
+
+            .table-section {
+                max-height: none;
+            }
+
+            .recent-rated-list {
+                max-height: 400px;
+            }
+
+            .rated-item {
+                flex-wrap: wrap;
+            }
+
+            .rated-meta {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                margin-top: var(--space-2);
+                padding-top: var(--space-2);
+                border-top: 1px solid var(--border-light);
+            }
         }
     </style>
 @endpush
@@ -662,14 +826,17 @@
 
         <div class="dashboard-header-row">
             <div>
-                <h1 class="dashboard-title">Dashboard</h1>
-                <p class="dashboard-subtitle">Welcome back! Here's what's happening with your units today.</p>
+                <h1 class="dashboard-title">
+                    <span class="welcome-emoji">👋</span>
+                    Welcome Back!
+                </h1>
+                <p class="dashboard-subtitle">Here's what's happening with your units today.</p>
             </div>
-            <div class="time-filter-group">
+            {{-- <div class="time-filter-group">
                 <button class="time-filter active" data-period="today">Today</button>
                 <button class="time-filter" data-period="week">This Week</button>
                 <button class="time-filter" data-period="month">This Month</button>
-            </div>
+            </div> --}}
         </div>
 
         <div class="kpi-section">
@@ -684,7 +851,6 @@
                     <span class="kpi-comparison">vs previous period</span>
                 </div>
             </div>
-
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="ti ti-star"></i></div>
                 <div class="kpi-content">
@@ -696,7 +862,6 @@
                     <span class="kpi-comparison">vs previous period</span>
                 </div>
             </div>
-
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="ti ti-chart-bar"></i></div>
                 <div class="kpi-content">
@@ -708,7 +873,6 @@
                     <span class="kpi-comparison">across all units</span>
                 </div>
             </div>
-
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="ti ti-building"></i></div>
                 <div class="kpi-content">
@@ -734,9 +898,8 @@
                         <span class="legend-item"><span class="legend-dot primary"></span> Daily Active</span>
                     </div>
                 </div>
-                <div id="chart-students" style="min-height: 350px;"></div>
+                <div id="chart-students" style="min-height: 320px;"></div>
             </div>
-
             <div class="chart-container">
                 <div class="chart-header">
                     <div>
@@ -749,7 +912,7 @@
                         <span class="legend-item"><span class="legend-dot secondary"></span> Cumulative</span>
                     </div>
                 </div>
-                <div id="chart-units-monthly" style="min-height: 350px;"></div>
+                <div id="chart-units-monthly" style="min-height: 320px;"></div>
             </div>
         </div>
 
@@ -767,8 +930,7 @@
                         <button class="filter-tab unit-filter-tab" data-filter="attention">Needs Attention</button>
                     </div>
                 </div>
-
-                <div class="table-responsive">
+                <div class="table-wrapper">
                     <table class="data-table-enhanced">
                         <thead>
                             <tr>
@@ -781,41 +943,62 @@
                             </tr>
                         </thead>
                         <tbody id="units-table-body">
-                            <tr>
-                                <td colspan="6">
-                                    <div class="loading-state">
-                                        <div class="spinner-border text-primary" role="status"></div>
-                                        <p>Loading units data...</p>
+                            <tr class="skeleton-row">
+                                <td>
+                                    <div class="skeleton-cell">
+                                        <div class="skeleton skeleton-avatar"></div>
+                                        <div style="flex: 1;">
+                                            <div class="skeleton skeleton-text w-80" style="margin-bottom: 4px;"></div>
+                                            <div class="skeleton skeleton-text w-40"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="skeleton skeleton-badge"></div>
+                                </td>
+                                <td>
+                                    <div class="skeleton skeleton-rating"></div>
+                                </td>
+                                <td>
+                                    <div class="skeleton skeleton-text w-40"></div>
+                                </td>
+                                <td>
+                                    <div class="skeleton skeleton-status"></div>
+                                </td>
+                                <td>
+                                    <div class="skeleton-actions">
+                                        <div class="skeleton skeleton-action"></div>
+                                        <div class="skeleton skeleton-action"></div>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
                 <div class="table-footer">
-                    <span class="showing-text">Showing <span id="showing-count">0</span> of <span
-                            id="total-count">0</span> units</span>
+                    <span class="showing-text">Showing <span id="showing-count">0</span> of <span id="total-count">0</span>
+                        units</span>
                     <div class="pagination" id="pagination-container"></div>
                 </div>
             </div>
 
             <div class="recent-rated-section">
-                <div class="table-header-enhanced">
+                <div class="recent-rated-header">
                     <div>
-                        <h3 class="table-title">Recent Rated Units</h3>
-                        <p class="table-subtitle">Latest student feedback across all units</p>
+                        <h3 class="recent-rated-title">Recent Rated Units</h3>
+                        <p class="recent-rated-subtitle">Latest student feedback across all units</p>
                     </div>
                 </div>
                 <div class="recent-rated-list" id="recent-rated-list">
                     <div class="loading-state">
                         <div class="spinner-border text-primary" role="status"></div>
+                        <p>Loading ratings...</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="table-section">
+        <div class="table-section" style="margin-bottom: var(--space-8);">
             <div class="table-header-enhanced">
                 <div>
                     <h3 class="table-title">Top Performing Employees</h3>
@@ -827,8 +1010,7 @@
                     <button class="filter-tab employee-filter-tab" data-filter="inactive">Inactive</button>
                 </div>
             </div>
-
-            <div class="table-responsive">
+            <div class="table-wrapper">
                 <table class="data-table-enhanced">
                     <thead>
                         <tr>
@@ -839,11 +1021,29 @@
                         </tr>
                     </thead>
                     <tbody id="employees-table-body">
-                        <tr>
-                            <td colspan="4">
-                                <div class="loading-state">
-                                    <div class="spinner-border text-primary" role="status"></div>
-                                    <p>Loading employees...</p>
+                        <tr class="skeleton-row">
+                            <td>
+                                <div class="skeleton-cell">
+                                    <div class="skeleton skeleton-avatar"></div>
+                                    <div style="flex: 1;">
+                                        <div class="skeleton skeleton-text w-80" style="margin-bottom: 4px;"></div>
+                                        <div class="skeleton skeleton-text w-40"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 4px;">
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="skeleton skeleton-status"></div>
+                            </td>
+                            <td>
+                                <div class="skeleton-actions">
+                                    <div class="skeleton skeleton-action"></div>
+                                    <div class="skeleton skeleton-action"></div>
                                 </div>
                             </td>
                         </tr>

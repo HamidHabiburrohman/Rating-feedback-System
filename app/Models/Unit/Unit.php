@@ -6,6 +6,9 @@ use App\Models\Employee\EmployeeUnitAssignment;
 use App\Models\Feedback\Rating;
 use App\Models\Feedback\UnitVisit;
 use App\Models\Report\Report;
+use App\Models\Unit\UnitPhoto;
+use App\Models\Unit\QrCode;
+use Database\Factories\UnitFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -110,8 +113,9 @@ class Unit extends Model
     {
         return $this->hasMany(EmployeeUnitAssignment::class);
     }
+
     protected static function newFactory()
     {
-        return \Database\Factories\UnitFactory::new();
+        return UnitFactory::new();
     }
 }

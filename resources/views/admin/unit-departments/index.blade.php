@@ -146,340 +146,303 @@
 @endsection
 
 @push('styles')
-    <style>
-        .skeleton {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: skeleton-shimmer 1.5s infinite ease-in-out;
-            border-radius: 6px;
-        }
-
-        .skeleton-circle {
-            border-radius: 50%;
-        }
-
-        @keyframes skeleton-shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-    </style>
+<style>
+.skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    border-radius: 6px;
+}
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+</style>
 @endpush
 
 @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeSearch();
-            initializeFilters();
-            initializeStatusToggle();
-            initializeAlerts();
-            initializeDropdowns();
-            initializePagination();
-            initializeSort();
-        });
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSearch();
+    initializeFilters();
+    initializePagination();
+    initializeSort();
+    initializeAlerts();
+    initializeDropdowns();
+    initializeStatusToggle();
+});
 
-        function generateSkeletonRows(count) {
-            let html = '';
-            for (let i = 0; i < count; i++) {
-                html += `
+function generateSkeletonRows(count) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `
             <tr>
-                <td class="ps-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="skeleton skeleton-circle" style="width: 36px; height: 36px;"></div>
-                        <div class="skeleton" style="width: 160px; height: 16px;"></div>
-                    </div>
-                </td>
-                <td>
-                    <div class="skeleton" style="width: 70px; height: 24px; border-radius: 12px;"></div>
-                </td>
-                <td>
-                    <div class="skeleton" style="width: 80px; height: 24px; border-radius: 12px;"></div>
-                </td>
+                <td class="ps-4"><div class="skeleton" style="width: 160px; height: 16px;"></div></td>
+                <td><div class="skeleton" style="width: 60px; height: 24px; border-radius: 12px;"></div></td>
+                <td><div class="skeleton" style="width: 70px; height: 24px; border-radius: 12px;"></div></td>
                 <td class="text-center pe-4">
                     <div class="d-flex justify-content-center gap-2">
-                        <div class="skeleton" style="width: 32px; height: 32px; border-radius: 8px;"></div>
-                        <div class="skeleton" style="width: 32px; height: 32px; border-radius: 8px;"></div>
+                        <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                        <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
                     </div>
                 </td>
             </tr>
         `;
+    }
+    return html;
+}
+
+function generateSkeletonPagination() {
+    return `<div class="d-flex justify-content-center py-3"><div class="skeleton" style="width:250px;height:40px;"></div></div>`;
+}
+
+function fetchData(url) {
+    const tableBody = document.getElementById('unitTypesTable') || document.getElementById('unitDepartmentsTable') || document.getElementById('facilitiesTable');
+    const paginationContainer = document.getElementById('unitTypesPaginationContainer') || document.getElementById('unitDepartmentsPaginationContainer') || document.getElementById('facilitiesPaginationContainer');
+
+    if (!tableBody || !paginationContainer) return;
+
+    tableBody.innerHTML = generateSkeletonRows(10);
+    paginationContainer.innerHTML = generateSkeletonPagination();
+
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.html !== undefined) tableBody.innerHTML = data.html;
+        if (data.pagination !== undefined) paginationContainer.innerHTML = data.pagination;
+        initializeTooltips();
+    })
+    .catch(error => {
+        console.error('Error fetching data:', error);
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-danger">Failed to load data.</td></tr>';
+    });
+}
+
+function initializeTooltips() {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        if (!bootstrap.Tooltip.getInstance(el)) new bootstrap.Tooltip(el);
+    });
+}
+
+function initializeSearch() {
+    const searchInput = document.getElementById('searchInput') || document.querySelector('input[name="search"]');
+    if (!searchInput) return;
+
+    let searchTimeout;
+    const performSearch = () => {
+        const url = new URL(window.location.href);
+        if (searchInput.value.trim()) {
+            url.searchParams.set('search', searchInput.value.trim());
+        } else {
+            url.searchParams.delete('search');
+        }
+        url.searchParams.set('page', '1');
+        window.history.pushState({}, '', url);
+        fetchData(url);
+    };
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            clearTimeout(searchTimeout);
+            performSearch();
+        }
+    });
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 800);
+    });
+}
+
+function initializeFilters() {
+    const filterContainer = document.getElementById('filterContainer');
+    if (!filterContainer) return;
+
+    const params = new URLSearchParams(window.location.search);
+    let selectedStatus = params.get('status') || '';
+
+    const activeStyle = 'background:#f8773c;border:none;color:white;';
+    const inactiveStyle = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
+
+    function updateUI() {
+        filterContainer.querySelectorAll('.filter-status').forEach(btn => {
+            const value = btn.dataset.value;
+            btn.style.cssText = value === selectedStatus ? activeStyle : inactiveStyle;
+        });
+
+        const filterText = document.getElementById('filterText');
+        const filterBtn = document.getElementById('filterDropdown');
+
+        if (filterBtn && filterText) {
+            filterBtn.querySelector('.filter-badge')?.remove();
+            if (selectedStatus) {
+                const label = { 'active': 'Active', 'inactive': 'Inactive' }[selectedStatus] || selectedStatus;
+                filterText.textContent = `Filter: ${label}`;
+                const badge = document.createElement('span');
+                badge.className = 'filter-badge';
+                badge.style.cssText = 'width:8px;height:8px;background:#f8773c;border-radius:50%;margin-left:6px;display:inline-block;';
+                filterBtn.appendChild(badge);
+            } else {
+                filterText.textContent = 'Filter';
             }
-            return html;
         }
+    }
 
-        function fetchData(url) {
-            const tableBody = document.getElementById('unitDepartmentsTable');
-            const paginationContainer = document.getElementById('unitDepartmentsPaginationContainer');
-
-            if (!tableBody || !paginationContainer) return;
-
-            tableBody.innerHTML = generateSkeletonRows(10);
-
-            fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.html !== undefined) {
-                        tableBody.innerHTML = data.html;
-                    }
-                    if (data.pagination !== undefined) {
-                        paginationContainer.innerHTML = data.pagination;
-                    }
-                    initializeTooltips();
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    tableBody.innerHTML =
-                        '<tr><td colspan="4" class="text-center py-5 text-danger">Failed to load data.</td></tr>';
-                });
-        }
-
-        function initializeTooltips() {
-            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-                if (!bootstrap.Tooltip.getInstance(el)) {
-                    new bootstrap.Tooltip(el);
-                }
-            });
-        }
-
-        function initializeSearch() {
-            const searchInput = document.getElementById('searchInput') || document.querySelector('input[name="search"]');
-            if (!searchInput) return;
-
-            let searchTimeout;
-
-            const performSearch = () => {
-                const url = new URL(window.location.href);
-                if (searchInput.value.trim()) {
-                    url.searchParams.set('search', searchInput.value.trim());
-                } else {
-                    url.searchParams.delete('search');
-                }
-                url.searchParams.set('page', '1');
-                window.history.pushState({}, '', url);
-                fetchData(url);
-            };
-
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    clearTimeout(searchTimeout);
-                    performSearch();
-                }
-            });
-
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(performSearch, 800);
-            });
-        }
-
-        function initializeFilters() {
-            const filterContainer = document.getElementById('filterContainer');
-            if (!filterContainer) return;
-
-            const params = new URLSearchParams(window.location.search);
-            let selectedStatus = (params.get('status') || '').split(',').filter(s => s !== '');
-
-            const activeStyle = 'background:#f8773c;border:none;color:white;';
-            const inactiveStyle = 'background:white;border:1px solid #d1d5db;color:#6b7280;';
-
-            function updateUI() {
-                filterContainer.querySelectorAll('.filter-status').forEach(btn => {
-                    const value = btn.dataset.value;
-                    btn.style.cssText = (value === '' && selectedStatus.length === 0) || selectedStatus.includes(
-                            value) ?
-                        activeStyle :
-                        inactiveStyle;
-                });
-
-                const filterText = document.getElementById('filterText');
-                const filterBtn = document.getElementById('filterDropdown');
-
-                if (filterBtn && filterText) {
-                    filterBtn.querySelector('.filter-badge')?.remove();
-
-                    if (selectedStatus.length > 0) {
-                        const labels = selectedStatus.map(s => ({
-                            'active': 'Active',
-                            'inactive': 'Inactive'
-                        } [s] || s)).join(', ');
-                        filterText.textContent = `Filter: ${labels}`;
-
-                        const badge = document.createElement('span');
-                        badge.className = 'filter-badge';
-                        badge.style.cssText =
-                            'width:8px;height:8px;background:#f8773c;border-radius:50%;margin-left:6px;display:inline-block;';
-                        filterBtn.appendChild(badge);
-                    } else {
-                        filterText.textContent = 'Filter';
-                    }
-                }
-            }
-
-            filterContainer.querySelectorAll('.filter-status').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const value = this.dataset.value;
-                    if (value === '') {
-                        selectedStatus = [];
-                    } else {
-                        const index = selectedStatus.indexOf(value);
-                        index === -1 ? selectedStatus.push(value) : selectedStatus.splice(index, 1);
-                    }
-                    updateUI();
-                });
-            });
-
-            document.getElementById('applyFilter')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const url = new URL(window.location.href);
-                selectedStatus.length > 0 ?
-                    url.searchParams.set('status', selectedStatus.join(',')) :
-                    url.searchParams.delete('status');
-                url.searchParams.set('page', '1');
-                window.history.pushState({}, '', url);
-                fetchData(url);
-
-                const dropdownToggle = document.getElementById('filterDropdown');
-                const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
-                if (dropdown) dropdown.hide();
-            });
-
-            document.getElementById('resetFilter')?.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectedStatus = [];
-                updateUI();
-                const url = new URL(window.location.href);
-                url.searchParams.delete('status');
-                url.searchParams.set('page', '1');
-                window.history.pushState({}, '', url);
-                fetchData(url);
-            });
-
-            filterContainer.querySelector('.dropdown-menu')?.addEventListener('click', e => e.stopPropagation());
+    filterContainer.querySelectorAll('.filter-status').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectedStatus = this.dataset.value;
             updateUI();
+        });
+    });
+
+    document.getElementById('applyFilter')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = new URL(window.location.href);
+        if (selectedStatus) {
+            url.searchParams.set('status', selectedStatus);
+        } else {
+            url.searchParams.delete('status');
         }
+        url.searchParams.set('page', '1');
+        window.history.pushState({}, '', url);
+        fetchData(url);
 
-        function initializeStatusToggle() {
-            document.querySelectorAll('.status-toggle').forEach(button => {
-                button.addEventListener('click', function() {
-                    const deptId = this.dataset.id;
-                    const isActive = this.dataset.active === 'true';
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const dropdownToggle = document.getElementById('filterDropdown');
+        const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+        if (dropdown) dropdown.hide();
+    });
 
-                    fetch(`/admin/unit-departments/${deptId}/toggle-status`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(res => {
-                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                            return res.json();
-                        })
-                        .then(data => {
-                            if (!data.success) return;
+    document.getElementById('resetFilter')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectedStatus = '';
+        updateUI();
+        const url = new URL(window.location.href);
+        url.searchParams.delete('status');
+        url.searchParams.set('page', '1');
+        window.history.pushState({}, '', url);
+        fetchData(url);
+    });
 
-                            const newActive = !isActive;
-                            this.dataset.active = String(newActive);
-                            const badge = document.getElementById(`status_badge_${deptId}`);
+    filterContainer.querySelector('.dropdown-menu')?.addEventListener('click', e => e.stopPropagation());
+    updateUI();
+}
 
-                            if (newActive) {
-                                this.classList.replace('btn-outline-secondary', 'btn-success');
-                                this.textContent = 'Active';
-                                if (badge) {
-                                    badge.className =
-                                        'badge rounded-pill px-3 ms-2 bg-success-subtle text-success';
-                                    badge.textContent = 'Active';
-                                }
-                            } else {
-                                this.classList.replace('btn-success', 'btn-outline-secondary');
-                                this.textContent = 'Inactive';
-                                if (badge) {
-                                    badge.className =
-                                        'badge rounded-pill px-3 ms-2 bg-danger-subtle text-danger';
-                                    badge.textContent = 'Inactive';
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Toggle status error:', err));
-                });
+function initializePagination() {
+    document.addEventListener('click', function(e) {
+        const paginationLink = e.target.closest('.pagination .page-link');
+        if (paginationLink) {
+            e.preventDefault();
+            const url = new URL(paginationLink.href);
+            window.history.pushState({}, '', url);
+            fetchData(url);
+        }
+    });
+}
+
+function initializeSort() {
+    document.addEventListener('click', function(e) {
+        const sortLink = e.target.closest('#sortDropdown .dropdown-item');
+        if (sortLink) {
+            e.preventDefault();
+            const url = new URL(sortLink.href);
+            window.history.pushState({}, '', url);
+            fetchData(url);
+
+            const dropdown = sortLink.closest('.dropdown');
+            const buttonTextSpan = dropdown.querySelector('button .fw-medium');
+            if (buttonTextSpan) {
+                buttonTextSpan.textContent = 'Sort: ' + sortLink.textContent.trim();
+            }
+
+            dropdown.querySelectorAll('.dropdown-item').forEach(function(item) {
+                item.classList.remove('active');
             });
+            sortLink.classList.add('active');
+
+            const dropdownToggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+            const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+            if (bsDropdown) bsDropdown.hide();
         }
+    });
+}
 
-        function initializeDropdowns() {
-            initializeTooltips();
+function initializeDropdowns() {
+    document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
+        const icon = btn.querySelector('.dropdown-icon');
+        if (!icon) return;
+        btn.addEventListener('show.bs.dropdown', () => icon.style.transform = 'rotate(180deg)');
+        btn.addEventListener('hide.bs.dropdown', () => icon.style.transform = 'rotate(0)');
+    });
+}
 
-            document.querySelectorAll('.dropdown-toggle-btn').forEach(btn => {
-                const icon = btn.querySelector('.dropdown-icon');
-                if (!icon) return;
-                btn.addEventListener('show.bs.dropdown', () => icon.style.transform = 'rotate(180deg)');
-                btn.addEventListener('hide.bs.dropdown', () => icon.style.transform = 'rotate(0)');
-            });
-        }
+function initializeAlerts() {
+    document.querySelectorAll('.alert').forEach(alert => {
+        setTimeout(() => {
+            if (alert.classList.contains('show')) {
+                bootstrap.Alert.getOrCreateInstance(alert)?.close();
+            }
+        }, 5000);
+    });
+}
 
-        function initializeAlerts() {
-            document.querySelectorAll('.alert').forEach(alert => {
-                setTimeout(() => {
-                    if (alert.classList.contains('show')) {
-                        bootstrap.Alert.getOrCreateInstance(alert)?.close();
-                    }
-                }, 5000);
-            });
-        }
+function initializeStatusToggle() {
+    document.querySelectorAll('.status-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const isActive = this.dataset.active === 'true';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            
+            let baseUrl = window.location.pathname;
+            if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+            const endpoint = `${baseUrl}/${id}/toggle-status`;
 
-        function initializePagination() {
-            document.addEventListener('click', function(e) {
-                const paginationLink = e.target.closest('.pagination .page-link');
-                if (paginationLink) {
-                    e.preventDefault();
-                    const url = new URL(paginationLink.href);
-                    window.history.pushState({}, '', url);
-                    fetchData(url);
+            fetch(endpoint, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
                 }
-            });
-        }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                if (!data.success) return;
+                const newActive = !isActive;
+                this.dataset.active = String(newActive);
+                const badge = document.getElementById(`status_badge_${id}`);
 
-        function initializeSort() {
-            document.addEventListener('click', function(e) {
-                const sortLink = e.target.closest('#sortDropdown .dropdown-item');
-                if (sortLink) {
-                    e.preventDefault(); 
-                    const url = new URL(sortLink.href);
-                    window.history.pushState({}, '', url);
-                    fetchData(url);
-
-                    const dropdown = sortLink.closest('.dropdown');
-                    const buttonTextSpan = dropdown.querySelector('button .fw-medium');
-                    if (buttonTextSpan) {
-                        buttonTextSpan.textContent = 'Sort: ' + sortLink.textContent.trim();
+                if (newActive) {
+                    this.classList.replace('btn-outline-secondary', 'btn-success');
+                    this.textContent = 'Active';
+                    if (badge) {
+                        badge.className = 'badge rounded-pill px-3 ms-2 bg-success-subtle text-success';
+                        badge.textContent = 'Active';
                     }
-
-                    dropdown.querySelectorAll('.dropdown-item').forEach(function(item) {
-                        item.classList.remove('active');
-                    });
-                    sortLink.classList.add('active');
-
-                    const dropdownToggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-                    const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
-                    if (bsDropdown) bsDropdown.hide();
+                } else {
+                    this.classList.replace('btn-success', 'btn-outline-secondary');
+                    this.textContent = 'Inactive';
+                    if (badge) {
+                        badge.className = 'badge rounded-pill px-3 ms-2 bg-danger-subtle text-danger';
+                        badge.textContent = 'Inactive';
+                    }
                 }
-            });
-        }
-    </script>
+            })
+            .catch(err => console.error('Toggle status error:', err));
+        });
+    });
+}
+</script>
 @endpush

@@ -60,6 +60,12 @@
                     <i class="ti ti-building"></i>
                     <span class="nav-label">Units</span>
                 </a>
+
+                <a href="{{  route('admin.qr-codes.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.qr-codes.*') ? 'active' : '' }}">
+                    <i class="ti ti-qrcode"></i>
+                    <span class="nav-label">QR Codes</span>
+                </a>
             </div>
 
             <div class="nav-section">
@@ -68,6 +74,11 @@
                     class="nav-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
                     <i class="ti ti-users"></i>
                     <span class="nav-label">Employees</span>
+                </a>
+                <a href="{{ route('admin.employees.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
+                    <i class="ti ti-clipboard-list"></i>
+                    <span class="nav-label">Assigments</span>
                 </a>
             </div>
 

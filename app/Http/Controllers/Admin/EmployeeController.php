@@ -19,9 +19,9 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Employee::class);
-        
+
         try {
-            $filters = $request->only(['search', 'unit_id', 'status', 'sort', 'per_page']);
+            $filters = $request->only(['search', 'unit_id', 'status', 'sort', 'order', 'per_page']);
             $employees = $this->service->getFilteredEmployees($filters);
             $units = $this->service->getUnitsForFilter();
 

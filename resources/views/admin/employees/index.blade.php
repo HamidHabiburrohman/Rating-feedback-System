@@ -58,9 +58,8 @@
                             type="button" data-bs-toggle="dropdown"
                             style="height: 44px; background-color: white; border-color: #d1d5db;">
                             <span class="fw-medium" id="perPageText">{{ request('per_page', 10) }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
-                                style="transition:.3s">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
@@ -82,14 +81,13 @@
                             class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
                             type="button" data-bs-toggle="dropdown" id="filterDropdown"
                             style="height:44px;background:white;border-color:#d1d5db;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                             </svg>
                             <span class="fw-medium" id="filterText">Filter</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
-                                style="transition:.3s">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" class="dropdown-icon" style="transition:.3s">
                                 <path d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
@@ -101,8 +99,8 @@
                                     <label class="small fw-bold text-uppercase mb-2 d-block"
                                         style="color: #6b7280; letter-spacing: 0.05em;">Assigned Unit</label>
                                     <div class="position-relative mb-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                            viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="#9ca3af" stroke-width="2"
                                             style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%);">
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -131,8 +129,7 @@
                                             @foreach ($units as $unit)
                                                 <button type="button"
                                                     class="btn btn-sm rounded-pill px-3 fw-medium filter-unit unit-btn {{ in_array($unit->id, $currentUnits) ? 'filter-active' : '' }}"
-                                                    data-value="{{ $unit->id }}"
-                                                    data-name="{{ strtolower($unit->name) }}"
+                                                    data-value="{{ $unit->id }}" data-name="{{ strtolower($unit->name) }}"
                                                     style="{{ in_array($unit->id, $currentUnits) ? $activeStyle : $inactiveStyle }}">{{ $unit->name }}</button>
                                             @endforeach
                                         </div>
@@ -171,34 +168,13 @@
                         </div>
                     </div>
 
-                    <div class="dropdown" id="sortDropdown">
-                        <button
-                            class="btn btn-white border rounded-pill px-3 d-flex align-items-center gap-2 dropdown-toggle-btn"
-                            type="button" data-bs-toggle="dropdown"
-                            style="height: 44px; background: white; border-color: #d1d5db;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 6h18M6 12h12M9 18h6" />
-                            </svg>
-                            <span class="fw-medium"
-                                id="sortText">{{ request('sort', 'Name A-Z') == 'name_asc' ? 'Name A-Z' : (request('sort') == 'name_desc' ? 'Name Z-A' : (request('sort') == 'created_at_desc' ? 'Newest First' : (request('sort') == 'created_at_asc' ? 'Oldest First' : 'Name A-Z'))) }}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" class="dropdown-icon"
-                                style="transition:.3s">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </button>
-                        <ul class="dropdown-menu border-0 shadow-lg rounded-3">
-                            <li><a class="dropdown-item sort-option" data-sort="name_asc" href="javascript:void(0)">Name
-                                    A-Z</a></li>
-                            <li><a class="dropdown-item sort-option" data-sort="name_desc" href="javascript:void(0)">Name
-                                    Z-A</a></li>
-                            <li><a class="dropdown-item sort-option" data-sort="created_at_desc"
-                                    href="javascript:void(0)">Newest First</a></li>
-                            <li><a class="dropdown-item sort-option" data-sort="created_at_asc"
-                                    href="javascript:void(0)">Oldest First</a></li>
-                        </ul>
-                    </div>
+                    <x-admin.sort-button :sortOptions="[
+            'name_asc' => 'Name A-Z',
+            'name_desc' => 'Name Z-A',
+            'created_at_desc' => 'Newest First',
+            'created_at_asc' => 'Oldest First',
+        ]" defaultSort="name"
+                        defaultOrder="asc" />
 
                     <x-admin.button-create url="{{ route('admin.employees.create') }}" tooltip="Add New Employee"
                         size="md">Add Employee</x-admin.button-create>
@@ -207,10 +183,9 @@
         </div>
 
         @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center"
-                role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" class="me-2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
@@ -220,10 +195,9 @@
         @endif
 
         @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center"
-                role="alert">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" class="me-2">
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" class="me-2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -259,7 +233,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const filterContainer = document.getElementById('filterContainer');
             const filterDropdownBtn = document.getElementById('filterDropdown');
             const unitBtns = document.querySelectorAll('.unit-btn');
@@ -271,16 +245,16 @@
             const paginationWrapper = document.getElementById('paginationWrapper');
 
             const activeStyle = 'background: #f8773c !important; border: none !important; color: white !important;';
-            const inactiveStyle =
-                'background: white !important; border: 1px solid #d1d5db !important; color: #6b7280 !important;';
+            const inactiveStyle = 'background: white !important; border: 1px solid #d1d5db !important; color: #6b7280 !important;';
 
             let filters = {
                 search: new URLSearchParams(window.location.search).get('search') || '',
                 unit_id: '{{ request('unit_id', '') }}',
                 status: '{{ request('status', '') }}',
-                sort: '{{ request('sort', 'name_asc') }}',
+                sort: '{{ request('sort', 'name') }}',
+                order: '{{ request('order', 'asc') }}',
                 per_page: '{{ request('per_page', 10) }}',
-                page: 1
+                page: '{{ request('page', 1) }}'
             };
 
             let searchTimeout;
@@ -290,13 +264,24 @@
                 const rows = parseInt(filters.per_page) || 10;
                 for (let i = 0; i < rows; i++) {
                     skeleton += `
-                <tr>
-                    <td class="ps-4"><div class="d-flex align-items-center gap-3"><div class="skeleton-avatar" style="width:40px;height:40px;"></div><div class="skeleton-text" style="width: 120px;"></div></div></td>
-                    <td><div class="skeleton-text" style="width: 150px;"></div></td>
-                    <td><div class="skeleton-text" style="width: 100px;"></div></td>
-                    <td><div class="skeleton-text" style="width: 80px;"></div></td>
-                    <td class="text-center pe-4"><div class="d-flex justify-content-center gap-1"><div class="skeleton-btn"></div><div class="skeleton-btn"></div><div class="skeleton-btn"></div></div></td>
-                </tr>`;
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="skeleton-avatar" style="width:40px;height:40px;"></div>
+                                <div class="skeleton-text" style="width: 120px;"></div>
+                            </div>
+                        </td>
+                        <td><div class="skeleton-text" style="width: 150px;"></div></td>
+                        <td><div class="skeleton-text" style="width: 100px;"></div></td>
+                        <td><div class="skeleton-text" style="width: 80px;"></div></td>
+                        <td class="text-center pe-4">
+                            <div class="d-flex justify-content-center gap-1">
+                                <div class="skeleton-btn"></div>
+                                <div class="skeleton-btn"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </td>
+                    </tr>`;
                 }
                 tbody.innerHTML = skeleton;
             }
@@ -311,10 +296,10 @@
                 });
 
                 fetch(`{{ route('admin.employees.index') }}?${params.toString()}`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                     .then(res => res.json())
                     .then(data => {
                         tbody.innerHTML = data.html;
@@ -323,29 +308,27 @@
                     })
                     .catch(err => {
                         console.error('Error fetching employees:', err);
-                        tbody.innerHTML =
-                            `<tr><td colspan="5" class="text-center py-5 text-danger">Failed to load data</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Failed to load data</td></tr>`;
                     });
             }
 
             function bindPaginationEvents() {
                 document.querySelectorAll('.ajax-page-link').forEach(link => {
-                    link.addEventListener('click', function(e) {
+                    link.addEventListener('click', function (e) {
                         e.preventDefault();
                         const page = this.dataset.page;
                         if (page && page != filters.page) {
                             filters.page = page;
                             fetchEmployees();
-                            window.scrollTo({
-                                top: 0,
-                                behavior: 'smooth'
-                            });
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                     });
                 });
+            }
 
+            function initializePerPage() {
                 document.querySelectorAll('.ajax-per-page').forEach(link => {
-                    link.addEventListener('click', function(e) {
+                    link.addEventListener('click', function (e) {
                         e.preventDefault();
                         filters.per_page = this.dataset.perPage;
                         filters.page = 1;
@@ -353,6 +336,19 @@
                         fetchEmployees();
                     });
                 });
+            }
+
+            function initializeSearch() {
+                if (searchInput) {
+                    searchInput.addEventListener('input', function () {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => {
+                            filters.search = this.value;
+                            filters.page = 1;
+                            fetchEmployees();
+                        }, 500);
+                    });
+                }
             }
 
             function updateUnitVisibility() {
@@ -378,161 +374,177 @@
                 });
             }
 
-            function setupDropdownIconRotation(dropdownId) {
-                const dropdown = document.getElementById(dropdownId);
-                if (!dropdown) return;
-                const btn = dropdown.querySelector('.dropdown-toggle-btn');
-                const icon = dropdown.querySelector('.dropdown-icon');
-                if (!btn || !icon) return;
-
-                dropdown.addEventListener('show.bs.dropdown', () => {
-                    icon.style.transform = 'rotate(180deg)';
-                });
-                dropdown.addEventListener('hide.bs.dropdown', () => {
-                    icon.style.transform = 'rotate(0)';
-                });
-            }
-
-            setupDropdownIconRotation('perPageDropdown');
-            setupDropdownIconRotation('filterContainer');
-            setupDropdownIconRotation('sortDropdown');
-
-            if (filterContainer) {
-                filterContainer.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
-
-            if (unitSearchInput) {
-                unitSearchInput.addEventListener('input', function(e) {
-                    e.stopPropagation();
+            function initializeFilters() {
+                if (unitSearchInput) {
+                    unitSearchInput.addEventListener('input', function (e) {
+                        e.stopPropagation();
+                        updateUnitVisibility();
+                    });
                     updateUnitVisibility();
-                });
-                updateUnitVisibility();
-            }
+                }
 
-            document.querySelectorAll('.filter-unit, .filter-status').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const value = this.dataset.value;
-                    const isUnit = this.classList.contains('unit-btn');
+                document.querySelectorAll('.filter-unit, .filter-status').forEach(btn => {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const value = this.dataset.value;
+                        const isUnit = this.classList.contains('unit-btn');
 
-                    if (isUnit) {
-                        if (value === '') {
-                            filters.unit_id = '';
-                            unitBtns.forEach(b => {
+                        if (isUnit) {
+                            if (value === '') {
+                                filters.unit_id = '';
+                                unitBtns.forEach(b => {
+                                    b.style.cssText = inactiveStyle;
+                                    b.classList.remove('filter-active');
+                                });
+                                this.style.cssText = activeStyle;
+                                this.classList.add('filter-active');
+                            } else {
+                                const allBtn = document.querySelector('.filter-unit[data-value=""]');
+                                if (allBtn) {
+                                    allBtn.style.cssText = inactiveStyle;
+                                    allBtn.classList.remove('filter-active');
+                                }
+                                let selected = filters.unit_id ? filters.unit_id.split(',').filter(Boolean) : [];
+                                const idx = selected.indexOf(value);
+                                if (idx > -1) {
+                                    selected.splice(idx, 1);
+                                    this.style.cssText = inactiveStyle;
+                                    this.classList.remove('filter-active');
+                                } else {
+                                    selected.push(value);
+                                    this.style.cssText = activeStyle;
+                                    this.classList.add('filter-active');
+                                }
+                                filters.unit_id = selected.join(',');
+                            }
+                        } else {
+                            filters.status = value;
+                            document.querySelectorAll('.filter-status').forEach(b => {
                                 b.style.cssText = inactiveStyle;
                                 b.classList.remove('filter-active');
                             });
                             this.style.cssText = activeStyle;
                             this.classList.add('filter-active');
-                        } else {
-                            const allBtn = document.querySelector('.filter-unit[data-value=""]');
-                            if (allBtn) {
-                                allBtn.style.cssText = inactiveStyle;
-                                allBtn.classList.remove('filter-active');
-                            }
-                            let selected = filters.unit_id ? filters.unit_id.split(',').filter(
-                                Boolean) : [];
-                            const idx = selected.indexOf(value);
-                            if (idx > -1) {
-                                selected.splice(idx, 1);
-                                this.style.cssText = inactiveStyle;
-                                this.classList.remove('filter-active');
-                            } else {
-                                selected.push(value);
-                                this.style.cssText = activeStyle;
-                                this.classList.add('filter-active');
-                            }
-                            filters.unit_id = selected.join(',');
                         }
-                    } else {
-                        filters.status = value;
-                        document.querySelectorAll('.filter-status').forEach(b => {
+                    });
+                });
+
+                if (applyFilterBtn) {
+                    applyFilterBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        filters.page = 1;
+                        fetchEmployees();
+                        const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
+                        if (dropdownInstance) dropdownInstance.hide();
+                    });
+                }
+
+                if (resetFilterBtn) {
+                    resetFilterBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        filters.unit_id = '';
+                        filters.status = '';
+                        filters.page = 1;
+
+                        document.querySelectorAll('.filter-unit, .filter-status').forEach(b => {
                             b.style.cssText = inactiveStyle;
                             b.classList.remove('filter-active');
                         });
-                        this.style.cssText = activeStyle;
-                        this.classList.add('filter-active');
-                    }
-                });
-            });
 
-            if (applyFilterBtn) {
-                applyFilterBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    filters.page = 1;
-                    fetchEmployees();
-                    const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
-                    if (dropdownInstance) dropdownInstance.hide();
-                });
-            }
+                        const allUnitBtn = document.querySelector('.filter-unit[data-value=""]');
+                        if (allUnitBtn) {
+                            allUnitBtn.style.cssText = activeStyle;
+                            allUnitBtn.classList.add('filter-active');
+                        }
 
-            if (resetFilterBtn) {
-                resetFilterBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    filters.unit_id = '';
-                    filters.status = '';
-                    filters.page = 1;
+                        const allStatusBtn = document.querySelector('.filter-status[data-value=""]');
+                        if (allStatusBtn) {
+                            allStatusBtn.style.cssText = activeStyle;
+                            allStatusBtn.classList.add('filter-active');
+                        }
 
-                    document.querySelectorAll('.filter-unit, .filter-status').forEach(b => {
-                        b.style.cssText = inactiveStyle;
-                        b.classList.remove('filter-active');
-                    });
-                    const allUnitBtn = document.querySelector('.filter-unit[data-value=""]');
-                    if (allUnitBtn) {
-                        allUnitBtn.style.cssText = activeStyle;
-                        allUnitBtn.classList.add('filter-active');
-                    }
-                    const allStatusBtn = document.querySelector('.filter-status[data-value=""]');
-                    if (allStatusBtn) {
-                        allStatusBtn.style.cssText = activeStyle;
-                        allStatusBtn.classList.add('filter-active');
-                    }
+                        if (unitSearchInput) {
+                            unitSearchInput.value = '';
+                            updateUnitVisibility();
+                        }
 
-                    if (unitSearchInput) {
-                        unitSearchInput.value = '';
-                        updateUnitVisibility();
-                    }
-
-                    fetchEmployees();
-                    const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
-                    if (dropdownInstance) dropdownInstance.hide();
-                });
-            }
-
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        filters.search = this.value;
-                        filters.page = 1;
                         fetchEmployees();
-                    }, 500);
+                        const dropdownInstance = bootstrap.Dropdown.getInstance(filterDropdownBtn);
+                        if (dropdownInstance) dropdownInstance.hide();
+                    });
+                }
+            }
+
+            function initializeSort() {
+                document.addEventListener('click', function (e) {
+                    const sortLink = e.target.closest('#sortDropdown .dropdown-item');
+                    if (sortLink) {
+                        e.preventDefault();
+                        const url = new URL(sortLink.href);
+
+                        filters.sort = url.searchParams.get('sort') || 'name';
+                        filters.order = url.searchParams.get('order') || 'asc';
+                        filters.page = 1;
+
+                        const dropdown = sortLink.closest('.dropdown');
+                        const buttonTextSpan = dropdown.querySelector('button .fw-medium');
+                        if (buttonTextSpan) {
+                            buttonTextSpan.textContent = 'Sort: ' + sortLink.textContent.trim();
+                        }
+
+                        dropdown.querySelectorAll('.dropdown-item').forEach(function (item) {
+                            item.classList.remove('active');
+                        });
+                        sortLink.classList.add('active');
+
+                        const dropdownToggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+                        const bsDropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+                        if (bsDropdown) bsDropdown.hide();
+
+                        window.history.pushState({}, '', url);
+                        fetchEmployees();
+                    }
                 });
             }
 
-            document.querySelectorAll('.sort-option').forEach(opt => {
-                opt.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    filters.sort = this.dataset.sort;
-                    filters.page = 1;
-                    document.getElementById('sortText').textContent = this.textContent;
-                    fetchEmployees();
+            function initializeDropdowns() {
+                function setupDropdownIconRotation(dropdownId) {
+                    const dropdown = document.getElementById(dropdownId);
+                    if (!dropdown) return;
+                    const btn = dropdown.querySelector('.dropdown-toggle-btn');
+                    const icon = dropdown.querySelector('.dropdown-icon');
+                    if (!btn || !icon) return;
+
+                    dropdown.addEventListener('show.bs.dropdown', () => {
+                        icon.style.transform = 'rotate(180deg)';
+                    });
+                    dropdown.addEventListener('hide.bs.dropdown', () => {
+                        icon.style.transform = 'rotate(0)';
+                    });
+                }
+
+                setupDropdownIconRotation('perPageDropdown');
+                setupDropdownIconRotation('filterContainer');
+                setupDropdownIconRotation('sortDropdown');
+            }
+
+            function initializeAlerts() {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    setTimeout(() => {
+                        if (alert.classList.contains('show')) {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                            if (bsAlert) bsAlert.close();
+                        }
+                    }, 5000);
                 });
-            });
+            }
 
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    if (alert.classList.contains('show')) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        if (bsAlert) bsAlert.close();
-                    }
-                }, 5000);
-            });
-
-            bindPaginationEvents();
+            initializeSearch();
+            initializeFilters();
+            initializePerPage();
+            initializeSort();
+            initializeDropdowns();
+            initializeAlerts();
         });
     </script>
 @endpush

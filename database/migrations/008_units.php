@@ -27,18 +27,15 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->enum('operational_status', ['open', 'full', 'maintenance', 'closed'])->default('open');
             
-            // ✅ TAMBAHAN: Kolom statistik rating (denormalization untuk performa query)
             $table->unsignedInteger('total_ratings')->default(0);
             $table->decimal('avg_rating', 3, 2)->default(0.00);
             
-            // Circular dependency fix: tanpa FK constraint ke qr_codes
             $table->unsignedBigInteger('primary_qr_code_id')->nullable();
             
             $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
             
-            // ✅ TAMBAHAN: Index agar sorting di Landing Page & Dashboard super cepat
             $table->index('avg_rating');
             $table->index('total_ratings');
             $table->index('primary_qr_code_id');
