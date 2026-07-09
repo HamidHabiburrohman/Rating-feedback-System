@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Carbon\Carbon;
 
 class QrCodeService
 {
@@ -28,54 +29,117 @@ class QrCodeService
         protected string $directory = 'qr-codes'
     ) {}
 
-    public function getAllQrCodes(array $filters = []): LengthAwarePaginator
-    {
-        $query = QrCode::with(['unit', 'generatedByAdmin'])
-            ->withCount(['unitVisits', 'ratings']);
+    // public function getAllQrCodes(array $filters = []): LengthAwarePaginator
+    // {
+    //     $query = QrCode::with(['unit', 'generatedByAdmin'])
+    //         ->withCount(['unitVisits', 'ratings']);
 
+    //     if (!empty($filters['search'])) {
+    //         $search = $filters['search'];
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('code', 'LIKE', "%{$search}%")
+    //                 ->orWhereHas('unit', fn($u) => $u->where('name', 'LIKE', "%{$search}%"));
+    //         });
+    //     }
+
+    //     if (!empty($filters['status'])) {
+    //         if ($filters['status'] === 'active') {
+    //             $query->where('is_active', true)
+    //                 ->where(function ($q) {
+    //                     $q->whereNull('expires_at')
+    //                         ->orWhere('expires_at', '>', now());
+    //                 });
+    //         } elseif ($filters['status'] === 'inactive') {
+    //             $query->where('is_active', false);
+    //         } elseif ($filters['status'] === 'expired') {
+    //             $query->where('expires_at', '<=', now());
+    //         }
+    //     }
+
+    //     if (!empty($filters['unit_id'])) {
+    //         $query->where('unit_id', $filters['unit_id']);
+    //     }
+
+    //     $sort = $filters['sort'] ?? 'created_at';
+    //     $order = $filters['order'] ?? 'desc';
+
+    //     $allowedSorts = ['created_at', 'code', 'expires_at'];
+    //     if (!in_array($sort, $allowedSorts)) {
+    //         $sort = 'created_at';
+    //     }
+
+    //     $order = in_array(strtolower($order), ['asc', 'desc']) ? strtolower($order) : 'desc';
+
+    //     $query->orderBy($sort, $order);
+
+    //     $perPage = (int) ($filters['per_page'] ?? 10);
+    //     if (!in_array($perPage, $this->perPageOptions)) {
+    //         $perPage = 10;
+    //     }
+
+    //     return $query->paginate($perPage);
+    // }
+
+    
+    
+    public function getAllQrCodes(array $filters): LengthAwarePaginator
+    {
+        $query = QrCode::query()
+            // KUNCI UTAMA 1: Eager load semua relasi untuk menghindari N+1 query
+            ->with([
+                'unit.unitDepartment',
+                'generatedByAdmin'
+            ])
+            // KUNCI UTAMA 2: Hitung total visit langsung di level database query (efisien & cepat)
+            ->withCount('unitVisits');
+
+        // Apply Search
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'LIKE', "%{$search}%")
-                    ->orWhereHas('unit', fn($u) => $u->where('name', 'LIKE', "%{$search}%"));
+                    ->orWhereHas('unit', function ($unitQ) use ($search) {
+                        $unitQ->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('code', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
+        // Apply Status Filter
         if (!empty($filters['status'])) {
-            if ($filters['status'] === 'active') {
+            $status = $filters['status'];
+            $now = Carbon::now();
+
+            if ($status === 'active') {
                 $query->where('is_active', true)
-                    ->where(function ($q) {
-                        $q->whereNull('expires_at')
-                            ->orWhere('expires_at', '>', now());
+                    ->where(function ($q) use ($now) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
                     });
-            } elseif ($filters['status'] === 'inactive') {
+            } elseif ($status === 'inactive') {
                 $query->where('is_active', false);
-            } elseif ($filters['status'] === 'expired') {
-                $query->where('expires_at', '<=', now());
+            } elseif ($status === 'expired') {
+                $query->whereNotNull('expires_at')->where('expires_at', '<=', $now);
             }
         }
 
+        // Apply Unit Filter
         if (!empty($filters['unit_id'])) {
             $query->where('unit_id', $filters['unit_id']);
         }
 
+        // Apply Sorting
         $sort = $filters['sort'] ?? 'created_at';
         $order = $filters['order'] ?? 'desc';
-        
+
+        // Validasi sort kolom untuk keamanan
         $allowedSorts = ['created_at', 'code', 'expires_at'];
-        if (!in_array($sort, $allowedSorts)) {
-            $sort = 'created_at';
-        }
-        
-        $order = in_array(strtolower($order), ['asc', 'desc']) ? strtolower($order) : 'desc';
-        
-        $query->orderBy($sort, $order);
-
-        $perPage = (int) ($filters['per_page'] ?? 10);
-        if (!in_array($perPage, $this->perPageOptions)) {
-            $perPage = 10;
+        if (in_array($sort, $allowedSorts, true)) {
+            $query->orderBy($sort, $order);
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
+        $perPage = isset($filters['per_page']) ? (int)$filters['per_page'] : 10;
         return $query->paginate($perPage);
     }
 

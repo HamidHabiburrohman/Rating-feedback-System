@@ -29,6 +29,6 @@ class RatingScore extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\RatingScoreFactory::new();
+        return \Database\Factories\Rating\RatingScoreFactory::new();
     }
 }

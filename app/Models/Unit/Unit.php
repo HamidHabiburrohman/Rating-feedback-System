@@ -6,16 +6,13 @@ use App\Models\Employee\EmployeeUnitAssignment;
 use App\Models\Feedback\Rating;
 use App\Models\Feedback\UnitVisit;
 use App\Models\Report\Report;
-use App\Models\Unit\UnitPhoto;
-use App\Models\Unit\QrCode;
-use Database\Factories\UnitFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Unit extends Model
 {
@@ -116,6 +113,6 @@ class Unit extends Model
 
     protected static function newFactory()
     {
-        return UnitFactory::new();
+        return \Database\Factories\Unit\UnitFactory::new();
     }
 }

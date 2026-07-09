@@ -26,6 +26,6 @@ class ReportCategory extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ReportCategoryFactory::new();
+        return \Database\Factories\Report\ReportCategoryFactory::new();
     }
 }

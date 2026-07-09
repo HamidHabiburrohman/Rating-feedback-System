@@ -19,13 +19,10 @@ return new class extends Migration
             $table->text('description');
             $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium');
             $table->enum('status', ['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview'])->default('new');
-            $table->foreignId('assigned_to_employee_id')->nullable()->constrained('employees')->nullOnDelete();
-            $table->foreignId('admin_id')->nullable()->constrained('admins')->nullOnDelete();
-            $table->text('admin_response')->nullable();
-            $table->timestamp('replied_at')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
             $table->index(['unit_id', 'status']);
             $table->index(['rating_id', 'status']);
             $table->index('priority');

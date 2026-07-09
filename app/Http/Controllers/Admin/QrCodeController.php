@@ -245,23 +245,61 @@ class QrCodeController extends Controller
         return back()->with('success', 'QR Code berhasil dihapus.');
     }
 
-    public function search(Request $request)
+    public function search(Request $request): JsonResponse
     {
         $query = $request->get('q', '');
         $limit = min((int) $request->get('limit', 5), 10);
 
         $units = Unit::where('is_active', true)
+            ->whereNotIn('id', QrCode::select('unit_id'))
             ->when($query, function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                     ->orWhere('code', 'LIKE', "%{$query}%");
             })
-            ->with('unitType')
+            ->with(['unitType', 'unitDepartment'])
             ->limit($limit)
-            ->get(['id', 'name', 'code', 'unit_type_id']);
+            ->get(['id', 'name', 'code', 'unit_type_id', 'unit_department_id']);
 
         return response()->json([
             'success' => true,
-            'units' => $units
+            'units' => $units->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'name' => $unit->name,
+                    'code' => $unit->code ?? 'N/A',
+                    'type' => $unit->unitType ? $unit->unitType->name : 'General',
+                    'department' => $unit->unitDepartment ? $unit->unitDepartment->name : 'No Department',
+                ];
+            })
+        ]);
+    }
+
+    public function searchUnits(Request $request)
+    {
+        $query = $request->get('q', '');
+        $limit = min((int) $request->get('limit', 10), 20);
+
+        $units = Unit::where('is_active', true)
+            ->whereNotIn('id', \App\Models\Unit\QrCode::where('is_active', true)->select('unit_id'))
+            ->when($query, function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('code', 'LIKE', "%{$query}%");
+            })
+            ->with(['unitType', 'unitDepartment'])
+            ->limit($limit)
+            ->get(['id', 'name', 'code', 'unit_type_id', 'unit_department_id']);
+
+        return response()->json([
+            'success' => true,
+            'units' => $units->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'name' => $unit->name,
+                    'code' => $unit->code ?? 'N/A',
+                    'type' => $unit->unitType ? $unit->unitType->name : 'General',
+                    'department' => $unit->unitDepartment ? $unit->unitDepartment->name : 'No Department',
+                ];
+            })
         ]);
     }
 }

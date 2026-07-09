@@ -48,6 +48,6 @@ class Export extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ExportFactory::new();
+        return \Database\Factories\Export\ExportFactory::new();
     }
 }

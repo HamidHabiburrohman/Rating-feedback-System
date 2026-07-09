@@ -38,6 +38,6 @@ class ReportStatusHistory extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ReportStatusHistoryFactory::new();
+        return \Database\Factories\Report\ReportStatusHistoryFactory::new();
     }
 }

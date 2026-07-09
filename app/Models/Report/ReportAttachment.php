@@ -30,6 +30,6 @@ class ReportAttachment extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ReportAttachmentFactory::new();
+        return \Database\Factories\Report\ReportAttachmentFactory::new();
     }
 }

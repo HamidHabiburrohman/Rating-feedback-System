@@ -57,6 +57,6 @@ class Setting extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\SettingFactory::new();
+        return \Database\Factories\Setting\SettingFactory::new();
     }
 }

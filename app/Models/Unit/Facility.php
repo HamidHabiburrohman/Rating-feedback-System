@@ -28,6 +28,6 @@ class Facility extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\FacilityFactory::new();
+        return \Database\Factories\Facility\FacilityFactory::new();
     }
 }

@@ -47,6 +47,6 @@ class QrCode extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\QrCodeFactory::new();
+        return \Database\Factories\QRCode\QrCodeFactory::new();
     }
 }

@@ -30,6 +30,6 @@ class RatingAttachment extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\RatingAttachmentFactory::new();
+        return \Database\Factories\Rating\RatingAttachmentFactory::new();
     }
 }

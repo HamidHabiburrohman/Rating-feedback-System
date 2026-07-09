@@ -2,10 +2,12 @@
 
 namespace App\Models\Authentication;
 
+use App\Models\Employee\EmployeeUnitAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Admin extends Authenticatable
 {
@@ -14,10 +16,24 @@ class Admin extends Authenticatable
     protected $table = 'admins';
 
     protected $fillable = [
-        'nama', 'email', 'password', 'role', 'photo', 'phone', 'location',
-        'employee_id', 'position', 'department', 'bio', 'timezone',
-        'is_active', 'two_factor_enabled', 'preferences',
-        'login_count', 'last_login_at', 'last_login_ip'
+        'nama',
+        'email',
+        'password',
+        'role',
+        'photo',
+        'phone',
+        'location',
+        'employee_id',
+        'position',
+        'department',
+        'bio',
+        'timezone',
+        'is_active',
+        'two_factor_enabled',
+        'preferences',
+        'login_count',
+        'last_login_at',
+        'last_login_ip'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -51,11 +67,11 @@ class Admin extends Authenticatable
         ])->save();
     }
 
-
     public function getPreference(string $key, $default = null)
     {
         return $this->preferences[$key] ?? $default;
     }
+
     public function mergePreferences(array $preferences): void
     {
         $current = $this->preferences ?? [];
@@ -63,8 +79,18 @@ class Admin extends Authenticatable
         $this->save();
     }
 
+    public function assignedEmployeeAssignments(): HasMany
+    {
+        return $this->hasMany(EmployeeUnitAssignment::class, 'assigned_by_admin_id');
+    }
+
+    public function verifiedEmployeeAssignments(): HasMany
+    {
+        return $this->hasMany(EmployeeUnitAssignment::class, 'verified_by_admin_id');
+    }
+
     protected static function newFactory()
     {
-        return \Database\Factories\AdminFactory::new();
+        return \Database\Factories\Admin\AdminFactory::new();
     }
 }

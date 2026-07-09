@@ -28,6 +28,6 @@ class Notification extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\NotificationFactory::new();
+        return \Database\Factories\Notification\NotificationFactory::new();
     }
 }

@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ModerationLogController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\MessageController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -68,19 +69,24 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::post('units/bulk-force-delete', [UnitController::class, 'bulkForceDelete'])->name('units.force-delete-bulk');
     Route::post('units/bulk-activate', [UnitController::class, 'bulkActivate'])->name('units.bulk-activate');
 
+    // -----------------------------------------------------------------
+    // QR CODES MANAGEMENT
+    // -----------------------------------------------------------------
     Route::prefix('units/{unit}')->group(function () {
         Route::post('/upload', [UnitPhotoController::class, 'upload'])->name('admin.units.photos.upload');
         Route::post('/{photoId}/primary', [UnitPhotoController::class, 'setPrimary'])->name('admin.units.photos.set-primary');
         Route::delete('/{photoId}', [UnitPhotoController::class, 'destroy'])->name('admin.units.photos.destroy');
+        Route::get('qr-codes', [QrCodeController::class, 'index'])->name('units.qr-codes.index');
+        Route::post('qr-codes/generate', [QrCodeController::class, 'generate'])->name('units.qr-codes.generate');
     });
 
     Route::prefix('qr-codes')->group(function () {
         Route::get('/', [QrCodeController::class, 'globalIndex'])->name('qr-codes.index');
         Route::post('/generate', [QrCodeController::class, 'generateGlobal'])->name('qr-codes.generate');
+        Route::get('/search', [QrCodeController::class, 'search'])->name('qr-codes.search');
         Route::get('/stats', [QrCodeController::class, 'stats'])->name('qr-codes.stats');
-        Route::get('units/search', [UnitController::class, 'search'])->name('units.search');
         Route::get('{qrCode}/download', [QrCodeController::class, 'download'])->name('qr-codes.download');
-        Route::get('{qrCode}/preview-data', [QrCodeController::class, 'previewData'])->name('admin.qr-codes.preview-data');
+        Route::get('{qrCode}/preview-data', [QrCodeController::class, 'previewData'])->name('qr-codes.preview-data');
         Route::get('{qrCode}/preview', [QrCodeController::class, 'preview'])->name('qr-codes.preview');
         Route::post('{qrCode}/regenerate', [QrCodeController::class, 'regenerate'])->name('qr-codes.regenerate');
         Route::patch('{qrCode}/activate', [QrCodeController::class, 'activate'])->name('qr-codes.activate');
@@ -150,4 +156,15 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('notifications/latest', [NotificationController::class, 'latest'])->name('notifications.latest');
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+    Route::prefix('assignments/{assignment}/messages')->group(function () {
+        Route::get('/', [MessageController::class, 'index'])->name('assignments.messages.index');
+        Route::get('/{message}', [MessageController::class, 'show'])->name('assignments.messages.show');
+        Route::post('/', [MessageController::class, 'store'])->name('assignments.messages.store');
+        Route::put('/{message}', [MessageController::class, 'update'])->name('assignments.messages.update');
+        Route::delete('/{message}', [MessageController::class, 'destroy'])->name('assignments.messages.destroy');
+        Route::patch('/{message}/read', [MessageController::class, 'markAsRead'])->name('assignments.messages.read');
+        Route::patch('/read-all', [MessageController::class, 'markAllAsRead'])->name('assignments.messages.read-all');
+        Route::get('/{message}/download', [MessageController::class, 'downloadAttachment'])->name('assignments.messages.download');
+    });
 });

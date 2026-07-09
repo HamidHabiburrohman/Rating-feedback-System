@@ -26,6 +26,6 @@ class UnitDepartment extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\UnitDepartmentFactory::new();
+        return \Database\Factories\Unit\UnitDepartmentFactory::new();
     }
 }

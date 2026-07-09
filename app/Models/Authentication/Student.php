@@ -60,6 +60,6 @@ class Student extends Authenticatable
 
     protected static function newFactory()
     {
-        return \Database\Factories\StudentFactory::new();
+        return \Database\Factories\Student\StudentFactory::new();
     }
 }

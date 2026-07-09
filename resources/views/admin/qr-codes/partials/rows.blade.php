@@ -81,7 +81,7 @@
             <td class="text-center pe-4">
                 <div class="d-flex justify-content-center gap-1">
 
-                    <button type="button" class="btn btn-sm btn-light rounded-circle open-preview-modal-btn"
+                    <button type="button" class="btn-preview open-preview-modal-btn" id=""
                         data-id="{{ $qrCode->id }}" data-bs-toggle="tooltip" title="Preview QR Code">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

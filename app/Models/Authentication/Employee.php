@@ -2,10 +2,18 @@
 
 namespace App\Models\Authentication;
 
+use App\Models\Employee\EmployeeUnitAssignment;
+use App\Models\Feedback\RatingReply;
+use App\Models\Message\Message;
+use App\Models\Report\ReportReply;
+use App\Models\Unit\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Authenticatable
 {
@@ -14,12 +22,26 @@ class Employee extends Authenticatable
     protected $table = 'employees';
 
     protected $fillable = [
-        'name', 'email', 'password', 'employee_id', 'photo', 'phone',
-        'position', 'department', 'is_active', 'timezone', 'preferences',
-        'login_count', 'last_login_at', 'last_login_ip'
+        'name',
+        'email',
+        'password',
+        'employee_id',
+        'photo',
+        'phone',
+        'position',
+        'department',
+        'is_active',
+        'timezone',
+        'preferences',
+        'login_count',
+        'last_login_at',
+        'last_login_ip',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -30,35 +52,40 @@ class Employee extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    public function unitAssignments()
+    public function employeeAssignments(): HasMany
     {
-        return $this->hasMany(\App\Models\Employee\EmployeeUnitAssignment::class);
+        return $this->hasMany(EmployeeUnitAssignment::class);
     }
 
-    public function assignedUnits()
+    public function assignedUnits(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Unit\Unit::class, 'employee_unit_assignments')
-                    ->withPivot('role_in_unit', 'assigned_at', 'ended_at', 'is_active')
-                    ->withTimestamps();
+        return $this->belongsToMany(Unit::class, 'employee_unit_assignments')
+            ->withPivot('assigned_at', 'status', 'priority', 'notes')
+            ->withTimestamps();
     }
 
-    public function ratingReplies()
+    public function messages(): HasMany
     {
-        return $this->hasMany(\App\Models\Feedback\RatingReply::class);
+        return $this->hasMany(Message::class);
     }
 
-    public function reportReplies()
+    public function ratingReplies(): HasMany
     {
-        return $this->hasMany(\App\Models\Report\ReportReply::class);
+        return $this->hasMany(RatingReply::class);
     }
 
-    public function notifications()
+    public function reportReplies(): HasMany
+    {
+        return $this->hasMany(ReportReply::class);
+    }
+
+    public function notifications(): MorphMany
     {
         return $this->morphMany(\App\Models\System\Notification::class, 'notifiable');
     }
 
     protected static function newFactory()
     {
-        return \Database\Factories\EmployeeFactory::new();
+        return \Database\Factories\Employee\EmployeeFactory::new();
     }
 }

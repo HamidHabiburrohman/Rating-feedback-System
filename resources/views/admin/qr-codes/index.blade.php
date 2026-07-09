@@ -178,7 +178,9 @@
         ]" defaultSort="created_at"
                         defaultOrder="desc" />
 
-                    <button type="button" class="qr-btn qr-btn-primary open-generate-modal-btn">
+                    <button type="button" class="qr-btn qr-btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#generateQrModal"
+                        style="background: #f8773c; border: none; color: white; padding: 0.625rem 1.5rem; border-radius: 333px; font-size: 0.875rem; font-weight: 600; box-shadow: 0 4px 14px rgba(248, 119, 60, 0.25); display: inline-flex; align-items: center; gap: 0.5rem;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -572,6 +574,20 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
             color: #b91c1c;
         }
+
+        .btn-preview {
+            background-color: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.09) !important;
+            transition: all 0.2s ease-in-out !important;
+            padding: 8px !important;
+            border-radius: 999px;
+        }
+
+        .btn-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            color: #007bff;
+        }
     </style>
 @endpush
 
@@ -633,7 +649,7 @@
                 unitSelectOptions.querySelectorAll('.custom-select-option').forEach(opt => opt.remove());
 
                 // Fetch from server
-                fetch(`{{ route('admin.units.search') }}?q=${encodeURIComponent(query)}&limit=5`, {
+                fetch(`{{ route('admin.qr-codes.search') }}?q=${encodeURIComponent(query)}&limit=5`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
@@ -650,13 +666,13 @@
                                 option.className = 'custom-select-option';
                                 option.dataset.value = unit.id;
                                 option.innerHTML = `
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                        <polyline points="9 22 9 12 15 12 15 22"/>
-                                    </svg>
-                                    <span class="option-text">${unit.name}</span>
-                                    <span class="option-code">${unit.code || 'No Code'}</span>
-                                `;
+                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                                                <polyline points="9 22 9 12 15 12 15 22"/>
+                                                            </svg>
+                                                            <span class="option-text">${unit.name}</span>
+                                                            <span class="option-code">${unit.code || 'No Code'}</span>
+                                                        `;
 
                                 option.addEventListener('click', function () {
                                     selectUnit(unit.id, unit.name);
@@ -704,7 +720,7 @@
                 btnText.textContent = 'Generating...';
 
                 try {
-                    const response = await fetch('{{ route("admin.qr-codes.generate", ":unit") }}'.replace(':unit', selectedUnitId), {
+                    const response = await fetch(`{{ route("admin.qr-codes.generate") }}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -763,24 +779,24 @@
             let html = '';
             for (let i = 0; i < count; i++) {
                 html += `
-                        <tr>
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="skeleton" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                    <div class="skeleton" style="width: 120px; height: 16px;"></div>
-                                </div>
-                            </td>
-                            <td><div class="skeleton" style="width: 140px; height: 16px;"></div></td>
-                            <td><div class="skeleton" style="width: 80px; height: 24px; border-radius: 12px;"></div></td>
-                            <td><div class="skeleton" style="width: 100px; height: 16px;"></div></td>
-                            <td class="text-center pe-4">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
-                                    <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                                                <tr>
+                                                    <td class="ps-4">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div class="skeleton" style="width: 40px; height: 40px; border-radius: 8px;"></div>
+                                                            <div class="skeleton" style="width: 120px; height: 16px;"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td><div class="skeleton" style="width: 140px; height: 16px;"></div></td>
+                                                    <td><div class="skeleton" style="width: 80px; height: 24px; border-radius: 12px;"></div></td>
+                                                    <td><div class="skeleton" style="width: 100px; height: 16px;"></div></td>
+                                                    <td class="text-center pe-4">
+                                                        <div class="d-flex justify-content-center gap-2">
+                                                            <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                                                            <div class="skeleton" style="width: 34px; height: 34px; border-radius: 8px;"></div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `;
             }
             return html;
         }

@@ -32,6 +32,6 @@ class ModerationLog extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ModerationLogFactory::new();
+        return \Database\Factories\Moderation\ModerationLogFactory::new();
     }
 }

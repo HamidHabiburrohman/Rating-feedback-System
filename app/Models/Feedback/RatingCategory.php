@@ -43,6 +43,6 @@ class RatingCategory extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\RatingCategoryFactory::new();
+        return \Database\Factories\Rating\RatingCategoryFactory::new();
     }
 }

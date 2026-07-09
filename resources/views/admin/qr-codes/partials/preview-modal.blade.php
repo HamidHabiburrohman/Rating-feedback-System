@@ -380,10 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div class="qr-preview-details">
                             <div class="qr-preview-row">
-                                <span class="qr-preview-label">QR Code</span>
-                                <span class="qr-preview-value qr-preview-code">${d.code}</span>
-                            </div>
-                            <div class="qr-preview-row">
                                 <span class="qr-preview-label">Unit Name</span>
                                 <span class="qr-preview-value">${d.unit_name}</span>
                             </div>

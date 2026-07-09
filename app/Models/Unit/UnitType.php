@@ -26,6 +26,6 @@ class UnitType extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\UnitTypeFactory::new();
+        return \Database\Factories\Unit\UnitTypeFactory::new();
     }
 }

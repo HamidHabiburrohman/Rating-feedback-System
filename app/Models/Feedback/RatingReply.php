@@ -31,6 +31,6 @@ class RatingReply extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\RatingReplyFactory::new();
+        return \Database\Factories\Rating\RatingReplyFactory::new();
     }
 }

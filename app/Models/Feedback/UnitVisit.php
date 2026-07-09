@@ -48,6 +48,6 @@ class UnitVisit extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\UnitVisitFactory::new();
+        return \Database\Factories\Unit\UnitVisitFactory::new();
     }
 }

@@ -36,6 +36,6 @@ class UnitPhoto extends Model
     }
     protected static function newFactory()
     {
-        return \Database\Factories\UnitPhotoFactory::new();
+        return \Database\Factories\Unit\UnitPhotoFactory::new();
     }
 }

@@ -80,6 +80,11 @@
                     <i class="ti ti-clipboard-list"></i>
                     <span class="nav-label">Assigments</span>
                 </a>
+                <a href="{{ route('admin.employees.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
+                    <i class="ti ti-message"></i>
+                    <span class="nav-label">Messages</span>
+                </a>
             </div>
 
             <div class="nav-section">

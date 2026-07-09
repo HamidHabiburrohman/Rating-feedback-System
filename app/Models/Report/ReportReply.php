@@ -36,6 +36,6 @@ class ReportReply extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\ReportReplyFactory::new();
+        return \Database\Factories\Report\ReportReplyFactory::new();
     }
 }

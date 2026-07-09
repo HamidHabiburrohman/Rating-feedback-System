@@ -69,6 +69,6 @@ class Rating extends Model
 
     protected static function newFactory()
     {
-        return \Database\Factories\RatingFactory::new();
+        return \Database\Factories\Rating\RatingFactory::new();
     }
 }
