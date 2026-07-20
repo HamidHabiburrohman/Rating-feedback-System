@@ -16,8 +16,8 @@ class UploadUnitPhotoRequest extends FormRequest
         return [
             'photos' => 'required|array',
             'photos.*' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'is_primary' => 'sometimes|boolean',
-        ];
+            'is_primary' => 'sometimes|boolean'
+    ];
     }
 
     public function messages(): array
@@ -25,7 +25,7 @@ class UploadUnitPhotoRequest extends FormRequest
         return [
             'photos.*.image' => 'File harus berupa gambar',
             'photos.*.mimes' => 'Format gambar harus jpeg, png, atau jpg',
-            'photos.*.max' => 'Ukuran gambar maksimal 5MB',
-        ];
+            'photos.*.max' => 'Ukuran gambar maksimal 5MB'
+    ];
     }
 }

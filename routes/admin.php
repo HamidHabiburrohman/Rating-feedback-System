@@ -1,27 +1,31 @@
 <?php
 
+use App\Http\Controllers\Admin\Export\ExportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\ResetPasswordController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\UnitController;
-use App\Http\Controllers\Admin\UnitTypeController;
-use App\Http\Controllers\Admin\UnitDepartmentController;
-use App\Http\Controllers\Admin\UnitPhotoController;
-use App\Http\Controllers\Admin\FacilityController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\QrCodeController;
-use App\Http\Controllers\Admin\RatingCategoryController;
-use App\Http\Controllers\Admin\RatingController;
-use App\Http\Controllers\Admin\ReportCategoryController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\ModerationLogController;
-use App\Http\Controllers\Admin\ExportController;
-use App\Http\Controllers\Admin\NotificationController;
-use App\Http\Controllers\Admin\MessageController;
+use App\Http\Controllers\Admin\Conversation\ConversationController;
+use App\Http\Controllers\Admin\Conversation\ConversationParticipantController;
+use App\Http\Controllers\Admin\Conversation\MessageController;
+use App\Http\Controllers\Admin\Conversation\MessageAttachmentController;
+use App\Http\Controllers\Admin\Conversation\MessageReadController;
+use App\Http\Controllers\Admin\Dashboard\DashboardController;
+use App\Http\Controllers\Admin\Profile\ProfileController;
+use App\Http\Controllers\Admin\Unit\UnitController;
+use App\Http\Controllers\Admin\Unit\UnitTypeController;
+use App\Http\Controllers\Admin\Unit\UnitDepartmentController;
+use App\Http\Controllers\Admin\Unit\UnitPhotoController;
+use App\Http\Controllers\Admin\Facility\FacilityController;
+use App\Http\Controllers\Admin\Employee\EmployeeController;
+use App\Http\Controllers\Admin\QRCode\QrCodeController;
+use App\Http\Controllers\Admin\Rating\RatingCategoryController;
+use App\Http\Controllers\Admin\Rating\RatingController;
+use App\Http\Controllers\Admin\Report\ReportCategoryController;
+use App\Http\Controllers\Admin\Report\ReportController;
+use App\Http\Controllers\Admin\Setting\SettingController;
+use App\Http\Controllers\Admin\Moderation\ModerationLogController;
+use App\Http\Controllers\Admin\Notification\NotificationController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -94,6 +98,60 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
         Route::delete('{qrCode}', [QrCodeController::class, 'destroy'])->name('qr-codes.destroy');
     });
 
+    // -----------------------------------------------------------------
+    // CONVERSATIONS MODULE
+    // Independent conversation system between Admin and Employee
+    // -----------------------------------------------------------------
+    Route::prefix('conversations')->name('conversations.')->group(function () {
+
+        // Conversation Management
+        Route::get('/', [ConversationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [ConversationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/', [ConversationController::class, 'store'])->name('store');
+        Route::get('/{conversation}', [ConversationController::class, 'show'])->name('show');
+        Route::put('/{conversation}', [ConversationController::class, 'update'])->name('update');
+        Route::delete('/{conversation}', [ConversationController::class, 'destroy'])->name('destroy');
+
+        // Conversation Actions
+        Route::patch('/{conversation}/archive', [ConversationController::class, 'archive'])->name('archive');
+        Route::patch('/{conversation}/reopen', [ConversationController::class, 'reopen'])->name('reopen');
+        Route::patch('/{conversation}/close', [ConversationController::class, 'close'])->name('close');
+
+        // Conversation Participants
+        Route::prefix('{conversation}/participants')->name('participants.')->group(function () {
+            Route::get('/', [ConversationParticipantController::class, 'index'])->name('index');
+            Route::post('/', [ConversationParticipantController::class, 'store'])->name('store');
+            Route::delete('/{participant}', [ConversationParticipantController::class, 'destroy'])->name('destroy');
+            Route::post('/{participant}/leave', [ConversationParticipantController::class, 'leave'])->name('leave');
+        });
+
+        // Messages (nested under conversation)
+        Route::prefix('{conversation}/messages')->name('messages.')->group(function () {
+            Route::get('/', [MessageController::class, 'index'])->name('index');
+            Route::post('/', [MessageController::class, 'store'])->name('store');
+            Route::get('/{message}', [MessageController::class, 'show'])->name('show');
+            Route::put('/{message}', [MessageController::class, 'update'])->name('update');
+            Route::delete('/{message}', [MessageController::class, 'destroy'])->name('destroy');
+            Route::post('/read-all', [MessageReadController::class, 'markAllAsRead'])->name('read-all');
+
+            // Message Actions
+            Route::patch('/{message}/read', [MessageReadController::class, 'markAsRead'])->name('read');
+            Route::post('/read-all', [MessageReadController::class, 'markAllAsRead'])->name('read-all');
+
+            // Message Attachments
+            Route::post('/{message}/attachments', [MessageAttachmentController::class, 'upload'])->name('attachments.upload');
+            Route::get('/{message}/attachments/{attachment}', [MessageAttachmentController::class, 'download'])->name('attachments.download');
+            Route::delete('/{message}/attachments/{attachment}', [MessageAttachmentController::class, 'destroy'])->name('attachments.destroy');
+            Route::get('attachments/{attachment}/download', [MessageAttachmentController::class, 'downloadDirect'])->name('attachments.download-direct');
+        });
+    });
+
+    // Global attachment download (direct access without conversation context)
+    Route::get('attachments/{attachment}/download', [MessageAttachmentController::class, 'downloadDirect'])->name('attachments.download-direct');
+
+    // Global attachment download (not tied to specific conversation UI)
+    Route::get('attachments/{attachment}/download', [MessageAttachmentController::class, 'download'])->name('attachments.download');
+
     Route::resource('unit-types', UnitTypeController::class);
     Route::post('unit-types/reorder', [UnitTypeController::class, 'reorder'])->name('unit-types.reorder');
 
@@ -135,16 +193,18 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
 
-    Route::get('moderation-logs', [ModerationLogController::class, 'index'])->name('moderation-logs.index');
-    Route::get('moderation-logs/stats', [ModerationLogController::class, 'stats'])->name('moderation-logs.stats');
-    Route::get('moderation-logs/export', [ModerationLogController::class, 'export'])->name('moderation-logs.export');
-    Route::get('moderation-logs/summary', [ModerationLogController::class, 'summary'])->name('moderation-logs.summary');
-    Route::get('moderation-logs/by-target/{targetType}/{targetId}', [ModerationLogController::class, 'byTarget'])->name('moderation-logs.by-target');
-    Route::get('moderation-logs/by-admin/{adminId}', [ModerationLogController::class, 'byAdmin'])->name('moderation-logs.by-admin');
-    Route::get('moderation-logs/{id}', [ModerationLogController::class, 'show'])->name('moderation-logs.show');
-    Route::post('moderation-logs/cleanup', [ModerationLogController::class, 'cleanup'])->name('moderation-logs.cleanup');
-    Route::post('moderation-logs/bulk-destroy', [ModerationLogController::class, 'bulkDestroy'])->name('moderation-logs.bulk-destroy');
-    Route::delete('moderation-logs/{log}', [ModerationLogController::class, 'destroy'])->name('moderation-logs.destroy');
+    Route::prefix('moderation-logs')->group(function () {
+        Route::get('moderation-logs', [ModerationLogController::class, 'index'])->name('moderation-logs.index');
+        Route::get('moderation-logs/stats', [ModerationLogController::class, 'stats'])->name('moderation-logs.stats');
+        Route::get('moderation-logs/export', [ModerationLogController::class, 'export'])->name('moderation-logs.export');
+        Route::get('moderation-logs/summary', [ModerationLogController::class, 'summary'])->name('moderation-logs.summary');
+        Route::get('moderation-logs/by-target/{targetType}/{targetId}', [ModerationLogController::class, 'byTarget'])->name('moderation-logs.by-target');
+        Route::get('moderation-logs/by-admin/{adminId}', [ModerationLogController::class, 'byAdmin'])->name('moderation-logs.by-admin');
+        Route::get('moderation-logs/{id}', [ModerationLogController::class, 'show'])->name('moderation-logs.show');
+        Route::post('moderation-logs/cleanup', [ModerationLogController::class, 'cleanup'])->name('moderation-logs.cleanup');
+        Route::post('moderation-logs/bulk-destroy', [ModerationLogController::class, 'bulkDestroy'])->name('moderation-logs.bulk-destroy');
+        Route::delete('moderation-logs/{log}', [ModerationLogController::class, 'destroy'])->name('moderation-logs.destroy');
+    });
 
     Route::get('exports', [ExportController::class, 'index'])->name('exports.index');
     Route::get('exports/{id}/download', [ExportController::class, 'downloadExport'])->name('exports.download');
@@ -156,15 +216,4 @@ Route::middleware(['admin', 'role:super_admin,admin'])->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('notifications/latest', [NotificationController::class, 'latest'])->name('notifications.latest');
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-
-    Route::prefix('assignments/{assignment}/messages')->group(function () {
-        Route::get('/', [MessageController::class, 'index'])->name('assignments.messages.index');
-        Route::get('/{message}', [MessageController::class, 'show'])->name('assignments.messages.show');
-        Route::post('/', [MessageController::class, 'store'])->name('assignments.messages.store');
-        Route::put('/{message}', [MessageController::class, 'update'])->name('assignments.messages.update');
-        Route::delete('/{message}', [MessageController::class, 'destroy'])->name('assignments.messages.destroy');
-        Route::patch('/{message}/read', [MessageController::class, 'markAsRead'])->name('assignments.messages.read');
-        Route::patch('/read-all', [MessageController::class, 'markAllAsRead'])->name('assignments.messages.read-all');
-        Route::get('/{message}/download', [MessageController::class, 'downloadAttachment'])->name('assignments.messages.download');
-    });
 });

@@ -15,7 +15,7 @@ class ReorderUnitTypeRequest extends FormRequest
     {
         return [
             'ids' => 'required|array',
-            'ids.*' => 'exists:unit_types,id',
-        ];
+            'ids.*' => 'exists:unit_types,id'
+    ];
     }
 }

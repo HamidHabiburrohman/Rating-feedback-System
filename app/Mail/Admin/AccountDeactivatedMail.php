@@ -48,8 +48,8 @@ class AccountDeactivatedMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'account_deactivated',
                 'role' => $this->role,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -63,7 +63,7 @@ class AccountDeactivatedMail extends Mailable implements ShouldQueue
                 'reason' => $this->reason,
                 'deactivatedByName' => $this->deactivatedByName,
                 'supportEmail' => $this->supportEmail,
-            ],
-        );
+            ]
+    );
     }
 }

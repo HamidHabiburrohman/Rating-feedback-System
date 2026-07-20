@@ -20,15 +20,15 @@ class UpdateReportStatusRequest extends FormRequest
                 'string',
                 Rule::in(['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected', 'pending_preview']),
             ],
-            'reason' => 'nullable|string|max:1000',
-        ];
+            'reason' => 'nullable|string|max:1000'
+    ];
     }
 
     public function messages(): array
     {
         return [
             'status.required' => 'Status wajib dipilih',
-            'status.in' => 'Status tidak valid',
-        ];
+            'status.in' => 'Status tidak valid'
+    ];
     }
 }

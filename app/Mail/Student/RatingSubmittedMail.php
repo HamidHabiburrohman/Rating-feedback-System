@@ -45,8 +45,8 @@ class RatingSubmittedMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'rating_submitted',
                 'tracking_code' => $this->trackingCode,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -59,7 +59,7 @@ class RatingSubmittedMail extends Mailable implements ShouldQueue
                 'overallScore' => $this->overallScore,
                 'trackingCode' => $this->trackingCode,
                 'viewUrl' => $this->viewUrl,
-            ],
-        );
+            ]
+    );
     }
 }

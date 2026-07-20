@@ -17,11 +17,11 @@ class MessageRead extends Model
         'message_id',
         'reader_type',
         'reader_id',
-        'read_at',
+        'read_at'
     ];
 
     protected $casts = [
-        'read_at' => 'datetime',
+        'read_at' => 'datetime'
     ];
 
     public function message(): BelongsTo

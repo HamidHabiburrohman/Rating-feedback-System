@@ -110,7 +110,7 @@ class IconService
         'speaker' => [
             'name' => 'Sound System',
             'svg' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M12 13v4"/><path d="M9 18h6"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="12" cy="17" r="1"/></svg>'
-        ],
+        ]
     ];
 
     /**
@@ -158,15 +158,15 @@ class IconService
             return [
                 'key' => $key,
                 'name' => ucfirst($key ?: 'Default'),
-                'svg' => $this->renderSvg($this->defaultSvg, ['class' => 'w-6 h-6']),
-            ];
+                'svg' => $this->renderSvg($this->defaultSvg, ['class' => 'w-6 h-6'])
+    ];
         }
 
         return [
             'key' => $key,
             'name' => $this->icons[$key]['name'],
-            'svg' => $this->renderSvg($this->icons[$key]['svg'], ['class' => 'w-6 h-6']),
-        ];
+            'svg' => $this->renderSvg($this->icons[$key]['svg'], ['class' => 'w-6 h-6'])
+    ];
     }
 
     /**
@@ -195,8 +195,8 @@ class IconService
             foreach ($this->icons as $key => $icon) {
                 $previews[$key] = [
                     'name' => $icon['name'],
-                    'svg' => $this->renderSvg($icon['svg'], ['class' => 'w-6 h-6']),
-                ];
+                    'svg' => $this->renderSvg($icon['svg'], ['class' => 'w-6 h-6'])
+    ];
             }
             return $previews;
         });

@@ -37,8 +37,8 @@ class UpdateProfileRequest extends FormRequest
             'department' => 'nullable|string|max:100',
             'timezone' => 'nullable|string|max:60',
             'profile_banner' => 'nullable|string|max:255',
-            'two_factor_enabled' => 'nullable|boolean',
-        ];
+            'two_factor_enabled' => 'nullable|boolean'
+    ];
     }
 
     public function messages(): array
@@ -55,8 +55,8 @@ class UpdateProfileRequest extends FormRequest
             'employee_id.unique' => 'ID Karyawan sudah digunakan.',
             'department.max' => 'Departemen maksimal 100 karakter.',
             'timezone.max' => 'Timezone maksimal 60 karakter.',
-            'profile_banner.max' => 'Banner profil maksimal 255 karakter.',
-        ];
+            'profile_banner.max' => 'Banner profil maksimal 255 karakter.'
+    ];
     }
 
     protected function prepareForValidation()

@@ -3,9 +3,8 @@
         <div class="brand-logo">
             <a href="{{ route('admin.dashboard') }}" class="logo-anchor">
                 <div class="logo-mark">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
                         <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                     </svg>
@@ -80,10 +79,10 @@
                     <i class="ti ti-clipboard-list"></i>
                     <span class="nav-label">Assigments</span>
                 </a>
-                <a href="{{ route('admin.employees.index') }}"
-                    class="nav-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }}">
-                    <i class="ti ti-message"></i>
-                    <span class="nav-label">Messages</span>
+                <a href="{{ route('admin.conversations.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.conversations.*') ? 'active' : '' }}">
+                    <i class="ti ti-messages"></i>
+                    <span class="nav-label">Conversations</span>
                 </a>
             </div>
 
@@ -258,9 +257,10 @@
     }
 
     .nav-item.active {
-        background: linear-gradient(135deg, #fff4ed, #fff);
+        background: linear-gradient(135deg, #fff6f0, #fff);
         color: #f8773c;
         font-weight: 600;
+        border: 1px solid #fffaf8;
         box-shadow: inset 0 0 0 1px rgba(248, 119, 60, 0.1);
     }
 

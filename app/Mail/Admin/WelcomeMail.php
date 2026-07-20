@@ -49,8 +49,8 @@ class WelcomeMail extends Mailable implements ShouldQueue
                 'type' => 'admin_welcome',
                 'admin_id' => $this->adminId,
                 'role' => $this->role,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -63,7 +63,7 @@ class WelcomeMail extends Mailable implements ShouldQueue
                 'role' => $this->role,
                 'temporaryPassword' => $this->temporaryPassword,
                 'loginUrl' => $this->loginUrl,
-            ],
-        );
+            ]
+    );
     }
 }

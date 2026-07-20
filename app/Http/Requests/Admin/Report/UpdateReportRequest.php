@@ -17,9 +17,8 @@ class UpdateReportRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high,critical',
-            'status' => 'required|in:new,in_progress,replied,resolved,rejected',
-            'admin_response' => 'nullable|string|max:5000'
-        ];
+            'status' => 'required|in:new,in_progress,replied,resolved,rejected'
+    ];
     }
 
     public function messages()
@@ -32,7 +31,6 @@ class UpdateReportRequest extends FormRequest
             'priority.in' => 'Prioritas tidak valid',
             'status.required' => 'Status harus dipilih',
             'status.in' => 'Status tidak valid',
-            'admin_response.max' => 'Tanggapan maksimal 5000 karakter'
         ];
     }
 }

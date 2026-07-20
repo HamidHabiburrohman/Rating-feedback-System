@@ -38,8 +38,8 @@ class ResetPasswordMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'student_password_reset',
                 'recipient_name' => $this->studentName,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -50,7 +50,7 @@ class ResetPasswordMail extends Mailable implements ShouldQueue
                 'resetUrl' => $this->resetUrl,
                 'studentName' => $this->studentName,
                 'expiresInMinutes' => $this->expiresInMinutes,
-            ],
-        );
+            ]
+    );
     }
 }

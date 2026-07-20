@@ -48,8 +48,8 @@ class WelcomeMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'employee_welcome',
                 'employee_id' => $this->employeeId,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -62,7 +62,7 @@ class WelcomeMail extends Mailable implements ShouldQueue
                 'temporaryPassword' => $this->temporaryPassword,
                 'assignedUnits' => $this->assignedUnits,
                 'loginUrl' => $this->loginUrl,
-            ],
-        );
+            ]
+    );
     }
 }

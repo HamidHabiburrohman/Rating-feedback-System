@@ -1,0 +1,325 @@
+/* ============================================
+WORKSPACE LAYOUT
+============================================ */
+.conv-app-layout {
+    display: flex;
+    height: calc(100vh - 70px);
+    width: 100%;
+    background: #ffffff;
+    overflow: hidden;
+    font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.conv-workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fafafa;
+    overflow: hidden;
+    position: relative;
+    min-width: 0;
+}
+
+.conv-workspace-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ============================================
+EMPTY STATE
+============================================ */
+.conv-empty-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.conv-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ============================================
+LOADING STATE (Dots Animation)
+============================================ */
+.conv-loading-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+}
+
+.conv-loading-dots-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.conv-loading-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.conv-loading-dots span {
+    width: 8px;
+    height: 8px;
+    background-color: #f8773c; /* Primary Orange */
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: conv-dots-pulse 1.4s infinite ease-in-out both;
+}
+
+.conv-loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+.conv-loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes conv-dots-pulse {
+    0%,
+    80%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.3;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.conv-loading-text {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b; /* Muted Text */
+    margin: 0;
+}
+
+/* ============================================
+RESPONSIVE
+============================================ */
+@media (max-width: 768px) {
+    .conv-app-layout {
+        height: calc(100vh - 60px);
+    }
+}
+
+/* ============================================
+REPLY BANNER IN COMPOSER
+============================================ */
+.conv-reply-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    border-left: 3px solid #f8773c;
+    border-radius: 0 0 12px 12px;
+    margin: 0 16px 8px 16px;
+    font-size: 13px;
+}
+
+.conv-reply-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    color: #64748b;
+}
+
+.conv-reply-banner-content i {
+    color: #f8773c;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.conv-reply-banner-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.conv-reply-banner-sender {
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conv-reply-banner-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.conv-reply-banner-cancel {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.conv-reply-banner-cancel:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ============================================
+REPLY PREVIEW IN BUBBLE
+============================================ */
+.conv-msg-reply-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    border-left: 2px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    max-width: 100%;
+}
+
+.conv-msg-own .conv-msg-reply-preview {
+    background: rgba(255, 255, 255, 0.15);
+    border-left-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.conv-msg-reply-preview:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.conv-msg-own .conv-msg-reply-preview:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.conv-msg-reply-preview i {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.conv-msg-reply-sender {
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conv-msg-own .conv-msg-reply-sender {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.conv-msg-reply-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================
+HIGHLIGHT ANIMATION FOR SCROLL TO
+============================================ */
+@keyframes conv-msg-highlight-anim {
+    0% {
+        background-color: rgba(248, 119, 60, 0.15);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.conv-msg-highlight {
+    animation: conv-msg-highlight-anim 2s ease-out forwards;
+    border-radius: 12px;
+}
+
+/* ============================================
+REPLY BANNER IN COMPOSER
+============================================ */
+.conv-reply-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #f1f5f9; /* Subtle background */
+    border: 1px solid #e2e8f0;
+    border-radius: 12px; /* Rounded corners */
+    margin: 0 16px 8px 16px;
+    font-size: 13px;
+}
+.conv-reply-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    color: #64748b;
+}
+.conv-reply-banner-content i {
+    color: #f8773c;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.conv-reply-banner-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.conv-reply-banner-sender {
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.conv-reply-banner-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #64748b;
+    font-size: 12px;
+}
+.conv-reply-banner-cancel {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.conv-reply-banner-cancel:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}

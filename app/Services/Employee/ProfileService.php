@@ -31,8 +31,8 @@ class ProfileService extends BaseEmployeeService
                         'role' => $a->role_in_unit,
                         'started_at' => $a->started_at,
                     ])
-                    ->toArray(),
-            ];
+                    ->toArray()
+    ];
         });
     }
 
@@ -112,8 +112,8 @@ class ProfileService extends BaseEmployeeService
             return [
                 'total_units' => count($assignedUnitIds),
                 'total_rating_replies' => $employee->ratingReplies()->count(),
-                'total_report_replies' => $employee->reportReplies()->count(),
-            ];
+                'total_report_replies' => $employee->reportReplies()->count()
+    ];
         });
     }
 }

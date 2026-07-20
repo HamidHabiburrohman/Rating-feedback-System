@@ -33,8 +33,8 @@ class UpdateProfileRequest extends FormRequest
             'location' => 'nullable|string|max:100',
             'portfolio_url' => 'nullable|url|max:255',
             'linkedin_url' => 'nullable|url|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ];
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ];
     }
 
     public function messages(): array
@@ -48,7 +48,7 @@ class UpdateProfileRequest extends FormRequest
             'linkedin_url.url' => 'Format URL LinkedIn tidak valid',
             'photo.image' => 'File harus berupa gambar',
             'photo.mimes' => 'Format gambar harus jpeg, png, jpg, atau gif',
-            'photo.max' => 'Ukuran gambar maksimal 2MB',
-        ];
+            'photo.max' => 'Ukuran gambar maksimal 2MB'
+    ];
     }
 }

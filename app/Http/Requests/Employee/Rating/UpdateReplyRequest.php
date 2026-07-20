@@ -15,8 +15,8 @@ class UpdateReplyRequest extends FormRequest
     {
         return [
             'reply' => 'required|string|min:3|max:5000',
-            'is_public' => 'sometimes|boolean',
-        ];
+            'is_public' => 'sometimes|boolean'
+    ];
     }
 
     public function messages(): array
@@ -24,7 +24,7 @@ class UpdateReplyRequest extends FormRequest
         return [
             'reply.required' => 'Balasan wajib diisi',
             'reply.min' => 'Balasan minimal 3 karakter',
-            'reply.max' => 'Balasan maksimal 5000 karakter',
-        ];
+            'reply.max' => 'Balasan maksimal 5000 karakter'
+    ];
     }
 }

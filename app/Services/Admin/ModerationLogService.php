@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\System\ModerationLog;
+use App\Services\Admin\Shared\BaseAdminService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -16,15 +17,15 @@ class ModerationLogService extends BaseAdminService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
-                  ->orWhere('reason', 'like', "%{$search}%")
-                  ->orWhereHas('admin', fn($a) => $a->where('nama', 'like', "%{$search}%"));
+                    ->orWhere('reason', 'like', "%{$search}%")
+                    ->orWhereHas('admin', fn($a) => $a->where('nama', 'like', "%{$search}%"));
             });
         }
 
         if (!empty($filters['action'])) $query->where('action', $filters['action']);
         if (!empty($filters['target_type'])) $query->where('target_type', $filters['target_type']);
         if (!empty($filters['admin_id'])) $query->where('admin_id', $filters['admin_id']);
-        
+
         if (!empty($filters['date_from'])) $query->whereDate('created_at', '>=', $filters['date_from']);
         if (!empty($filters['date_to'])) $query->whereDate('created_at', '<=', $filters['date_to']);
 
@@ -50,7 +51,7 @@ class ModerationLogService extends BaseAdminService
                 'total' => ModerationLog::count(),
                 'today' => ModerationLog::whereDate('created_at', today())->count(),
                 'this_week' => ModerationLog::where('created_at', '>=', now()->startOfWeek())->count(),
-                'by_action' => ModerationLog::selectRaw('action, COUNT(*) as count')->groupBy('action')->pluck('count', 'action')->toArray(),
+                'by_action' => ModerationLog::selectRaw('action, COUNT(*) as count')->groupBy('action')->pluck('count', 'action')->toArray()
             ];
         });
     }
@@ -85,7 +86,7 @@ class ModerationLogService extends BaseAdminService
 
             return [
                 'top_admins' => $topAdmins,
-                'recent_actions' => ModerationLog::with(['admin'])->latest()->limit(10)->get()->toArray(),
+                'recent_actions' => ModerationLog::with(['admin'])->latest()->limit(10)->get()->toArray()
             ];
         });
     }
@@ -111,7 +112,7 @@ class ModerationLogService extends BaseAdminService
                 'New Value' => $log->new_value,
                 'Reason' => $log->reason ?? '-',
                 'IP Address' => $log->ip_address,
-                'Created At' => $log->created_at?->format('Y-m-d H:i:s'),
+                'Created At' => $log->created_at?->format('Y-m-d H:i:s')
             ];
         })->toArray();
 

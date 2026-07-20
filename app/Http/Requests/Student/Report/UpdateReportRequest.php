@@ -16,7 +16,7 @@ class UpdateReportRequest extends FormRequest
         return [
             'title' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|required|string|max:5000',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-        ];
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240'
+    ];
     }
 }

@@ -16,8 +16,7 @@ class BulkReportActionRequest extends FormRequest
         return [
             'report_ids' => 'required|array',
             'report_ids.*' => 'exists:reports,id',
-            'action' => 'required|string|in:in_progress,replied,resolved,rejected',
-            'admin_response' => 'required_if:action,replied,resolved|nullable|string|max:2000',
-        ];
+            'action' => 'required|string|in:in_progress,replied,resolved,rejected'
+    ];
     }
 }

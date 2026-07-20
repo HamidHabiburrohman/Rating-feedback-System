@@ -14,7 +14,7 @@ class FileUploadService
         'image/jpeg',
         'image/jpg',
         'image/png',
-        'image/webp',
+        'image/webp'
     ];
 
     protected int $maxSize = 5242880;
@@ -58,8 +58,8 @@ class FileUploadService
                         'original_name' => $file->getClientOriginalName(),
                         'mime_type' => $file->getMimeType(),
                         'size' => $file->getSize(),
-                        'disk' => $this->disk,
-                    ];
+                        'disk' => $this->disk
+    ];
                     $count++;
                 }
             }

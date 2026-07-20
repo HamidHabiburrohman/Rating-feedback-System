@@ -16,7 +16,7 @@ class UpdateRatingRequest extends FormRequest
         return [
             'scores' => 'required|array',
             'scores.*' => 'required|numeric|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-        ];
+            'comment' => 'nullable|string|max:1000'
+    ];
     }
 }

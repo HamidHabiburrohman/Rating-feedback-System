@@ -16,7 +16,7 @@ class ReportReply extends Model
 
     protected $casts = [
         'is_public' => 'boolean',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function report()

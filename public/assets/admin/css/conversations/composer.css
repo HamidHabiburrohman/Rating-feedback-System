@@ -1,0 +1,302 @@
+.conv-composer-wrapper {
+    position: relative;
+    background: #ffffff;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 16px 48px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   TYPING INDICATOR IN COMPOSER
+   ============================================ */
+
+.conv-composer-typing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px 12px;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.conv-composer-typing-dots {
+    display: flex;
+    gap: 3px;
+}
+
+.conv-composer-typing-dots span {
+    width: 4px;
+    height: 4px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: convTypingBounce 1.4s infinite ease-in-out both;
+}
+
+.conv-composer-typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.conv-composer-typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes convTypingBounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* ============================================
+   DRAG & DROP OVERLAY
+   ============================================ */
+
+.conv-drag-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px dashed #f8773c;
+    border-radius: 12px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.conv-drag-overlay.active {
+    display: flex;
+}
+
+.conv-drag-content {
+    text-align: center;
+    color: #f8773c;
+}
+
+.conv-drag-content i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    stroke-width: 1.5;
+}
+
+.conv-drag-content p {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* ============================================
+   ATTACHMENT PREVIEWS
+   ============================================ */
+
+.conv-composer-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 8px 16px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+/* ============================================
+   FORM & INPUT AREA
+   ============================================ */
+
+.conv-composer-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.conv-composer-input-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 18px;
+    padding: 8px 8px 8px 16px;
+    transition: all 0.2s ease;
+}
+
+.conv-composer-input-area:focus-within {
+    background: #ffffff;
+    border-color: #f8773c;
+    box-shadow: 0 0 0 4px rgba(248, 119, 60, 0.08);
+}
+
+.conv-composer-actions-left,
+.conv-composer-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 4px;
+}
+
+.conv-composer-textarea-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.conv-composer-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    color: #0f172a;
+    line-height: 1.5;
+    resize: none;
+    max-height: 144px;
+    padding: 8px 0;
+}
+
+.conv-composer-textarea::placeholder {
+    color: #94a3b8;
+}
+
+/* ============================================
+   ICON BUTTONS
+   ============================================ */
+
+.conv-composer-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.conv-composer-icon-btn:hover {
+    background: rgba(15, 23, 42, 0.04);
+    color: #0f172a;
+}
+
+.conv-composer-icon-btn i {
+    font-size: 20px;
+    stroke-width: 1.5;
+}
+
+/* ============================================
+   CHAR COUNTER
+   ============================================ */
+
+.conv-char-counter {
+    font-size: 11px;
+    font-weight: 500;
+    color: #94a3b8;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
+.conv-char-counter.warning {
+    color: #f59e0b;
+}
+
+.conv-char-counter.danger {
+    color: #ef4444;
+}
+
+/* ============================================
+   SEND BUTTON
+   ============================================ */
+
+.conv-composer-send-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8773c;
+    border: none;
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.conv-composer-send-btn:hover:not(:disabled) {
+    background: #ea580c;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(248, 119, 60, 0.4);
+}
+
+.conv-composer-send-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.conv-composer-send-btn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.conv-composer-send-btn i {
+    font-size: 18px;
+    stroke-width: 2;
+    transition: opacity 0.2s;
+}
+
+/* ============================================
+   SEND LOADER
+   ============================================ */
+
+.conv-send-loader {
+    display: none;
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: convSpin 0.6s linear infinite;
+}
+
+.conv-composer-send-btn.loading i {
+    opacity: 0;
+}
+
+.conv-composer-send-btn.loading .conv-send-loader {
+    display: block;
+}
+
+@keyframes convSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .conv-composer-wrapper {
+        padding: 16px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .conv-composer-wrapper {
+        padding: 12px 16px;
+    }
+
+    .conv-composer-input-area {
+        padding: 6px 6px 6px 12px;
+        border-radius: 24px;
+    }
+
+    .conv-char-counter {
+        display: none;
+    }
+}

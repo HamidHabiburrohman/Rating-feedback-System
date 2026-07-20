@@ -45,8 +45,8 @@ class UpdateUnitTypeRequest extends FormRequest
             ],
             'icon_key'    => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:500'],
-            'is_active'   => ['nullable', 'boolean'],
-        ];
+            'is_active'   => ['nullable', 'boolean']
+    ];
     }
 
     public function messages(): array
@@ -55,8 +55,8 @@ class UpdateUnitTypeRequest extends FormRequest
             'name.required'     => 'Nama tipe unit wajib diisi.',
             'name.unique'       => 'Nama tipe unit sudah digunakan.',
             'slug.unique'       => 'Slug sudah digunakan.',
-            'icon_key.required' => 'Ikon wajib dipilih.',
-        ];
+            'icon_key.required' => 'Ikon wajib dipilih.'
+    ];
     }
 
     protected function prepareForValidation(): void

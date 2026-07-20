@@ -14,7 +14,7 @@ class UpdateRatingStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|string|in:active,edited,archived',
-        ];
+            'status' => 'required|string|in:active,edited,archived'
+    ];
     }
 }

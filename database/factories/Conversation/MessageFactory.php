@@ -1,21 +1,17 @@
 <?php
-
 declare(strict_types=1);
-
 namespace Database\Factories\Conversation;
-
 use App\Models\Conversation\Conversation;
 use App\Models\Conversation\Message;
 use Illuminate\Database\Eloquent\Factories\Factory;
-
 class MessageFactory extends Factory
 {
     protected $model = Message::class;
-
     public function definition(): array
     {
         return [
             'conversation_id' => Conversation::factory(),
+            'reply_to_id' => null,
             'body' => $this->faker->randomElement([
                 'Good morning.',
                 'The report has been reviewed and approved.',
@@ -37,7 +33,6 @@ class MessageFactory extends Factory
             'edited_at' => $this->faker->optional(0.1)->dateTimeBetween('-1 week', 'now'),
         ];
     }
-
     public function system(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -50,7 +45,6 @@ class MessageFactory extends Factory
             ]),
         ]);
     }
-
     public function withAttachment(): static
     {
         return $this->state(fn (array $attributes) => [

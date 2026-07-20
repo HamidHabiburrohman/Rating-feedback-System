@@ -16,7 +16,7 @@ class ReorderCategoryRequest extends FormRequest
         return [
             'categories' => 'required|array',
             'categories.*.id' => 'required|exists:rating_categories,id',
-            'categories.*.sort_order' => 'required|integer|min:0',
-        ];
+            'categories.*.sort_order' => 'required|integer|min:0'
+    ];
     }
 }

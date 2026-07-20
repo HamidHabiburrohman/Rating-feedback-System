@@ -29,8 +29,8 @@ class ProfileService extends BaseStudentService
                 'bio' => $student->bio,
                 'is_active' => $student->is_active,
                 'is_verified' => $student->is_verified,
-                'created_at' => $student->created_at,
-            ];
+                'created_at' => $student->created_at
+    ];
         });
     }
 
@@ -102,8 +102,8 @@ class ProfileService extends BaseStudentService
             return [
                 'total_ratings' => $student->ratings()->count(),
                 'total_reports' => $student->reports()->count(),
-                'total_units_visited' => $student->visits()->distinct('unit_id')->count('unit_id'),
-            ];
+                'total_units_visited' => $student->visits()->distinct('unit_id')->count('unit_id')
+    ];
         });
     }
 
@@ -125,8 +125,8 @@ class ProfileService extends BaseStudentService
                         'title' => 'Rating untuk ' . ($rating->unit->name ?? 'Unit'),
                         'description' => 'Memberikan rating ' . $rating->overall_score . ' bintang',
                         'created_at' => $rating->created_at,
-                        'url' => route('student.ratings.show', $rating->tracking_code),
-                    ];
+                        'url' => route('student.ratings.show', $rating->tracking_code)
+    ];
                 });
 
             $reports = $student->reports()
@@ -140,8 +140,8 @@ class ProfileService extends BaseStudentService
                         'title' => 'Laporan: ' . $report->title,
                         'description' => 'Status: ' . ucfirst($report->status),
                         'created_at' => $report->created_at,
-                        'url' => route('student.reports.show', $report->tracking_code),
-                    ];
+                        'url' => route('student.reports.show', $report->tracking_code)
+    ];
                 });
 
             return $ratings->concat($reports)
@@ -177,8 +177,8 @@ class ProfileService extends BaseStudentService
                 'ratings' => $ratingsThisWeek,
                 'reports' => $reportsThisWeek,
                 'visits' => $visitsThisWeek,
-                'total_engagement' => $ratingsThisWeek + $reportsThisWeek + $visitsThisWeek,
-            ];
+                'total_engagement' => $ratingsThisWeek + $reportsThisWeek + $visitsThisWeek
+    ];
         });
     }
 
@@ -195,8 +195,8 @@ class ProfileService extends BaseStudentService
                         'ip_address' => $session->ip_address,
                         'user_agent' => $session->user_agent,
                         'last_activity' => \Carbon\Carbon::createFromTimestamp($session->last_activity),
-                        'payload' => $session->payload,
-                    ];
+                        'payload' => $session->payload
+    ];
                 })
                 ->toArray();
 

@@ -14,7 +14,7 @@ class SetPrimaryPhotoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'photo_id' => 'required|exists:unit_photos,id',
-        ];
+            'photo_id' => 'required|exists:unit_photos,id'
+    ];
     }
 }

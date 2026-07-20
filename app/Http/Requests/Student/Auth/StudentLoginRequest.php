@@ -15,8 +15,8 @@ class StudentLoginRequest extends FormRequest
     {
         return [
             'student_identifier' => 'required|string|max:50',
-            'password' => 'required|string|min:6',
-        ];
+            'password' => 'required|string|min:6'
+    ];
     }
 
     public function messages(): array
@@ -25,7 +25,7 @@ class StudentLoginRequest extends FormRequest
             'student_identifier.required' => 'NIM atau email wajib diisi',
             'student_identifier.max' => 'NIM maksimal 50 karakter',
             'password.required' => 'Password wajib diisi',
-            'password.min' => 'Password minimal 6 karakter',
-        ];
+            'password.min' => 'Password minimal 6 karakter'
+    ];
     }
 }

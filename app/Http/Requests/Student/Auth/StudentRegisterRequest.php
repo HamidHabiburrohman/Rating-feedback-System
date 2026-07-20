@@ -20,8 +20,8 @@ class StudentRegisterRequest extends FormRequest
             'password' => 'required|string|min:8|confirmed',
             'major' => 'nullable|string|max:100',
             'class_year' => 'nullable|string|max:10',
-            'phone' => 'nullable|string|max:20',
-        ];
+            'phone' => 'nullable|string|max:20'
+    ];
     }
 
     public function messages(): array
@@ -34,7 +34,7 @@ class StudentRegisterRequest extends FormRequest
             'email.unique' => 'Email sudah terdaftar',
             'password.required' => 'Password wajib diisi',
             'password.min' => 'Password minimal 8 karakter',
-            'password.confirmed' => 'Konfirmasi password tidak cocok',
-        ];
+            'password.confirmed' => 'Konfirmasi password tidak cocok'
+    ];
     }
 }

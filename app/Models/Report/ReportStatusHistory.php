@@ -18,7 +18,7 @@ class ReportStatusHistory extends Model
 
     protected $casts = [
         'changed_by_admin_id' => 'integer',
-        'changed_by_employee_id' => 'integer',
+        'changed_by_employee_id' => 'integer'
     ];
 
     public function report()

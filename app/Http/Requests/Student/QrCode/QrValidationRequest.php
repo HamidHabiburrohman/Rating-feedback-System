@@ -16,8 +16,8 @@ class QrValidationRequest extends FormRequest
         return [
             'qr_code' => 'required|string|exists:qr_codes,code',
             'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ];
+            'longitude' => 'required|numeric|between:-180,180'
+    ];
     }
 
     public function messages(): array
@@ -30,7 +30,7 @@ class QrValidationRequest extends FormRequest
             'latitude.between' => 'Lokasi tidak valid',
             'longitude.required' => 'Lokasi tidak ditemukan',
             'longitude.numeric' => 'Format lokasi tidak valid',
-            'longitude.between' => 'Lokasi tidak valid',
-        ];
+            'longitude.between' => 'Lokasi tidak valid'
+    ];
     }
 }

@@ -18,8 +18,8 @@ class StoreReportRequest extends FormRequest
             'category' => 'required|in:technical,facility,network,other',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:5000',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
-        ];
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240'
+    ];
     }
 
     public function messages(): array
@@ -35,7 +35,7 @@ class StoreReportRequest extends FormRequest
             'description.max' => 'Deskripsi maksimal 5000 karakter',
             'attachment.file' => 'File tidak valid',
             'attachment.mimes' => 'Format file harus JPG, JPEG, PNG, atau PDF',
-            'attachment.max' => 'Ukuran file maksimal 10MB',
-        ];
+            'attachment.max' => 'Ukuran file maksimal 10MB'
+    ];
     }
 }

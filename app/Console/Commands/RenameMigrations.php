@@ -74,8 +74,8 @@ class RenameMigrations extends Command
             'feedback',
             'reports',
             'system',
-            'infrastructure',
-        ];
+            'infrastructure'
+    ];
 
         foreach ($folders as $folder) {
             $this->processFolder($folder);
@@ -124,8 +124,8 @@ class RenameMigrations extends Command
                     'original_name' => $filename,
                     'table_name' => $tableName,
                     'new_name' => null,
-                    'order' => 0,
-                ];
+                    'order' => 0
+    ];
             } elseif (preg_match('/^(\d{3})_(.+)\.php$/', $filename, $matches)) {
                 $order = (int)$matches[1];
                 $tableName = $matches[2];
@@ -135,8 +135,8 @@ class RenameMigrations extends Command
                     'original_name' => $filename,
                     'table_name' => $tableName,
                     'new_name' => null,
-                    'order' => $order,
-                ];
+                    'order' => $order
+    ];
             }
         }
 
@@ -251,8 +251,8 @@ class RenameMigrations extends Command
 
         $colors = [
             'RENAME' => 'green',
-            'SKIP' => 'yellow',
-        ];
+            'SKIP' => 'yellow'
+    ];
 
         $color = $colors[$type] ?? 'white';
         $tag = str_pad("[{$type}]", 10);

@@ -18,8 +18,8 @@ class StoreUnitDepartmentRequest extends FormRequest
             'slug' => 'nullable|string|max:255|unique:unit_departments,slug',
             'code' => 'nullable|string|max:50|unique:unit_departments,code',
             'description' => 'nullable|string',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 
     protected function prepareForValidation()

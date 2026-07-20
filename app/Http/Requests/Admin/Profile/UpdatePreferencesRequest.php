@@ -19,16 +19,16 @@ class UpdatePreferencesRequest extends FormRequest
             'notifications' => 'nullable|boolean',
             'compact_sidebar' => 'nullable|boolean',
             'show_activity' => 'nullable|boolean',
-            'login_notifications' => 'nullable|boolean',
-        ];
+            'login_notifications' => 'nullable|boolean'
+    ];
     }
 
     public function messages(): array
     {
         return [
             'theme.in' => 'Tema tidak valid.',
-            'language.in' => 'Bahasa tidak valid.',
-        ];
+            'language.in' => 'Bahasa tidak valid.'
+    ];
     }
 
     protected function prepareForValidation()

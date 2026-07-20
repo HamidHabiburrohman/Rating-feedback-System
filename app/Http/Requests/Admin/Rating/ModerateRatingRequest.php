@@ -15,7 +15,7 @@ class ModerateRatingRequest extends FormRequest
     {
         return [
             'action' => 'required|string|in:censor,archive,restore',
-            'reason' => 'required_if:action,censor|nullable|string|max:500',
-        ];
+            'reason' => 'required_if:action,censor|nullable|string|max:500'
+    ];
     }
 }

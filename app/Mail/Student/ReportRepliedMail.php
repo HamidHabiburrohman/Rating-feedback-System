@@ -52,8 +52,8 @@ class ReportRepliedMail extends Mailable implements ShouldQueue
                 'type' => 'report_replied',
                 'tracking_code' => $this->trackingCode,
                 'replied_by_role' => $this->repliedByRole,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -68,8 +68,8 @@ class ReportRepliedMail extends Mailable implements ShouldQueue
                 'repliedByRole' => $this->repliedByRole,
                 'replyPreview' => $this->replyPreview,
                 'viewUrl' => $this->viewUrl,
-            ],
-        );
+            ]
+    );
     }
 
     private function truncate(string $text, int $length): string

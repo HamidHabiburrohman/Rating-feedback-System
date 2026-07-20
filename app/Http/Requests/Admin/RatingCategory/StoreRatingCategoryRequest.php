@@ -20,8 +20,8 @@ class StoreRatingCategoryRequest extends FormRequest
             'sort_order'    => 'nullable|integer|min:0',
             'min_score'     => 'nullable|numeric|min:0',
             'max_score'     => 'nullable|numeric|gte:min_score',
-            'default_score' => 'nullable|numeric',
-        ];
+            'default_score' => 'nullable|numeric'
+    ];
     }
 
     public function messages(): array
@@ -29,7 +29,7 @@ class StoreRatingCategoryRequest extends FormRequest
         return [
             'name.required' => 'Nama kategori wajib diisi.',
             'name.unique'   => 'Nama kategori sudah digunakan.',
-            'max_score.gte' => 'Skor maksimal harus lebih besar atau sama dengan skor minimal.',
-        ];
+            'max_score.gte' => 'Skor maksimal harus lebih besar atau sama dengan skor minimal.'
+    ];
     }
 }

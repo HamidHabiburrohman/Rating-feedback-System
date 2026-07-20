@@ -14,7 +14,7 @@ class UnitFacility extends Model
     protected $fillable = ['unit_id', 'facility_id', 'value'];
 
     protected $casts = [
-        'value' => 'string',
+        'value' => 'string'
     ];
 
     public function unit()

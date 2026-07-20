@@ -31,7 +31,7 @@ class Report extends Model
 
     protected $casts = [
         'resolved_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function rating(): BelongsTo
@@ -71,7 +71,7 @@ class Report extends Model
 
     public function assignment(): HasOne
     {
-        return $this->hasOne(EmployeeUnitAssignment::class);
+        return $this->hasOne(EmployeeUnitAssignment::class,'report_id');
     }
 
     protected static function newFactory()

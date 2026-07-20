@@ -19,7 +19,7 @@ class UpdateUnitRequest extends FormRequest
             'phone' => 'nullable|string',
             'email' => 'nullable|email',
             'operating_hours' => 'nullable|array',
-            'facilities' => 'nullable|array',
-        ];
+            'facilities' => 'nullable|array'
+    ];
     }
 }

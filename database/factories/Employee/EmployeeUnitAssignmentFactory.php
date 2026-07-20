@@ -18,9 +18,14 @@ class EmployeeUnitAssignmentFactory extends Factory
             'employee_id' => Employee::factory(),
             'unit_id' => Unit::factory(),
             'assigned_by_admin_id' => Admin::factory(),
+            'verified_by_admin_id' => null,
+            'status' => $this->faker->randomElement(['assigned', 'accepted', 'in_progress', 'waiting_verification', 'completed', 'cancelled']),
+            'priority' => $this->faker->randomElement(['low', 'medium', 'high', 'critical']),
+            'notes' => $this->faker->optional(0.3)->sentence(),
             'assigned_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
-            'ended_at' => $this->faker->optional(0.2)->dateTimeBetween('now', '+6 months'),
-            'is_active' => true,
+            'started_at' => $this->faker->optional(0.7)->dateTimeBetween('-5 months', 'now'),
+            'completed_at' => null,
+            'verified_at' => null,
         ];
     }
 
@@ -38,19 +43,34 @@ class EmployeeUnitAssignmentFactory extends Factory
         ]);
     }
 
-    public function ended(): static
+    public function completed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'ended_at' => $this->faker->dateTimeBetween('-3 months', '-1 day'),
-            'is_active' => false,
+            'status' => 'completed',
+            'completed_at' => $this->faker->dateTimeBetween('-3 months', '-1 day'),
+            'verified_at' => $this->faker->optional(0.5)->dateTimeBetween('-2 months', 'now'),
+            'verified_by_admin_id' => Admin::factory(),
         ]);
     }
 
     public function active(): static
     {
         return $this->state(fn (array $attributes) => [
-            'ended_at' => null,
-            'is_active' => true,
+            'status' => $this->faker->randomElement(['assigned', 'accepted', 'in_progress', 'waiting_verification']),
+            'completed_at' => null,
+            'verified_at' => null,
+            'verified_by_admin_id' => null,
+        ]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'cancelled',
+            'completed_at' => null,
+            'verified_at' => null,
+            'verified_by_admin_id' => null,
+            'notes' => 'Assignment cancelled due to operational changes.',
         ]);
     }
 }

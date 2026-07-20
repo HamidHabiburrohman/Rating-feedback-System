@@ -17,8 +17,8 @@ class StoreRatingRequest extends FormRequest
             'unit_id' => 'required|exists:units,id',
             'scores' => 'required|array|min:1',
             'scores.*' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-        ];
+            'comment' => 'nullable|string|max:1000'
+    ];
     }
 
     public function messages(): array
@@ -31,7 +31,7 @@ class StoreRatingRequest extends FormRequest
             'scores.*.integer' => 'Nilai harus berupa angka',
             'scores.*.min' => 'Nilai minimal adalah 1',
             'scores.*.max' => 'Nilai maksimal adalah 5',
-            'comment.max' => 'Komentar maksimal 1000 karakter',
-        ];
+            'comment.max' => 'Komentar maksimal 1000 karakter'
+    ];
     }
 }

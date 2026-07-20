@@ -23,8 +23,8 @@ class ReportExport extends BaseExport
                 'Unit' => $report->unit->nama_unit ?? '-',
                 'Admin' => $report->admin->name ?? '-',
                 'Tanggapan Admin' => $report->tanggapan_admin ?? '-',
-                'Tanggal Dibuat' => $report->created_at->format('d/m/Y H:i'),
-            ];
+                'Tanggal Dibuat' => $report->created_at->format('d/m/Y H:i')
+    ];
         })->toArray();
     }
     

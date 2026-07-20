@@ -23,7 +23,7 @@ class ReportFilterRequest extends FormRequest
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'sort' => 'nullable|string|in:id,created_at,priority,status',
             'order' => 'nullable|string|in:asc,desc',
-            'per_page' => 'nullable|integer|in:10,25,50,100',
-        ];
+            'per_page' => 'nullable|integer|in:10,25,50,100'
+    ];
     }
 }

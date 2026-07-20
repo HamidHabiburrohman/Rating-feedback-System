@@ -14,7 +14,7 @@ class StoreReplyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reply_message' => 'required|string|max:2000',
-        ];
+            'reply_message' => 'required|string|max:2000'
+    ];
     }
 }

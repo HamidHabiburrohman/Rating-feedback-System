@@ -18,8 +18,8 @@ class StoreUnitTypeRequest extends FormRequest
             'slug' => 'nullable|string|max:255|unique:unit_types,slug',
             'icon_key' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-        ];
+            'is_active' => 'nullable|boolean'
+    ];
     }
 
     protected function prepareForValidation()

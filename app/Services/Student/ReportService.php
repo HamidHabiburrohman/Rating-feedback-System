@@ -155,8 +155,8 @@ class ReportService extends BaseStudentService
                 'new' => $reports->where('status', 'new')->count(),
                 'in_progress' => $reports->where('status', 'in_progress')->count(),
                 'resolved' => $reports->where('status', 'resolved')->count(),
-                'rejected' => $reports->where('status', 'rejected')->count(),
-            ];
+                'rejected' => $reports->where('status', 'rejected')->count()
+    ];
         });
     }
 }

@@ -40,7 +40,7 @@ class Unit extends Model
         'primary_qr_code_id',
         'metadata',
         'avg_rating',
-        'total_ratings',
+        'total_ratings'
     ];
 
     protected $casts = [
@@ -51,7 +51,7 @@ class Unit extends Model
         'metadata' => 'array',
         'deleted_at' => 'datetime',
         'avg_rating' => 'float',
-        'total_ratings' => 'integer',
+        'total_ratings' => 'integer'
     ];
 
     public function unitType(): BelongsTo

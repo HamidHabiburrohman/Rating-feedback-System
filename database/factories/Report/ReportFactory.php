@@ -5,8 +5,6 @@ namespace Database\Factories\Report;
 use App\Models\Report\Report;
 use App\Models\Feedback\Rating;
 use App\Models\Report\ReportCategory;
-use App\Models\Authentication\Employee;
-use App\Models\Authentication\Admin;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ReportFactory extends Factory
@@ -17,15 +15,15 @@ class ReportFactory extends Factory
     {
         $rating = Rating::inRandomOrder()->first() ?? Rating::factory();
         $category = ReportCategory::inRandomOrder()->first();
-
+        
         if (!$category) {
             $category = ReportCategory::factory()->create();
         }
 
-        $status = $this->faker->randomElement(['new', 'assigned', 'in_progress', 'replied', 'resolved', 'rejected']);
-        $assignedToEmployeeId = in_array($status, ['assigned', 'in_progress', 'replied', 'resolved'])
-            ? Employee::factory()
-            : null;
+        $status = $this->faker->randomElement([
+            'new', 'assigned', 'in_progress', 
+            'replied', 'resolved', 'rejected'
+        ]);
 
         return [
             'tracking_code' => 'RPT-' . strtoupper(uniqid()),
@@ -37,25 +35,26 @@ class ReportFactory extends Factory
             'description' => $this->faker->paragraphs(2, true),
             'priority' => $this->faker->randomElement(['low', 'medium', 'high', 'critical']),
             'status' => $status,
-            'assigned_to_employee_id' => $assignedToEmployeeId,
-            'admin_id' => Admin::factory(),
-            'admin_response' => $this->faker->optional(0.5)->paragraph(),
-            'replied_at' => $this->faker->optional(0.4)->dateTimeBetween('-1 month', 'now'),
-            'resolved_at' => $status === 'resolved' ? $this->faker->dateTimeBetween('-1 month', 'now') : null,
+            'resolved_at' => $status === 'resolved' 
+                ? $this->faker->dateTimeBetween('-1 month', 'now') 
+                : null,
             'created_at' => $this->faker->dateTimeBetween('-3 months', 'now'),
-            'updated_at' => fn(array $attributes) => $this->faker->dateTimeBetween($attributes['created_at'], 'now'),
+            'updated_at' => fn(array $attributes) => $this->faker->dateTimeBetween(
+                $attributes['created_at'], 
+                'now'
+            )
         ];
     }
 
     public function forRating(Rating $rating): static
     {
         $category = ReportCategory::inRandomOrder()->first() ?? ReportCategory::factory();
-
+        
         return $this->state(fn(array $attributes) => [
             'rating_id' => $rating->id,
             'unit_id' => $rating->unit_id,
             'student_id' => $rating->student_id,
-            'report_category_id' => $category->id,
+            'report_category_id' => $category->id
         ]);
     }
 
@@ -63,10 +62,7 @@ class ReportFactory extends Factory
     {
         return $this->state(fn(array $attributes) => [
             'status' => 'new',
-            'assigned_to_employee_id' => null,
-            'admin_response' => null,
-            'replied_at' => null,
-            'resolved_at' => null,
+            'resolved_at' => null
         ]);
     }
 
@@ -74,21 +70,21 @@ class ReportFactory extends Factory
     {
         return $this->state(fn(array $attributes) => [
             'status' => 'resolved',
-            'resolved_at' => now(),
+            'resolved_at' => now()
         ]);
     }
 
     public function asRejected(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => 'rejected',
+            'status' => 'rejected'
         ]);
     }
 
     public function critical(): static
     {
         return $this->state(fn(array $attributes) => [
-            'priority' => 'critical',
+            'priority' => 'critical'
         ]);
     }
 }

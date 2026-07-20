@@ -22,8 +22,8 @@ class UpdatePasswordRequest extends FormRequest
                     $fail('Password saat ini tidak cocok.');
                 }
             }],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
-        ];
+            'new_password' => ['required', 'string', 'min:8', 'confirmed']
+    ];
     }
 
     public function messages(): array
@@ -32,7 +32,7 @@ class UpdatePasswordRequest extends FormRequest
             'current_password.required' => 'Password saat ini harus diisi.',
             'new_password.required' => 'Password baru harus diisi.',
             'new_password.min' => 'Password minimal 8 karakter.',
-            'new_password.confirmed' => 'Konfirmasi password tidak cocok.',
-        ];
+            'new_password.confirmed' => 'Konfirmasi password tidak cocok.'
+    ];
     }
 }

@@ -16,8 +16,8 @@ class GenerateQrCodeRequest extends FormRequest
     {
         return [
             'unit_id' => 'required|exists:units,id',
-            'expires_at' => 'nullable|date|after:now',
-        ];
+            'expires_at' => 'nullable|date|after:now'
+    ];
     }
 
     public function messages(): array
@@ -25,7 +25,7 @@ class GenerateQrCodeRequest extends FormRequest
         return [
             'unit_id.required' => 'Unit wajib dipilih',
             'unit_id.exists' => 'Unit tidak ditemukan',
-            'expires_at.after' => 'Tanggal kadaluarsa harus setelah hari ini',
-        ];
+            'expires_at.after' => 'Tanggal kadaluarsa harus setelah hari ini'
+    ];
     }
 }

@@ -1,85 +1,120 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Student\Auth\ForgotPasswordController;
 use App\Http\Controllers\Student\Auth\LoginController;
 use App\Http\Controllers\Student\Auth\RegisterController;
-use App\Http\Controllers\Student\Auth\ForgotPasswordController;
 use App\Http\Controllers\Student\Auth\ResetPasswordController;
-use App\Http\Controllers\Student\DashboardController;
-use App\Http\Controllers\Student\ProfileController;
-use App\Http\Controllers\Student\NotificationController;
-use App\Http\Controllers\Student\UnitController;
-use App\Http\Controllers\Student\QrCodeController;
-use App\Http\Controllers\Student\RatingController;
-use App\Http\Controllers\Student\ReportController;
+use App\Http\Controllers\Student\Conversation\ConversationController;
+use App\Http\Controllers\Student\Conversation\MessageAttachmentController;
+use App\Http\Controllers\Student\Conversation\MessageController;
+use App\Http\Controllers\Student\Conversation\MessageReadController;
+use App\Http\Controllers\Student\Dashboard\DashboardController;
+use App\Http\Controllers\Student\Notification\NotificationController;
+use App\Http\Controllers\Student\Profile\ProfileController;
+use App\Http\Controllers\Student\QRCode\QrCodeController;
+use App\Http\Controllers\Student\Rating\RatingController;
+use App\Http\Controllers\Student\Report\ReportController;
+use App\Http\Controllers\Student\Unit\UnitController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login']);
-
     Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('register', [RegisterController::class, 'register']);
-
     Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-
     Route::get('reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
-
+    
     Route::get('/verify-email/{id}', function (int $id) {
         if (!request()->hasValidSignature()) {
             abort(401, 'Link verifikasi tidak valid atau sudah kadaluarsa.');
         }
-
         $service = app(\App\Services\Student\Auth\AuthService::class);
         $service->verifyEmail($id);
-
-        return redirect()->route('student.login')
-            ->with('success', 'Email berhasil diverifikasi! Silakan login.');
+        
+        return redirect()->route('student.login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
     })->name('verify.email');
 });
 
-Route::post('logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('check-auth', [LoginController::class, 'check'])->name('auth.check');
+Route::middleware(['student'])->group(function () {
+    Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+    Route::get('check-auth', [LoginController::class, 'check'])->name('auth.check');
 
-Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
-Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
-Route::get('dashboard/activity-chart', [DashboardController::class, 'activityChart'])->name('dashboard.activity-chart');
-Route::get('dashboard/recommended-units', [DashboardController::class, 'recommendedUnits'])->name('dashboard.recommended-units');
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])->name('index');
+        Route::get('stats', [DashboardController::class, 'stats'])->name('stats');
+        Route::get('activity-chart', [DashboardController::class, 'activityChart'])->name('activity-chart');
+        Route::get('recommended-units', [DashboardController::class, 'recommendedUnits'])->name('recommended-units');
+    });
 
-Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
-Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-Route::put('profile/update', [ProfileController::class, 'update'])->name('profile.update');
-Route::put('profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
-Route::get('profile/sessions', [ProfileController::class, 'sessions'])->name('profile.sessions');
-Route::post('profile/sessions/{sessionId}/terminate', [ProfileController::class, 'terminateSession'])->name('profile.sessions.terminate');
-Route::post('profile/sessions/terminate-all', [ProfileController::class, 'terminateAllSessions'])->name('profile.sessions.terminate-all');
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'show'])->name('show');
+        Route::get('edit', [ProfileController::class, 'edit'])->name('edit');
+        Route::put('update', [ProfileController::class, 'update'])->name('update');
+        Route::put('update-password', [ProfileController::class, 'updatePassword'])->name('update-password');
+        Route::get('sessions', [ProfileController::class, 'sessions'])->name('sessions');
+        Route::post('sessions/{sessionId}/terminate', [ProfileController::class, 'terminateSession'])->name('sessions.terminate');
+        Route::post('sessions/terminate-all', [ProfileController::class, 'terminateAllSessions'])->name('sessions.terminate-all');
+    });
 
-Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
-Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
-Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
 
-Route::get('units', [UnitController::class, 'index'])->name('units.index');
-Route::get('units/{slug}', [UnitController::class, 'show'])->name('units.show');
+    Route::prefix('units')->name('units.')->group(function () {
+        Route::get('/', [UnitController::class, 'index'])->name('index');
+        Route::get('{slug}', [UnitController::class, 'show'])->name('show');
+    });
 
-Route::get('qr/scan', [QrCodeController::class, 'scanForm'])->name('qr.scan');
-Route::get('qr/result', [QrCodeController::class, 'scanResult'])->name('qr.result');
-Route::post('qr/validate', [QrCodeController::class, 'validateQr'])->name('qr.validate');
-Route::get('qr/check-status/{unitId}', [QrCodeController::class, 'checkStatus'])->name('qr.check-status');
+    Route::get('units/{unit}/rate', [RatingController::class, 'create'])->name('ratings.create');
 
-Route::get('units/{unit}/rate', [RatingController::class, 'create'])->name('ratings.create');
-Route::post('ratings', [RatingController::class, 'store'])->name('ratings.store');
-Route::get('ratings/{trackingCode}', [RatingController::class, 'show'])->name('ratings.show');
-Route::get('ratings/{trackingCode}/edit', [RatingController::class, 'edit'])->name('ratings.edit');
-Route::put('ratings/{trackingCode}', [RatingController::class, 'update'])->name('ratings.update');
-Route::get('ratings/history', [RatingController::class, 'history'])->name('ratings.history');
-Route::get('units/{unit}/ratings', [RatingController::class, 'unitRatings'])->name('ratings.unit');
+    Route::prefix('qr')->name('qr.')->group(function () {
+        Route::get('scan', [QrCodeController::class, 'scanForm'])->name('scan');
+        Route::get('result', [QrCodeController::class, 'scanResult'])->name('result');
+        Route::post('validate', [QrCodeController::class, 'validateQr'])->name('validate');
+        Route::get('check-status/{unitId}', [QrCodeController::class, 'checkStatus'])->name('check-status');
+    });
 
-Route::get('ratings/{rating}/report', [ReportController::class, 'create'])->name('reports.create');
-Route::post('reports', [ReportController::class, 'store'])->name('reports.store');
-Route::get('reports/{trackingCode}', [ReportController::class, 'show'])->name('reports.show');
-Route::put('reports/{trackingCode}', [ReportController::class, 'update'])->name('reports.update');
-Route::get('reports/history', [ReportController::class, 'history'])->name('reports.history');
-Route::get('ratings/{rating}/can-report', [ReportController::class, 'checkCanReport'])->name('reports.check-can-report');
+    Route::prefix('ratings')->name('ratings.')->group(function () {
+        Route::get('history', [RatingController::class, 'history'])->name('history');
+        Route::post('/', [RatingController::class, 'store'])->name('store');
+        Route::get('{trackingCode}', [RatingController::class, 'show'])->name('show');
+        Route::get('{trackingCode}/edit', [RatingController::class, 'edit'])->name('edit');
+        Route::put('{trackingCode}', [RatingController::class, 'update'])->name('update');
+        Route::get('units/{unit}', [RatingController::class, 'unitRatings'])->name('unit');
+        Route::get('{rating}/report', [ReportController::class, 'create'])->name('report.create');
+        Route::get('{rating}/can-report', [ReportController::class, 'checkCanReport'])->name('report.check-can-report');
+    });
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('history', [ReportController::class, 'history'])->name('history');
+        Route::post('/', [ReportController::class, 'store'])->name('store');
+        Route::get('{trackingCode}', [ReportController::class, 'show'])->name('show');
+        Route::put('{trackingCode}', [ReportController::class, 'update'])->name('update');
+    });
+
+    Route::prefix('conversations')->name('conversations.')->group(function () {
+        Route::get('/', [ConversationController::class, 'index'])->name('index');
+        Route::get('unread-count', [ConversationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('/{conversation}', [ConversationController::class, 'show'])->name('show');
+        Route::post('/{conversation}/read-all', [MessageReadController::class, 'markAllAsRead'])->name('read-all');
+
+        Route::prefix('{conversation}/messages')->name('messages.')->group(function () {
+            Route::get('/', [MessageController::class, 'index'])->name('index');
+            Route::post('/', [MessageController::class, 'store'])->name('store');
+            Route::put('/{message}', [MessageController::class, 'update'])->name('update');
+            Route::delete('/{message}', [MessageController::class, 'destroy'])->name('destroy');
+            
+            Route::post('/{message}/attachments', [MessageAttachmentController::class, 'upload'])->name('attachments.upload');
+            Route::post('/{message}/read', [MessageReadController::class, 'markAsRead'])->name('read');
+        });
+    });
+
+    Route::get('attachments/{attachment}/download', [MessageAttachmentController::class, 'download'])->name('attachments.download');
+});

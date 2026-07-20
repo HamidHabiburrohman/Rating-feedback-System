@@ -25,7 +25,7 @@ class FlattenMigrations extends Command
         'feedback',
         'reports',
         'system',
-        'infrastructure',
+        'infrastructure'
     ];
 
     public function handle(): int
@@ -142,8 +142,8 @@ class FlattenMigrations extends Command
                 $orderedFiles[] = [
                     'path' => $file->getPathname(),
                     'relative' => "{$folder}/{$file->getFilename()}",
-                    'table_name' => $tableName,
-                ];
+                    'table_name' => $tableName
+    ];
             }
         }
 
@@ -171,8 +171,8 @@ class FlattenMigrations extends Command
                 $orderedFiles[] = [
                     'path' => $file->getPathname(),
                     'relative' => $file->getFilename(),
-                    'table_name' => $tableName,
-                ];
+                    'table_name' => $tableName
+    ];
             }
         }
 
@@ -249,8 +249,8 @@ class FlattenMigrations extends Command
             'DELETE FOLDER' => 'red',
             'DELETE OLD' => 'yellow',
             'BACKUP' => 'cyan',
-            'SKIP' => 'gray',
-        ];
+            'SKIP' => 'gray'
+    ];
 
         $color = $colors[$type] ?? 'white';
         $tag = str_pad("[{$type}]", 16);

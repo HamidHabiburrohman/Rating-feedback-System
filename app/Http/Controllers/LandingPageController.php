@@ -73,8 +73,8 @@ class LandingPageController extends Controller
                     'total_ratings' => $unit->total_ratings ?? 0,
                     'primaryPhoto' => $unit->primaryPhoto,
                     'type_name' => $unit->unitType?->name,
-                    'rating_display' => number_format($unit->avg_rating ?? 0, 1),
-                ];
+                    'rating_display' => number_format($unit->avg_rating ?? 0, 1)
+    ];
             });
     }
 
@@ -84,8 +84,8 @@ class LandingPageController extends Controller
             'total_units' => Unit::where('is_active', true)->count(),
             'total_members' => $this->getTotalMembers(),
             'total_categories' => UnitType::where('is_active', true)->count(),
-            'avg_rating_overall' => round(Unit::where('is_active', true)->avg('avg_rating') ?? 0, 1),
-        ];
+            'avg_rating_overall' => round(Unit::where('is_active', true)->avg('avg_rating') ?? 0, 1)
+    ];
     }
 
     protected function mapUnitData($unit): object
@@ -108,8 +108,8 @@ class LandingPageController extends Controller
             'full_stars' => $fullStars,
             'has_half' => $hasHalf,
             'empty_stars' => $emptyStars,
-            'rating_display' => number_format($avgRating, 1),
-        ];
+            'rating_display' => number_format($avgRating, 1)
+    ];
     }
 
     protected function getTotalMembers(): int

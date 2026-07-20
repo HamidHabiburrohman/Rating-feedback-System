@@ -96,7 +96,7 @@
 
     #main-content {
         flex: 1;
-        padding: 24px;
+        /* padding: 24px; */
         background-color: #f8fafc;
     }
 

@@ -49,8 +49,8 @@ class ReportSubmittedMail extends Mailable implements ShouldQueue
                 'type' => 'report_submitted',
                 'tracking_code' => $this->trackingCode,
                 'priority' => $this->priority,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -64,7 +64,7 @@ class ReportSubmittedMail extends Mailable implements ShouldQueue
                 'trackingCode' => $this->trackingCode,
                 'priority' => $this->priority,
                 'viewUrl' => $this->viewUrl,
-            ],
-        );
+            ]
+    );
     }
 }

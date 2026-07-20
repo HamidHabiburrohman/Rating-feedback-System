@@ -23,7 +23,7 @@ class UnitPhoto extends Model
         'file_size' => 'integer',
         'sort_order' => 'integer',
         'is_primary' => 'boolean',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function unit()

@@ -1,0 +1,106 @@
+(function () {
+    window.Conversation = window.Conversation || {};
+    window.Conversation.Constants = {
+        SELECTORS: {
+            WORKSPACE: '#conversation-workspace',
+            CONTENT: '#conversation-content',
+            EMPTY_STATE: '#conversation-empty-state',
+            LOADING: '#conversation-loading',
+            CHAT_AREA: '#convChatArea',
+            CHAT_LIST: '#convChatList',
+            CHAT_SCROLL: '#convChatScroll',
+            SIDEBAR: '#convSidebar',
+            SIDEBAR_LIST: '#convList',
+            SIDEBAR_OVERLAY: '#convSidebarOverlay',
+            CARD_LINK: '.conv-card-link',
+            CARD: '.conv-card',
+            SEARCH_INPUT: '#convSearchInput',
+            SEARCH_CLEAR: '#convSearchClear',
+            FILTER_PILLS: '.conv-spa-filter-pill',
+            REFRESH_BTN: '#convSidebarRefresh',
+            SORT_DROPDOWN: '#convSortDropdown',
+            SORT_TRIGGER: '#convSortTrigger',
+            SORT_MENU: '#convSortMenu',
+            COMPOSER_WRAPPER: '#convComposerWrapper',
+            COMPOSER_FORM: '#convComposerForm',
+            COMPOSER_TEXTAREA: '#convComposerTextarea',
+            COMPOSER_SEND_BTN: '#convSendBtn',
+            COMPOSER_ATTACH_BTN: '#convAttachBtn',
+            COMPOSER_PREVIEWS: '#convComposerPreviews',
+            COMPOSER_FILE_INPUTS: '#convFileInputsContainer',
+            DRAG_OVERLAY: '#convDragOverlay',
+            CHAR_COUNTER: '#convCharCounter',
+            UPLOAD_MODAL: '#convUploadModal',
+            UPLOAD_QUEUE_LIST: '#convUploadQueueList',
+            UPLOAD_EMPTY: '#convUploadQueueEmpty',
+            UPLOAD_SUBMIT_BTN: '#convUploadSubmitBtn',
+            UPLOAD_CANCEL_BTN: '#convUploadCancelBtn'
+        },
+        EVENTS: {
+            CONVERSATION_SELECTED: 'conversation:selected',
+            CONVERSATION_LOADED: 'conversation:loaded',
+            MESSAGE_SENDING: 'conversation:message:sending',
+            MESSAGE_SENT: 'conversation:message:sent',
+            MESSAGE_FAILED: 'conversation:message:failed',
+            MESSAGE_RETRY: 'conversation:message:retry',
+            MESSAGE_REMOVED: 'conversation:message:removed',
+            MESSAGE_DELIVERED: 'conversation:message:delivered',
+            MESSAGE_READ: 'conversation:message:read',
+            MESSAGE_DELETE: 'conversation:message:delete',
+            TYPING_START: 'conversation:typing:start',
+            TYPING_STOP: 'conversation:typing:stop',
+            ATTACHMENT_SELECTED: 'attachment:selected',
+            ATTACHMENT_QUEUED: 'attachment:queued',
+            ATTACHMENT_UPLOADING: 'attachment:uploading',
+            ATTACHMENT_UPLOADED: 'attachment:uploaded',
+            ATTACHMENT_FAILED: 'attachment:failed',
+            ATTACHMENT_CANCELLED: 'attachment:cancelled',
+            ATTACHMENT_REMOVED: 'attachment:removed',
+            ATTACHMENT_QUEUE_UPDATED: 'attachment:queue-updated',
+            OPEN_UPLOAD_MODAL: 'open-upload-modal',
+            OPEN_PREVIEW_MODAL: 'open-preview-modal',
+            ATTACHMENT_PREVIEW: 'attachment:preview',
+            ATTACHMENT_GALLERY: 'attachment:gallery',
+            SIDEBAR_UPDATED: 'sidebar:updated',
+            OPEN_PARTICIPANTS: 'conversation:open-participants',
+            OPEN_ATTACHMENTS: 'conversation:open-attachments',
+            SEARCH: 'conversation:search',
+            OPEN_CREATE_PARTICIPANT: 'open-create-participant-modal',
+            OPEN_EDIT_PARTICIPANT: 'open-edit-participant-modal'
+        },
+        ROUTES: {
+            MARK_READ: function (id) { return '/admin/conversations/' + id + '/messages/read-all'; },
+            CONVERSATION: function (id) { return '/admin/conversations/' + id; },
+            UPLOAD_ATTACHMENT: function (conversationId) { return '/admin/conversations/' + conversationId + '/messages/attachments/upload'; },
+            DELETE_MESSAGE: function (conversationId, messageId) { return '/admin/conversations/' + conversationId + '/messages/' + messageId; },
+            LATEST_MESSAGES: function (conversationId) { return '/admin/conversations/' + conversationId + '/messages/latest'; }
+        },
+        TIMEOUTS: {
+            DEBOUNCE_SEARCH: 300,
+            SCROLL_DELAY: 100,
+            AUTO_SCROLL: 100
+        },
+        CONFIG: {
+            MAX_FILES: 10,
+            MAX_FILE_SIZE: 10 * 1024 * 1024,
+            MAX_TEXT_LENGTH: 5000,
+            MAX_TEXTAREA_HEIGHT: 144,
+            SCROLL_THRESHOLD: 100,
+            ALLOWED_TYPES: [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ]
+        },
+        UPLOAD_STATES: {
+            QUEUED: 'queued',
+            UPLOADING: 'uploading',
+            UPLOADED: 'uploaded',
+            FAILED: 'failed',
+            CANCELLED: 'cancelled'
+        }
+    };
+})();

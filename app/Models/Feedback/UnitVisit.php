@@ -23,7 +23,7 @@ class UnitVisit extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'validation_radius_meters' => 'integer',
-        'metadata' => 'array',
+        'metadata' => 'array'
     ];
 
     public function unit()

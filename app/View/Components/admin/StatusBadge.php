@@ -39,7 +39,7 @@ class StatusBadge extends Component
         'critical'     => ['bg' => '#FEF2F2', 'text' => '#B91C1C', 'border' => '#FECACA'],
         'admin'        => ['bg' => '#EFF6FF', 'text' => '#1E40AF', 'border' => '#BFDBFE'],
         'super_admin'  => ['bg' => '#FAF5FF', 'text' => '#7C3AED', 'border' => '#E9D5FF'],
-        'unit'         => ['bg' => '#ECFEFF', 'text' => '#0E7490', 'border' => '#A5F3FC'],
+        'unit'         => ['bg' => '#ECFEFF', 'text' => '#0E7490', 'border' => '#A5F3FC']
     ];
 
     public function __construct(string $status, ?string $type = null, ?string $size = null, ?string $class = null)

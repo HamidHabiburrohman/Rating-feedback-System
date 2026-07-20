@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Admin\Message;
+namespace App\Http\Requests\Admin\Conversation\Message;
 
+use App\Services\Admin\Conversation\MessageService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateMessageRequest extends FormRequest
@@ -16,8 +17,15 @@ class UpdateMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'message' => 'nullable|string|max:5000',
-            'attachment' => 'nullable|file|max:10240',
+            'body' => ['required', 'string', 'max:' . MessageService::MAX_BODY_LENGTH],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'body.required' => 'Message body is required.',
+            'body.max' => 'Message body cannot exceed ' . MessageService::MAX_BODY_LENGTH . ' characters.',
         ];
     }
 }

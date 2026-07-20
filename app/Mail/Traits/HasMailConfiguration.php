@@ -8,16 +8,16 @@ trait HasMailConfiguration
     {
         return [
             'address' => config('mail.from.address', 'noreply@itenas.ac.id'),
-            'name' => config('mail.from.name', 'ITENAS Units Portal'),
-        ];
+            'name' => config('mail.from.name', 'ITENAS Units Portal')
+    ];
     }
 
     public function defaultReplyTo(): array
     {
         return [
             'address' => config('mail.reply_to.address', 'support@itenas.ac.id'),
-            'name' => config('mail.reply_to.name', 'ITENAS Support'),
-        ];
+            'name' => config('mail.reply_to.name', 'ITENAS Support')
+    ];
     }
 
     public function attachments(): array

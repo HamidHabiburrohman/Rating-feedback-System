@@ -15,14 +15,14 @@ class RegenerateQrCodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'expires_at' => 'nullable|date|after:now',
-        ];
+            'expires_at' => 'nullable|date|after:now'
+    ];
     }
 
     public function messages(): array
     {
         return [
-            'expires_at.after' => 'Tanggal kadaluarsa harus setelah hari ini',
-        ];
+            'expires_at.after' => 'Tanggal kadaluarsa harus setelah hari ini'
+    ];
     }
 }

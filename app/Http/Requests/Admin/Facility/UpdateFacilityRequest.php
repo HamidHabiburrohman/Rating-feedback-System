@@ -24,7 +24,7 @@ class UpdateFacilityRequest extends FormRequest
                 Rule::unique('facilities')->ignore($id),
             ],
             'icon_key' => 'nullable|string|max:100',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 }

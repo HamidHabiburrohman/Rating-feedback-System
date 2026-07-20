@@ -16,7 +16,7 @@ abstract class BaseExport
     {
         return [
             'rows' => $this->prepareData($data),
-            'headers' => $this->getHeaders(),
-        ];
+            'headers' => $this->getHeaders()
+    ];
     }
 }

@@ -84,8 +84,8 @@ class AppServiceProvider extends ServiceProvider
             \App\Models\System\Setting::class => \App\Policies\SettingPolicy::class,
             \App\Models\System\Export::class => \App\Policies\ExportPolicy::class,
             \App\Models\System\ModerationLog::class => \App\Policies\ModerationLogPolicy::class,
-            \App\Models\System\Notification::class => \App\Policies\NotificationPolicy::class,
-        ];
+            \App\Models\System\Notification::class => \App\Policies\NotificationPolicy::class
+    ];
 
         foreach ($policies as $model => $policy) {
             if (class_exists($model) && class_exists($policy)) {
@@ -102,8 +102,8 @@ class AppServiceProvider extends ServiceProvider
             \App\Models\Unit\Unit::class => \App\Observers\UnitObserver::class,
             \App\Models\Unit\UnitType::class => \App\Observers\UnitTypeObserver::class,
             \App\Models\Unit\UnitDepartment::class => \App\Observers\UnitDepartmentObserver::class,
-            \App\Models\Unit\Facility::class => \App\Observers\FacilityObserver::class,
-        ];
+            \App\Models\Unit\Facility::class => \App\Observers\FacilityObserver::class
+    ];
 
         foreach ($observers as $model => $observer) {
             if (class_exists($model) && class_exists($observer)) {

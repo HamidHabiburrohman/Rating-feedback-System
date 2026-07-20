@@ -18,12 +18,12 @@ class ConversationParticipant extends Model
         'participant_type',
         'participant_id',
         'joined_at',
-        'left_at',
+        'left_at'
     ];
 
     protected $casts = [
         'joined_at' => 'datetime',
-        'left_at' => 'datetime',
+        'left_at' => 'datetime'
     ];
 
     public function conversation(): BelongsTo

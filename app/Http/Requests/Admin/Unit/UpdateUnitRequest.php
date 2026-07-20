@@ -32,7 +32,7 @@ class UpdateUnitRequest extends FormRequest
             'is_active' => 'sometimes|boolean',
             'operational_status' => 'sometimes|in:open,full,maintenance,closed',
             'facilities' => 'nullable|array',
-            'facilities.*' => 'exists:facilities,id',
-        ];
+            'facilities.*' => 'exists:facilities,id'
+    ];
     }
 }

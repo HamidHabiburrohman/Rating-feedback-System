@@ -16,7 +16,7 @@ class BulkRatingActionRequest extends FormRequest
         return [
             'rating_ids' => 'required|array',
             'rating_ids.*' => 'exists:ratings,id',
-            'action' => 'required|string|in:archive,restore,delete',
-        ];
+            'action' => 'required|string|in:archive,restore,delete'
+    ];
     }
 }

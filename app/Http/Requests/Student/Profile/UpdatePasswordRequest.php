@@ -15,8 +15,8 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'current_password' => 'required|string|current_password:student',
-            'password' => 'required|string|min:8|confirmed',
-        ];
+            'password' => 'required|string|min:8|confirmed'
+    ];
     }
 
     public function messages(): array
@@ -26,7 +26,7 @@ class UpdatePasswordRequest extends FormRequest
             'current_password.current_password' => 'Password saat ini salah',
             'password.required' => 'Password baru wajib diisi',
             'password.min' => 'Password baru minimal 8 karakter',
-            'password.confirmed' => 'Konfirmasi password baru tidak cocok',
-        ];
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok'
+    ];
     }
 }

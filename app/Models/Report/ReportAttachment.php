@@ -20,7 +20,7 @@ class ReportAttachment extends Model
     protected $casts = [
         'size' => 'integer',
         'sort_order' => 'integer',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function report()

@@ -17,12 +17,12 @@ class QrCode extends Model
         'qr_image_path',
         'is_active',
         'expires_at',
-        'generated_by_admin_id',
+        'generated_by_admin_id'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'expires_at' => 'datetime',
+        'expires_at' => 'datetime'
     ];
 
     public function unit()

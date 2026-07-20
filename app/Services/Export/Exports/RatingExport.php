@@ -22,8 +22,8 @@ class RatingExport extends BaseExport
                 'IP Address' => $rating->visitor_ip ?? '-',
                 'Metadata' => json_encode($rating->metadata ?? []),
                 'Tanggal Dibuat' => $rating->created_at->format('d/m/Y H:i'),
-                'Tanggal Dibalas' => $rating->dibalas_pada ? $rating->dibalas_pada->format('d/m/Y H:i') : '-',
-            ];
+                'Tanggal Dibalas' => $rating->dibalas_pada ? $rating->dibalas_pada->format('d/m/Y H:i') : '-'
+    ];
         })->toArray();
     }
     

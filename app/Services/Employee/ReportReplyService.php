@@ -36,7 +36,6 @@ class ReportReplyService extends BaseEmployeeService
                 'is_public' => true,
             ]);
 
-            $report->update(['last_replied_at' => now()]);
 
             if (in_array($report->status, ['new', 'in_progress'])) {
                 $this->statusService->updateStatus(

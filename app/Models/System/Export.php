@@ -23,7 +23,7 @@ class Export extends Model
         'completed_at' => 'datetime',
         'expires_at' => 'datetime',
         'download_count' => 'integer',
-        'last_downloaded_at' => 'datetime',
+        'last_downloaded_at' => 'datetime'
     ];
 
     public function admin()

@@ -27,8 +27,8 @@ class AccountDeactivatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Account Deactivated Mail',
-        );
+            subject: 'Account Deactivated Mail'
+    );
     }
 
     /**
@@ -37,8 +37,8 @@ class AccountDeactivatedMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
-        );
+            view: 'view.name'
+    );
     }
 
     /**

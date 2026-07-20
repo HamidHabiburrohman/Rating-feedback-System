@@ -42,8 +42,8 @@ class WelcomeMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'student_welcome',
                 'student_id' => $this->studentId,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -54,7 +54,7 @@ class WelcomeMail extends Mailable implements ShouldQueue
                 'studentName' => $this->studentName,
                 'studentIdentifier' => $this->studentIdentifier,
                 'exploreUrl' => $this->exploreUrl,
-            ],
-        );
+            ]
+    );
     }
 }

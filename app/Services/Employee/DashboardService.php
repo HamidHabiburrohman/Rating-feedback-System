@@ -36,8 +36,8 @@ class DashboardService extends BaseEmployeeService
                     ->count(),
                 'total_rating_replies' => RatingReply::where('employee_id', $employeeId)->count(),
                 'total_report_replies' => ReportReply::where('employee_id', $employeeId)->count(),
-                'avg_rating' => round(Rating::whereIn('unit_id', $assignedUnitIds)->avg('overall_score') ?? 0, 2),
-            ];
+                'avg_rating' => round(Rating::whereIn('unit_id', $assignedUnitIds)->avg('overall_score') ?? 0, 2)
+    ];
         });
     }
 
@@ -108,8 +108,8 @@ class DashboardService extends BaseEmployeeService
                         'started_at' => $assignment->started_at,
                         'total_ratings' => $unit->total_ratings,
                         'avg_rating' => $unit->avg_rating,
-                        'primary_photo' => $unit->primaryPhoto,
-                    ];
+                        'primary_photo' => $unit->primaryPhoto
+    ];
                 })
                 ->toArray();
         });

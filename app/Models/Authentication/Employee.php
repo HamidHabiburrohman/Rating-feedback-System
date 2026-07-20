@@ -4,7 +4,7 @@ namespace App\Models\Authentication;
 
 use App\Models\Employee\EmployeeUnitAssignment;
 use App\Models\Feedback\RatingReply;
-use App\Models\Message\Message;
+use App\Models\Conversation\Message;
 use App\Models\Report\ReportReply;
 use App\Models\Unit\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,12 +35,12 @@ class Employee extends Authenticatable
         'preferences',
         'login_count',
         'last_login_at',
-        'last_login_ip',
+        'last_login_ip'
     ];
 
     protected $hidden = [
         'password',
-        'remember_token',
+        'remember_token'
     ];
 
     protected $casts = [
@@ -49,7 +49,7 @@ class Employee extends Authenticatable
         'preferences' => 'array',
         'login_count' => 'integer',
         'last_login_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function employeeAssignments(): HasMany

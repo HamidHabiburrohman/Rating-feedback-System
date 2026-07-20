@@ -29,7 +29,7 @@ class RatingCategory extends Model
         'min_score' => 'float',
         'max_score' => 'float',
         'default_score' => 'float',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function ratingScores()

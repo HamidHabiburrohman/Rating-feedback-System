@@ -47,8 +47,8 @@ class VerificationMail extends Mailable implements ShouldQueue
             metadata: [
                 'type' => 'student_email_verification',
                 'student_id' => $this->studentId,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -59,7 +59,7 @@ class VerificationMail extends Mailable implements ShouldQueue
                 'studentName' => $this->studentName,
                 'verificationUrl' => $this->verificationUrl,
                 'expiresInHours' => $this->expiresInHours,
-            ],
-        );
+            ]
+    );
     }
 }

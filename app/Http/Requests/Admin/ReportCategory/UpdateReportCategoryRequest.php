@@ -32,8 +32,8 @@ class UpdateReportCategoryRequest extends FormRequest
                 Rule::unique('report_categories', 'slug')->ignore($categoryId),
             ],
             'description' => 'nullable|string',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 
     public function messages(): array
@@ -41,7 +41,7 @@ class UpdateReportCategoryRequest extends FormRequest
         return [
             'name.unique' => 'Nama kategori sudah ada',
             'slug.unique' => 'Slug sudah digunakan',
-            'slug.regex' => 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung',
-        ];
+            'slug.regex' => 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung'
+    ];
     }
 }

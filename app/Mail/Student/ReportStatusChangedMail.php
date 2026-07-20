@@ -55,8 +55,8 @@ class ReportStatusChangedMail extends Mailable implements ShouldQueue
                 'type' => 'report_status_changed',
                 'tracking_code' => $this->trackingCode,
                 'new_status' => $this->newStatus,
-            ],
-        );
+            ]
+    );
     }
 
     public function content(): Content
@@ -72,8 +72,8 @@ class ReportStatusChangedMail extends Mailable implements ShouldQueue
                 'reason' => $this->reason,
                 'changedByName' => $this->changedByName,
                 'viewUrl' => $this->viewUrl,
-            ],
-        );
+            ]
+    );
     }
 
     private function formatStatus(string $status): string

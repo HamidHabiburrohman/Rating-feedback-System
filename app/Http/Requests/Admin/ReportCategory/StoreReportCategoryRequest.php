@@ -19,8 +19,8 @@ class StoreReportCategoryRequest extends FormRequest
             'name' => 'required|string|max:255|unique:report_categories,name',
             'slug' => 'required|string|max:255|unique:report_categories,slug|regex:/^[a-z0-9-]+$/',
             'description' => 'nullable|string',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 
     public function messages(): array
@@ -30,7 +30,7 @@ class StoreReportCategoryRequest extends FormRequest
             'name.unique' => 'Nama kategori sudah ada',
             'slug.required' => 'Slug wajib diisi',
             'slug.unique' => 'Slug sudah digunakan',
-            'slug.regex' => 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung',
-        ];
+            'slug.regex' => 'Slug hanya boleh berisi huruf kecil, angka, dan tanda hubung'
+    ];
     }
 }

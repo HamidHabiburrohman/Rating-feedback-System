@@ -45,7 +45,7 @@ class Admin extends Authenticatable
         'preferences' => 'array',
         'login_count' => 'integer',
         'last_login_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function isSuperAdmin(): bool

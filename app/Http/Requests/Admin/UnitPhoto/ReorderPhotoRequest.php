@@ -15,7 +15,7 @@ class ReorderPhotoRequest extends FormRequest
     {
         return [
             'photos' => 'required|array',
-            'photos.*' => 'exists:unit_photos,id',
-        ];
+            'photos.*' => 'exists:unit_photos,id'
+    ];
     }
 }

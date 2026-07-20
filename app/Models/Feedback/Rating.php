@@ -24,7 +24,7 @@ class Rating extends Model
         'last_edited_at' => 'datetime',
         'last_replied_at' => 'datetime',
         'metadata' => 'array',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function unit()

@@ -19,8 +19,8 @@ class AssignToUnitRequest extends FormRequest
             'unit_id' => 'required|exists:units,id',
             'role_in_unit' => 'nullable|string|max:100',
             'assigned_at' => 'nullable|date',
-            'ended_at' => 'nullable|date|after:assigned_at',
-        ];
+            'ended_at' => 'nullable|date|after:assigned_at'
+    ];
     }
 
     public function messages(): array
@@ -30,7 +30,7 @@ class AssignToUnitRequest extends FormRequest
             'employee_id.exists' => 'Karyawan tidak ditemukan',
             'unit_id.required' => 'Unit wajib dipilih',
             'unit_id.exists' => 'Unit tidak ditemukan',
-            'ended_at.after' => 'Tanggal selesai harus setelah tanggal mulai',
-        ];
+            'ended_at.after' => 'Tanggal selesai harus setelah tanggal mulai'
+    ];
     }
 }

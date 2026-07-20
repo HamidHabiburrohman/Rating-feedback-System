@@ -36,7 +36,7 @@ class Student extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
         'last_login_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function ratings()

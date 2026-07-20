@@ -19,11 +19,11 @@ class MessageAttachment extends Model
         'mime_type',
         'extension',
         'size',
-        'path',
+        'path'
     ];
 
     protected $casts = [
-        'size' => 'integer',
+        'size' => 'integer'
     ];
 
     public function message(): BelongsTo

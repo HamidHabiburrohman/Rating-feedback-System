@@ -24,7 +24,7 @@ class Setting extends Model
         'sort_order' => 'integer',
         'is_editable' => 'boolean',
         'is_visible' => 'boolean',
-        'is_public' => 'boolean',
+        'is_public' => 'boolean'
     ];
 
     public function getValueAttribute($value)

@@ -30,14 +30,14 @@ class EmployeeUnitAssignment extends Model
         'assigned_at',
         'started_at',
         'completed_at',
-        'verified_at',
+        'verified_at'
     ];
 
     protected $casts = [
         'assigned_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
-        'verified_at' => 'datetime',
+        'verified_at' => 'datetime'
     ];
 
     public function employee(): BelongsTo

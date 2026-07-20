@@ -36,8 +36,8 @@ class UpdateEmployeeRequest extends FormRequest
             'phone' => 'nullable|string|max:25',
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'timezone' => 'nullable|string|max:60',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 
     public function messages(): array
@@ -46,7 +46,7 @@ class UpdateEmployeeRequest extends FormRequest
             'email.unique' => 'Email sudah terdaftar',
             'employee_id.unique' => 'ID Karyawan sudah terdaftar',
             'password.min' => 'Password minimal 8 karakter',
-            'password.confirmed' => 'Konfirmasi password tidak cocok',
-        ];
+            'password.confirmed' => 'Konfirmasi password tidak cocok'
+    ];
     }
 }

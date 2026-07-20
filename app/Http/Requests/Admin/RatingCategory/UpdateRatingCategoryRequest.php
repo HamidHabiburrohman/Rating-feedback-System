@@ -24,7 +24,7 @@ class UpdateRatingCategoryRequest extends FormRequest
             'sort_order'    => 'nullable|integer|min:0',
             'min_score'     => 'nullable|numeric|min:0',
             'max_score'     => 'nullable|numeric|gte:min_score',
-            'default_score' => 'nullable|numeric',
-        ];
+            'default_score' => 'nullable|numeric'
+    ];
     }
 }

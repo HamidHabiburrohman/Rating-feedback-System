@@ -23,6 +23,8 @@ use App\Models\Feedback\UnitVisit;
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Authentication\Student;
+use App\Models\Conversation\Conversation;
+
 
 use App\Policies\UnitTypePolicy;
 use App\Policies\UnitPolicy;
@@ -43,6 +45,8 @@ use App\Policies\AdminPolicy;
 use App\Policies\EmployeePolicy;
 use App\Policies\StudentPolicy;
 use App\Policies\DashboardPolicy;
+use App\Policies\ConversationPolicy;
+
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -65,6 +69,7 @@ class AuthServiceProvider extends ServiceProvider
         Admin::class => AdminPolicy::class,
         Employee::class => EmployeePolicy::class,
         Student::class => StudentPolicy::class,
+        Conversation::class => ConversationPolicy::class,
     ];
 
     public function boot(): void

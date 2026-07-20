@@ -1,7 +1,5 @@
 <?php
-
 namespace Database\Seeders\Conversation;
-
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
 use App\Models\Conversation\Conversation;
@@ -10,26 +8,22 @@ use App\Models\Conversation\Message;
 use App\Models\Conversation\MessageAttachment;
 use App\Models\Conversation\MessageRead;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
-
 class MessageSeeder extends Seeder
 {
     public function run(): void
     {
         $admins = Admin::inRandomOrder()->limit(3)->get();
         $employees = Employee::inRandomOrder()->limit(5)->get();
-
-        if ($admins->isEmpty() || $employees->isEmpty()) {
-            $this->command->warn('Skipping MessageSeeder: Admins or Employees not found.');
+        $users = $admins->merge($employees);
+        if ($users->count() < 2) {
+            $this->command?->warn('Skipping MessageSeeder: Not enough users found.');
             return;
         }
-
         $distributions = [
             ['count' => 10, 'min_msg' => 5, 'max_msg' => 10],
             ['count' => 20, 'min_msg' => 15, 'max_msg' => 30],
             ['count' => 5, 'min_msg' => 50, 'max_msg' => 100],
         ];
-
         $messageTemplates = [
             'Please verify the QR assignment for Laboratory A.',
             'The report has been reviewed and approved.',
@@ -57,111 +51,91 @@ class MessageSeeder extends Seeder
             'I will be on leave tomorrow, please contact Sarah for urgent matters.',
             'The new software update has been deployed successfully.',
         ];
-
         $attachmentFiles = [
             ['name' => 'inspection-report.pdf', 'mime' => 'application/pdf', 'ext' => 'pdf'],
             ['name' => 'qr-assignment.xlsx', 'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'ext' => 'xlsx'],
             ['name' => 'laboratory-photo.jpg', 'mime' => 'image/jpeg', 'ext' => 'jpg'],
             ['name' => 'maintenance-document.pdf', 'mime' => 'application/pdf', 'ext' => 'pdf'],
         ];
-
         foreach ($distributions as $dist) {
             for ($i = 0; $i < $dist['count']; $i++) {
-                $admin = $admins->random();
-                $employee = $employees->random();
-                
+                $participantCount = rand(2, min(3, $users->count()));
+                $conversationUsers = $users->random($participantCount);
                 $startDate = now()->subWeeks(rand(1, 4))->subDays(rand(0, 6));
-                
                 $conversation = Conversation::factory()->create([
                     'last_message_at' => $startDate,
                 ]);
-
-                ConversationParticipant::create([
-                    'conversation_id' => $conversation->id,
-                    'participant_type' => Admin::class,
-                    'participant_id' => $admin->id,
-                    'joined_at' => $startDate,
-                ]);
-                
-                ConversationParticipant::create([
-                    'conversation_id' => $conversation->id,
-                    'participant_type' => Employee::class,
-                    'participant_id' => $employee->id,
-                    'joined_at' => $startDate,
-                ]);
-
+                foreach ($conversationUsers as $user) {
+                    ConversationParticipant::create([
+                        'conversation_id' => $conversation->id,
+                        'participant_type' => get_class($user),
+                        'participant_id' => $user->id,
+                        'joined_at' => $startDate,
+                    ]);
+                }
                 $messageCount = rand($dist['min_msg'], $dist['max_msg']);
                 $currentTime = $startDate->copy();
-                
-                // 0 = fully unread, 1 = partially read, 2 = fully read
-                $readState = rand(0, 2); 
+                $readState = rand(0, 2);
                 $lastReadMessageIndex = $readState === 0 ? -1 : ($readState === 1 ? rand(0, $messageCount - 2) : $messageCount - 1);
-
                 $messagesData = [];
-
+                $previousMessageId = null;
                 for ($m = 0; $m < $messageCount; $m++) {
                     $currentTime = $currentTime->copy()->addMinutes(rand(5, 120));
-                    $isAdminSender = rand(0, 1) === 1;
-                    
-                    $senderType = $isAdminSender ? Admin::class : Employee::class;
-                    $senderId = $isAdminSender ? $admin->id : $employee->id;
-                    
+                    $sender = $conversationUsers->random();
+                    $replyToId = null;
+                    if ($previousMessageId && rand(1, 100) <= 30) {
+                        $replyToId = $previousMessageId;
+                    }
                     $message = Message::factory()->create([
                         'conversation_id' => $conversation->id,
-                        'sender_type' => $senderType,
-                        'sender_id' => $senderId,
+                        'reply_to_id' => $replyToId,
+                        'sender_type' => get_class($sender),
+                        'sender_id' => $sender->id,
                         'body' => fake()->randomElement($messageTemplates),
                         'created_at' => $currentTime,
                         'updated_at' => $currentTime,
                     ]);
-                    
                     $messagesData[] = [
                         'id' => $message->id,
-                        'sender_type' => $senderType,
-                        'sender_id' => $senderId,
+                        'sender_type' => get_class($sender),
+                        'sender_id' => $sender->id,
                         'created_at' => $currentTime,
                     ];
-
-                    // 10% chance of attachment
+                    $previousMessageId = $message->id;
                     if (rand(1, 100) <= 10) {
                         $file = fake()->randomElement($attachmentFiles);
                         $storedName = fake()->uuid() . '.' . $file['ext'];
-                        
                         MessageAttachment::factory()->create([
                             'message_id' => $message->id,
                             'original_name' => $file['name'],
                             'stored_name' => $storedName,
                             'mime_type' => $file['mime'],
+                            'extension' => $file['ext'],
                             'path' => 'attachments/' . $storedName,
                             'created_at' => $currentTime,
                             'updated_at' => $currentTime,
                         ]);
-                        
                         $message->update(['type' => 'attachment']);
                     }
                 }
-
                 $conversation->update(['last_message_at' => $currentTime]);
-
-                // Generate read history naturally
                 foreach ($messagesData as $index => $msgData) {
-                    $readerType = ($msgData['sender_type'] === Admin::class) ? Employee::class : Admin::class;
-                    $readerId = ($msgData['sender_type'] === Admin::class) ? $employee->id : $admin->id;
-                    
-                    if ($index <= $lastReadMessageIndex) {
-                        $readAt = $msgData['created_at']->copy()->addMinutes(rand(1, 45));
-                        if ($readAt->isFuture()) {
-                            $readAt = now();
+                    foreach ($conversationUsers as $user) {
+                        $isSender = (get_class($user) === $msgData['sender_type'] && $user->id === $msgData['sender_id']);
+                        if (!$isSender && $index <= $lastReadMessageIndex) {
+                            $readAt = $msgData['created_at']->copy()->addMinutes(rand(1, 45));
+                            if ($readAt->isFuture()) {
+                                $readAt = now();
+                            }
+                            MessageRead::create([
+                                'message_id' => $msgData['id'],
+                                'reader_type' => get_class($user),
+                                'reader_id' => $user->id,
+                                'read_at' => $readAt,
+                                'created_at' => $readAt,
+                                'updated_at' => $readAt,
+                            ]);
                         }
-                        
-                        MessageRead::create([
-                            'message_id' => $msgData['id'],
-                            'participant_type' => $readerType,
-                            'participant_id' => $readerId,
-                            'read_at' => $readAt,
-                            'created_at' => $readAt,
-                            'updated_at' => $readAt,
-                        ]);
                     }
                 }
             }

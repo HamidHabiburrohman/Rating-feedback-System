@@ -22,7 +22,7 @@ class MessageFilterRequest extends FormRequest
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'has_attachment' => 'nullable|boolean',
-            'per_page' => 'nullable|integer|min:1|max:100',
-        ];
+            'per_page' => 'nullable|integer|min:1|max:100'
+    ];
     }
 }

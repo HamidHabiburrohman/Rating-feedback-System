@@ -27,8 +27,8 @@ class QrValidationService
                     'valid' => false,
                     'message' => 'QR Code tidak valid atau tidak ditemukan',
                     'unit' => null,
-                    'qr_code' => null,
-                ];
+                    'qr_code' => null
+    ];
             }
 
             if (!$qr->is_active) {
@@ -36,8 +36,8 @@ class QrValidationService
                     'valid' => false,
                     'message' => 'QR Code sudah tidak aktif',
                     'unit' => null,
-                    'qr_code' => null,
-                ];
+                    'qr_code' => null
+    ];
             }
 
             if ($qr->expires_at && $qr->expires_at->isPast()) {
@@ -45,8 +45,8 @@ class QrValidationService
                     'valid' => false,
                     'message' => 'QR Code sudah kedaluwarsa',
                     'unit' => null,
-                    'qr_code' => null,
-                ];
+                    'qr_code' => null
+    ];
             }
 
             $unit = $qr->unit;
@@ -55,16 +55,16 @@ class QrValidationService
                     'valid' => false,
                     'message' => 'Unit terkait tidak aktif',
                     'unit' => null,
-                    'qr_code' => null,
-                ];
+                    'qr_code' => null
+    ];
             }
 
             return [
                 'valid' => true,
                 'message' => 'QR Code valid',
                 'qr_code' => $qr,
-                'unit' => $unit,
-            ];
+                'unit' => $unit
+    ];
         });
     }
 
@@ -101,8 +101,8 @@ class QrValidationService
                 },
                 'capacity' => $unit->capacity,
                 'open_time' => $unit->open_time,
-                'close_time' => $unit->close_time,
-            ];
+                'close_time' => $unit->close_time
+    ];
         });
     }
 
@@ -122,8 +122,8 @@ class QrValidationService
                 'valid' => true,
                 'distance' => null,
                 'radius' => null,
-                'message' => 'Validasi GPS tidak tersedia untuk unit ini',
-            ];
+                'message' => 'Validasi GPS tidak tersedia untuk unit ini'
+    ];
         }
 
         $radius = 100; // meter
@@ -142,8 +142,8 @@ class QrValidationService
             'radius' => $radius,
             'message' => $isValid 
                 ? 'Validasi GPS berhasil' 
-                : "Anda berada terlalu jauh dari unit ({$distance}m > {$radius}m)",
-        ];
+                : "Anda berada terlalu jauh dari unit ({$distance}m > {$radius}m)"
+    ];
     }
 
     /**

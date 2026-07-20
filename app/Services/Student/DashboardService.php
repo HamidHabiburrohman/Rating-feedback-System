@@ -19,8 +19,8 @@ class DashboardService extends BaseStudentService
                 'total_ratings' => $student->ratings()->count(),
                 'total_reports' => $student->reports()->count(),
                 'total_units_visited' => $student->visits()->distinct('unit_id')->count('unit_id'),
-                'active_reports' => $student->reports()->whereIn('status', ['new', 'in_progress'])->count(),
-            ];
+                'active_reports' => $student->reports()->whereIn('status', ['new', 'in_progress'])->count()
+    ];
         });
     }
 
@@ -51,8 +51,8 @@ class DashboardService extends BaseStudentService
             return [
                 'labels' => $labels,
                 'ratings' => $ratings,
-                'reports' => $reports,
-            ];
+                'reports' => $reports
+    ];
         });
     }
 
@@ -93,8 +93,8 @@ class DashboardService extends BaseStudentService
                         'type_name' => $unit->unitType?->name,
                         'avg_rating' => round($unit->avg_rating ?? 0, 1),
                         'total_ratings' => $unit->total_ratings ?? 0,
-                        'primary_photo' => $unit->primaryPhoto,
-                    ];
+                        'primary_photo' => $unit->primaryPhoto
+    ];
                 })
                 ->toArray();
         });

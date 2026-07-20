@@ -16,7 +16,7 @@ class EmployeePosition extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'deleted_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     public function employees()

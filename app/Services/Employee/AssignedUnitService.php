@@ -68,8 +68,8 @@ class AssignedUnitService extends BaseEmployeeService
                     ->with(['student', 'category'])
                     ->latest()
                     ->limit(10)
-                    ->get(),
-            ];
+                    ->get()
+    ];
         });
     }
 
@@ -175,8 +175,8 @@ class AssignedUnitService extends BaseEmployeeService
                         $categoryStats[$catId] = [
                             'category' => $score->category,
                             'total_scores' => 0,
-                            'sum_scores' => 0,
-                        ];
+                            'sum_scores' => 0
+    ];
                     }
                     $categoryStats[$catId]['total_scores']++;
                     $categoryStats[$catId]['sum_scores'] += $score->score;
@@ -189,8 +189,8 @@ class AssignedUnitService extends BaseEmployeeService
                     'name' => $stat['category']->name,
                     'slug' => $stat['category']->slug,
                     'avg_score' => round($stat['sum_scores'] / $stat['total_scores'], 2),
-                    'total_scores' => $stat['total_scores'],
-                ];
+                    'total_scores' => $stat['total_scores']
+    ];
             }, $categoryStats);
         });
     }

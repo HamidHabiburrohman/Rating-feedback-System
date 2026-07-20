@@ -16,15 +16,15 @@ class UpdateSettingRequest extends FormRequest
     {
         return [
             'settings' => 'required|array',
-            'settings.*' => 'nullable|string',
-        ];
+            'settings.*' => 'nullable|string'
+    ];
     }
 
     public function messages(): array
     {
         return [
             'settings.required' => 'Pengaturan wajib diisi',
-            'settings.array' => 'Format pengaturan tidak valid',
-        ];
+            'settings.array' => 'Format pengaturan tidak valid'
+    ];
     }
 }

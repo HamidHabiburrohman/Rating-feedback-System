@@ -30,7 +30,7 @@ class ReportGeneratorService
             'ratings' => [
                 'total' => $ratings->count(),
                 'by_status' => $ratings->groupBy('status')->map->count(),
-            ],
-        ];
+            ]
+    ];
     }
 }

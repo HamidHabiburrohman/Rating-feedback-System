@@ -112,8 +112,8 @@ class RegenerateViewsStructure extends Command
             'admin/units/show.blade.php.backup',
             'admin/units/trashed.blade.php.backup',
             'landing/index.blade.php.backup',
-            'landing/code.txt',
-        ];
+            'landing/code.txt'
+    ];
 
         foreach ($filesToDelete as $file) {
             $this->deleteFileIfExists($file);
@@ -125,8 +125,8 @@ class RegenerateViewsStructure extends Command
         $renames = [
             'components/admin/logout-modal.php' => 'components/admin/logout-modal.blade.php',
             'emails/student-verification.blade.php' => 'emails/student/verification.blade.php',
-            'admin/dashboard.blade.php' => 'admin/dashboard/index.blade.php',
-        ];
+            'admin/dashboard.blade.php' => 'admin/dashboard/index.blade.php'
+    ];
 
         foreach ($renames as $from => $to) {
             $this->renameFileIfExists($from, $to);
@@ -141,8 +141,8 @@ class RegenerateViewsStructure extends Command
             'admin/replies',
             'layouts/admin/auth',
             'layouts/employee/auth',
-            'layouts/student/auth',
-        ];
+            'layouts/student/auth'
+    ];
 
         foreach ($foldersToRemove as $folder) {
             $this->removeFolderIfExists($folder);
@@ -159,8 +159,8 @@ class RegenerateViewsStructure extends Command
             'components/student/button.blade.php',
             'components/student/empty-state.blade.php',
             'components/student/pagination.blade.php',
-            'components/student/status-badge.blade.php',
-        ];
+            'components/student/status-badge.blade.php'
+    ];
 
         foreach ($duplicateComponents as $component) {
             $this->deleteFileIfExists($component);
@@ -187,8 +187,8 @@ class RegenerateViewsStructure extends Command
             'emails/admin',
             'emails/employee',
             'emails/student',
-            'emails/shared',
-        ];
+            'emails/shared'
+    ];
 
         foreach ($folders as $folder) {
             $this->createFolderIfMissing($folder);
@@ -202,8 +202,8 @@ class RegenerateViewsStructure extends Command
             'components/shared/breadcrumb.blade.php' => $this->getBreadcrumbStub(),
             'components/shared/loading-spinner.blade.php' => $this->getLoadingSpinnerStub(),
             'components/shared/confirm-modal.blade.php' => $this->getConfirmModalStub(),
-            'components/shared/data-table.blade.php' => $this->getDataTableStub(),
-        ];
+            'components/shared/data-table.blade.php' => $this->getDataTableStub()
+    ];
 
         foreach ($components as $path => $content) {
             $this->createFileIfMissing($path, $content);
@@ -226,8 +226,8 @@ class RegenerateViewsStructure extends Command
             'emails/student/report-status-changed.blade.php' => $this->getReportStatusChangedEmailStub(),
             'emails/student/rating-replied.blade.php' => $this->getRatingRepliedEmailStub(),
             'emails/student/report-replied.blade.php' => $this->getReportRepliedEmailStub(),
-            'emails/shared/account-deactivated.blade.php' => $this->getAccountDeactivatedEmailStub(),
-        ];
+            'emails/shared/account-deactivated.blade.php' => $this->getAccountDeactivatedEmailStub()
+    ];
 
         foreach ($templates as $path => $content) {
             $this->createFileIfMissing($path, $content);
@@ -255,8 +255,8 @@ class RegenerateViewsStructure extends Command
             'student/qr/result.blade.php' => $this->getQrResultStub(),
             'student/notifications/index.blade.php' => $this->getCrudIndexStub('Notifications', 'notification'),
             'student/verify/email.blade.php' => $this->getVerifyEmailStub(),
-            'student/verify/success.blade.php' => $this->getVerifySuccessStub(),
-        ];
+            'student/verify/success.blade.php' => $this->getVerifySuccessStub()
+    ];
 
         foreach ($placeholders as $path => $content) {
             $this->createFileIfMissing($path, $content);
@@ -401,8 +401,8 @@ class RegenerateViewsStructure extends Command
             'CREATE FOLDER' => 'green',
             'BACKUP' => 'cyan',
             'SKIP' => 'gray',
-            'ERROR' => 'red',
-        ];
+            'ERROR' => 'red'
+    ];
 
         $color = $colors[$type] ?? 'white';
         $tag = str_pad("[{$type}]", 16);
@@ -983,8 +983,8 @@ $colors = [
     'success' => ['bg' => 'bg-green-50', 'border' => 'border-green-400', 'text' => 'text-green-800', 'icon' => '✓'],
     'error' => ['bg' => 'bg-red-50', 'border' => 'border-red-400', 'text' => 'text-red-800', 'icon' => '✕'],
     'warning' => ['bg' => 'bg-yellow-50', 'border' => 'border-yellow-400', 'text' => 'text-yellow-800', 'icon' => '⚠'],
-    'info' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-400', 'text' => 'text-blue-800', 'icon' => 'ℹ'],
-];
+    'info' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-400', 'text' => 'text-blue-800', 'icon' => 'ℹ']
+    ];
 $color = $colors[$type] ?? $colors['info'];
 @endphp
 
@@ -1066,8 +1066,8 @@ BLADE;
 $confirmColors = [
     'danger' => 'bg-red-600 hover:bg-red-700',
     'warning' => 'bg-yellow-600 hover:bg-yellow-700',
-    'info' => 'bg-blue-600 hover:bg-blue-700',
-];
+    'info' => 'bg-blue-600 hover:bg-blue-700'
+    ];
 $confirmColor = $confirmColors[$type] ?? $confirmColors['danger'];
 @endphp
 

@@ -14,8 +14,8 @@ class PdfExportService
             'headers' => $headers,
             'rows' => $rows,
             'summary' => $this->generateSummary($rows),
-            'print_date' => date('d F Y H:i:s'),
-        ];
+            'print_date' => date('d F Y H:i:s')
+    ];
 
         $pdf = Pdf::loadView('exports.pdf', $data);
         
@@ -27,7 +27,7 @@ class PdfExportService
     {
         return [
             'Total Records' => count($rows),
-            'Generated Date' => date('d/m/Y H:i'),
-        ];
+            'Generated Date' => date('d/m/Y H:i')
+    ];
     }
 }

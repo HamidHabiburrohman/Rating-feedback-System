@@ -36,8 +36,8 @@ class UpdateUnitDepartmentRequest extends FormRequest
                 Rule::unique('unit_departments')->ignore($id),
             ],
             'description' => 'nullable|string',
-            'is_active' => 'sometimes|boolean',
-        ];
+            'is_active' => 'sometimes|boolean'
+    ];
     }
 
     protected function prepareForValidation()

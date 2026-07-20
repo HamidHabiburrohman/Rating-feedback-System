@@ -14,7 +14,7 @@ class RatingScore extends Model
     protected $fillable = ['rating_id', 'rating_category_id', 'score'];
 
     protected $casts = [
-        'score' => 'float',
+        'score' => 'float'
     ];
 
     public function rating()

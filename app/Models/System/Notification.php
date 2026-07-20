@@ -18,7 +18,7 @@ class Notification extends Model
 
     protected $casts = [
         'data' => 'array',
-        'read_at' => 'datetime',
+        'read_at' => 'datetime'
     ];
 
     public function notifiable()

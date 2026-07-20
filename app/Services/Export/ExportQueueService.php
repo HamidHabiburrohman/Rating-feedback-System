@@ -44,8 +44,8 @@ class ExportQueueService
             'error_message' => $exportLog->error_message,
             'download_url' => $exportLog->status === 'completed' && $exportLog->file_path 
                 ? route('admin.exports.download', $exportLog->id) 
-                : null,
-        ];
+                : null
+    ];
     }
 
     public function getUserExports(User $user, $status = null, $limit = 50)

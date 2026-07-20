@@ -46,7 +46,7 @@ class RefactorDatabaseStructure extends Command
         'UnitFacilityFactory' => 'Unit',
         'UnitPhotoFactory' => 'Unit',
         'UnitTypeFactory' => 'Unit',
-        'UnitVisitFactory' => 'Unit',
+        'UnitVisitFactory' => 'Unit'
     ];
 
     protected array $seederMapping = [
@@ -78,7 +78,7 @@ class RefactorDatabaseStructure extends Command
         'UnitFacilitySeeder' => 'Unit',
         'UnitPhotoSeeder' => 'Unit',
         'UnitTypeSeeder' => 'Unit',
-        'UnitVisitSeeder' => 'Unit',
+        'UnitVisitSeeder' => 'Unit'
     ];
 
     protected array $domains = [
