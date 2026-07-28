@@ -1,9 +1,6 @@
 <?php
-
 declare(strict_types=1);
-
 namespace App\Services\Admin\Conversation;
-
 use App\Models\Authentication\Admin;
 use App\Models\Conversation\Conversation;
 use App\Models\Conversation\Message;
@@ -17,7 +14,7 @@ final class MessageService
 {
     public const MAX_BODY_LENGTH = 5000;
     public const MAX_ATTACHMENTS = 10;
-    public const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    public const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     public function __construct(
         private readonly ConversationService $conversationService,
@@ -26,67 +23,72 @@ final class MessageService
     ) {}
 
     public function send(
-    ?Conversation $conversation,
-    Authenticatable $sender,
-    ?string $body = '',
-    ?array $attachments = null,
-    ?string $subject = null,
-    ?array $participants = null,
-    ?int $replyToId = null // Added
-): Message {
-    return DB::transaction(function () use ($conversation, $sender, $body, $attachments, $subject, $participants, $replyToId) {
-        $body = (string) ($body ?? '');
-        
-        if (!$conversation) {
-            if (empty($subject) || empty($participants)) {
+        ?Conversation $conversation,
+        Authenticatable $sender,
+        ?string $body = '',
+        ?array $attachments = null,
+        ?string $subject = null,
+        ?array $participants = null,
+        ?int $replyToId = null
+    ): Message {
+        return DB::transaction(function () use ($conversation, $sender, $body, $attachments, $subject, $participants, $replyToId) {
+            $body = (string) ($body ?? '');
+
+            if (!$conversation) {
+                if (empty($subject) || empty($participants)) {
+                    throw ValidationException::withMessages([
+                        'conversation' => ['Subject and participants are required for new conversations.'],
+                    ]);
+                }
+                $conversation = $this->conversationService->findOrCreate($subject, $participants);
+            }
+
+            $this->validateSenderIsParticipant($conversation, $sender);
+            $this->validateConversationIsActive($conversation);
+
+            if (mb_strlen($body) > self::MAX_BODY_LENGTH) {
                 throw ValidationException::withMessages([
-                    'conversation' => ['Subject and participants are required for new conversations.'],
+                    'body' => ['Message body cannot exceed ' . self::MAX_BODY_LENGTH . ' characters.'],
                 ]);
             }
-            $conversation = $this->conversationService->findOrCreate($subject, $participants);
-        }
 
-        $this->validateSenderIsParticipant($conversation, $sender);
-        $this->validateConversationIsActive($conversation);
-
-        if (mb_strlen($body) > self::MAX_BODY_LENGTH) {
-            throw ValidationException::withMessages([
-                'body' => ['Message body cannot exceed ' . self::MAX_BODY_LENGTH . ' characters.'],
-            ]);
-        }
-
-        if ($attachments && count($attachments) > self::MAX_ATTACHMENTS) {
-            throw ValidationException::withMessages([
-                'attachments' => ['Cannot upload more than ' . self::MAX_ATTACHMENTS . ' attachments.'],
-            ]);
-        }
-
-        $messageData = [
-            'conversation_id' => $conversation->id,
-            'sender_type' => get_class($sender),
-            'sender_id' => $sender->getAuthIdentifier(),
-            'body' => $body,
-            'type' => empty($attachments) ? 'text' : 'attachment',
-        ];
-
-        if ($replyToId) {
-            $replyMessage = Message::where('conversation_id', $conversation->id)->find($replyToId);
-            if ($replyMessage) {
-                $messageData['reply_to_id'] = $replyToId;
+            if ($attachments && count($attachments) > self::MAX_ATTACHMENTS) {
+                throw ValidationException::withMessages([
+                    'attachments' => ['Cannot upload more than ' . self::MAX_ATTACHMENTS . ' attachments.'],
+                ]);
             }
-        }
 
-        $message = Message::create($messageData);
+            $messageData = [
+                'conversation_id' => $conversation->id,
+                'sender_type' => get_class($sender),
+                'sender_id' => $sender->getAuthIdentifier(),
+                'body' => $body,
+                'type' => empty($attachments) ? 'text' : 'attachment',
+            ];
 
-        if (!empty($attachments)) {
-            $this->attachmentService->uploadMultiple($message, $attachments);
-        }
+            if ($replyToId) {
+                $replyMessage = Message::where('conversation_id', $conversation->id)->find($replyToId);
+                if ($replyMessage) {
+                    $messageData['reply_to_id'] = $replyToId;
+                }
+            }
 
-        $this->conversationService->updateLastMessage($conversation, $message);
+            $message = Message::create($messageData);
 
-        return $message->load(['sender', 'attachments', 'replyTo.sender']);
-    });
-}
+            if (!empty($attachments)) {
+                $this->attachmentService->uploadMultiple($message, $attachments);
+            }
+
+            $this->conversationService->updateLastMessage($conversation, $message);
+
+            return $message->load([
+                'sender',
+                'attachments',
+                'replyTo',
+                'replyTo.sender'
+            ]);
+        });
+    }
 
     public function edit(Message $message, Authenticatable $user, string $body): Message
     {
@@ -133,7 +135,6 @@ final class MessageService
     public function forward(Message $message, Conversation $targetConversation, Authenticatable $sender): Message
     {
         $this->validateSenderIsParticipant($targetConversation, $sender);
-
         $forwardedBody = "Forwarded message:\n" . ($message->body ?? '');
 
         return DB::transaction(function () use ($targetConversation, $sender, $forwardedBody, $message) {
@@ -146,7 +147,6 @@ final class MessageService
             ]);
 
             $this->conversationService->updateLastMessage($targetConversation, $newMessage);
-
             return $newMessage;
         });
     }

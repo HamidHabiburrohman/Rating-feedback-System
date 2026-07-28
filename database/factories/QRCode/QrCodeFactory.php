@@ -17,7 +17,7 @@ class QrCodeFactory extends Factory
         return [
             'unit_id' => Unit::factory(),
             'code' => strtoupper(Str::uuid()->toString()),
-            'qr_image_path' => 'qr-codes/unit-' . $this->faker->unique()->numberBetween(1, 9999) . '.png',
+            'qr_image_path' => 'qr-codes/testing-' . Str::random(10) . '.png',
             'is_active' => true,
             'expires_at' => now()->addYear(),
             'generated_by_admin_id' => Admin::factory(),

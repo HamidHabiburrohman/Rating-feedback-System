@@ -1,7 +1,5 @@
 <?php
-
 declare(strict_types=1);
-
 namespace App\Http\Controllers\Admin\QRCode;
 
 use App\Http\Controllers\Controller;
@@ -24,22 +22,19 @@ class QrCodeController extends Controller
     public function globalIndex(Request $request): View|JsonResponse
     {
         $this->authorize('viewAny', QrCode::class);
-
         try {
             $filters = $request->only(['search', 'status', 'unit_id', 'sort', 'order', 'per_page']);
             $qrCodes = $this->service->getAllQrCodes($filters);
             $stats = $this->service->getQrCodeStats();
-
-            // Kirim sebagai Collection lengkap untuk dropdown modal
             $units = Unit::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']);
-
+            
             if ($request->ajax()) {
                 return response()->json([
                     'html' => view('admin.qr-codes.partials.rows', ['qrCodes' => $qrCodes])->render(),
                     'pagination' => view('admin.qr-codes.partials.pagination', ['paginator' => $qrCodes])->render(),
                 ]);
             }
-
+            
             return view('admin.qr-codes.index', [
                 'qrCodes' => $qrCodes,
                 'stats' => $stats,
@@ -53,17 +48,10 @@ class QrCodeController extends Controller
                     'message' => 'Gagal memuat data QR Code: ' . $e->getMessage(),
                 ], 500);
             }
-
             $emptyQrCodes = new LengthAwarePaginator([], 0, 10);
-
             return view('admin.qr-codes.index', [
                 'qrCodes' => $emptyQrCodes,
-                'stats' => [
-                    'total' => 0,
-                    'active' => 0,
-                    'inactive' => 0,
-                    'expired' => 0,
-                ],
+                'stats' => ['total' => 0, 'active' => 0, 'inactive' => 0, 'expired' => 0],
                 'units' => collect(),
                 'filters' => [],
             ])->with('error', 'Gagal memuat data: ' . $e->getMessage());
@@ -73,17 +61,16 @@ class QrCodeController extends Controller
     public function generateGlobal(Request $request): JsonResponse|RedirectResponse
     {
         $this->authorize('create', QrCode::class);
-
         $validated = $request->validate([
             'unit_id' => 'required|exists:units,id',
         ]);
-
+        
         try {
             $qrCode = $this->service->generate(
                 (int) $validated['unit_id'],
                 (int) auth('admin')->id()
             );
-
+            
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -91,7 +78,7 @@ class QrCodeController extends Controller
                     'data' => $qrCode,
                 ]);
             }
-
+            
             return redirect()->route('admin.qr-codes.index')
                 ->with('success', 'QR Code berhasil digenerate.');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -102,9 +89,7 @@ class QrCodeController extends Controller
                     'errors' => $e->errors(),
                 ], 422);
             }
-
-            return back()->withInput()
-                ->with('error', $e->getMessage());
+            return back()->withInput()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -112,9 +97,7 @@ class QrCodeController extends Controller
                     'message' => 'Gagal generate QR Code: ' . $e->getMessage(),
                 ], 500);
             }
-
-            return back()->withInput()
-                ->with('error', 'Gagal generate QR Code: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal generate QR Code: ' . $e->getMessage());
         }
     }
 
@@ -139,13 +122,11 @@ class QrCodeController extends Controller
     public function previewData(QrCode $qrCode): \Illuminate\Http\JsonResponse
     {
         $this->authorize('view', $qrCode->unit);
-
         $qrCode->load('unit.unitDepartment', 'generatedByAdmin');
         $qrCode->loadCount('unitVisits');
-
         $isExpired = $qrCode->expires_at && $qrCode->expires_at->isPast();
         $status = $qrCode->is_active && !$isExpired ? 'active' : ($isExpired ? 'expired' : 'inactive');
-
+        
         return response()->json([
             'success' => true,
             'data' => [
@@ -165,6 +146,7 @@ class QrCodeController extends Controller
             ]
         ]);
     }
+
     public function generate(Unit $unit): RedirectResponse
     {
         $this->authorize('update', $unit);
@@ -196,14 +178,12 @@ class QrCodeController extends Controller
     public function preview(Request $request, QrCode $qrCode): View|JsonResponse
     {
         $this->authorize('view', $qrCode->unit);
-
         if ($request->ajax() || $request->wantsJson()) {
             $qrCode->load('unit.unitDepartment', 'generatedByAdmin');
             $qrCode->loadCount('unitVisits');
-
             $isExpired = $qrCode->expires_at && $qrCode->expires_at->isPast();
             $status = $qrCode->is_active && !$isExpired ? 'active' : ($isExpired ? 'expired' : 'inactive');
-
+            
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -224,7 +204,7 @@ class QrCodeController extends Controller
                 ]
             ]);
         }
-
+        
         $url = $this->service->preview($qrCode->id);
         return view('admin.qr-codes.preview', [
             'qrCode' => $qrCode,
@@ -249,12 +229,16 @@ class QrCodeController extends Controller
     {
         $query = $request->get('q', '');
         $limit = min((int) $request->get('limit', 5), 10);
+        
+        $unitsQuery = Unit::where('is_active', true)
+            ->whereDoesntHave('qrCodes');
+            
+        $allHaveQr = (clone $unitsQuery)->count() === 0;
 
-        $units = Unit::where('is_active', true)
-            ->whereNotIn('id', QrCode::select('unit_id'))
+        $units = $unitsQuery
             ->when($query, function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
-                    ->orWhere('code', 'LIKE', "%{$query}%");
+                  ->orWhere('code', 'LIKE', "%{$query}%");
             })
             ->with(['unitType', 'unitDepartment'])
             ->limit($limit)
@@ -269,21 +253,26 @@ class QrCodeController extends Controller
                     'code' => $unit->code ?? 'N/A',
                     'type' => $unit->unitType ? $unit->unitType->name : 'General',
                     'department' => $unit->unitDepartment ? $unit->unitDepartment->name : 'No Department'
-    ];
-            })
+                ];
+            }),
+            'all_have_qr' => $allHaveQr
         ]);
     }
 
-    public function searchUnits(Request $request)
+    public function searchUnits(Request $request): JsonResponse
     {
         $query = $request->get('q', '');
         $limit = min((int) $request->get('limit', 10), 20);
+        
+        $unitsQuery = Unit::where('is_active', true)
+            ->whereDoesntHave('qrCodes');
+            
+        $allHaveQr = (clone $unitsQuery)->count() === 0;
 
-        $units = Unit::where('is_active', true)
-            ->whereNotIn('id', \App\Models\Unit\QrCode::where('is_active', true)->select('unit_id'))
+        $units = $unitsQuery
             ->when($query, function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
-                    ->orWhere('code', 'LIKE', "%{$query}%");
+                  ->orWhere('code', 'LIKE', "%{$query}%");
             })
             ->with(['unitType', 'unitDepartment'])
             ->limit($limit)
@@ -298,8 +287,9 @@ class QrCodeController extends Controller
                     'code' => $unit->code ?? 'N/A',
                     'type' => $unit->unitType ? $unit->unitType->name : 'General',
                     'department' => $unit->unitDepartment ? $unit->unitDepartment->name : 'No Department'
-    ];
-            })
+                ];
+            }),
+            'all_have_qr' => $allHaveQr
         ]);
     }
 }

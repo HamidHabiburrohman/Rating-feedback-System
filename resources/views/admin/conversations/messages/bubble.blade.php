@@ -24,24 +24,20 @@
         @else
             <span class="conv-msg-hover-time">{{ $message->created_at->format('H:i') }}</span>
         @endif
-        
-        @if($message->reply_to_id)
+
+        @if($replyTo)
             @php
-                $replySender = 'Unknown';
+                $replySender = $replyTo->sender ? ($replyTo->sender->name ?? 'Unknown') : 'Unknown';
                 $replyText = 'Original message unavailable';
-                if ($replyTo) {
-                    $replySender = $replyTo->sender ? ($replyTo->sender->name ?? 'Unknown') : 'Unknown';
-                    if ($replyTo->trashed()) {
-                        $replyText = 'Original message unavailable';
-                    } else {
-                        $replyText = $replyTo->body ?: ($replyTo->attachments && $replyTo->attachments->count() > 0 ? 'Attachment' : 'Message');
-                        $replyText = \Illuminate\Support\Str::limit($replyText, 80);
-                    }
+                
+                if (!$replyTo->trashed()) {
+                    $replyText = $replyTo->body ?: ($replyTo->attachments && $replyTo->attachments->count() > 0 ? 'Attachment' : 'Message');
+                    $replyText = \Illuminate\Support\Str::limit($replyText, 80);
                 }
             @endphp
             <div class="conv-msg-reply-preview" 
-                 data-reply-to-id="{{ $message->reply_to_id }}" 
-                 onclick="window.Conversation.Workspace.scrollToAndHighlightMessage({{ $message->reply_to_id }})"
+                 data-reply-to-id="{{ $replyTo->id }}" 
+                 onclick="window.Conversation.Workspace.scrollToAndHighlightMessage({{ $replyTo->id }})"
                  title="Go to message">
                 <i class="ti ti-corner-up-left"></i>
                 <span class="conv-msg-reply-sender">{{ $replySender }}:</span>

@@ -37,7 +37,11 @@ class EmployeeController extends Controller
             if ($request->ajax()) {
                 return response()->json(['error' => 'Gagal memuat data: ' . $e->getMessage()], 500);
             }
-            return redirect()->route('admin.employees.index')->with('error', 'Gagal memuat data: ' . $e->getMessage());
+
+            return view('admin.employees.index', [
+                'employees' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10),
+                'units' => collect()
+            ])->with('error', 'Gagal memuat data: ' . $e->getMessage());
         }
     }
 
@@ -51,8 +55,10 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', Employee::class);
+
         try {
             $employee = $this->service->create($request->all());
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
@@ -60,7 +66,9 @@ class EmployeeController extends Controller
                     'redirect' => route('admin.employees.show', $employee->id)
                 ]);
             }
-            return redirect()->route('admin.employees.show', $employee->id)->with('success', 'Karyawan berhasil ditambahkan');
+
+            return redirect()->route('admin.employees.show', $employee->id)
+                ->with('success', 'Karyawan berhasil ditambahkan');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Gagal menambahkan: ' . $e->getMessage()], 422);
@@ -76,7 +84,8 @@ class EmployeeController extends Controller
             $this->authorize('view', $data['employee']);
             return view('admin.employees.show', $data);
         } catch (\Exception $e) {
-            return redirect()->route('admin.employees.index')->with('error', 'Karyawan tidak ditemukan');
+            return redirect()->route('admin.employees.index')
+                ->with('error', 'Karyawan tidak ditemukan');
         }
     }
 
@@ -87,7 +96,8 @@ class EmployeeController extends Controller
             $this->authorize('update', $data['employee']);
             return view('admin.employees.edit', $data);
         } catch (\Exception $e) {
-            return redirect()->route('admin.employees.index')->with('error', 'Karyawan tidak ditemukan');
+            return redirect()->route('admin.employees.index')
+                ->with('error', 'Karyawan tidak ditemukan');
         }
     }
 
@@ -95,12 +105,16 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
         $this->authorize('update', $employee);
+
         try {
             $this->service->update($id, $request->all());
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Karyawan berhasil diperbarui']);
             }
-            return redirect()->route('admin.employees.show', $id)->with('success', 'Karyawan berhasil diperbarui');
+
+            return redirect()->route('admin.employees.show', $id)
+                ->with('success', 'Karyawan berhasil diperbarui');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Gagal memperbarui: ' . $e->getMessage()], 422);
@@ -113,12 +127,16 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
         $this->authorize('delete', $employee);
+
         try {
             $this->service->delete($id);
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Karyawan berhasil dihapus']);
             }
-            return redirect()->route('admin.employees.index')->with('success', 'Karyawan berhasil dihapus');
+
+            return redirect()->route('admin.employees.index')
+                ->with('success', 'Karyawan berhasil dihapus');
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
@@ -130,6 +148,7 @@ class EmployeeController extends Controller
     public function restore(Request $request, int $id)
     {
         $this->authorize('restore', Employee::class);
+
         try {
             $this->service->restore($id);
             return response()->json(['success' => true, 'message' => 'Karyawan berhasil dipulihkan']);
@@ -141,9 +160,13 @@ class EmployeeController extends Controller
     public function assignToUnit(Request $request, int $id)
     {
         $this->authorize('assignToUnit', Employee::class);
-        $request->validate(['unit_id' => 'required|exists:units,id', 'role_in_unit' => 'nullable|string|max:100']);
+        $request->validate([
+            'unit_id' => 'required|exists:units,id',
+            'role_in_unit' => 'nullable|string|max:100'
+        ]);
+
         try {
-            $this->service->assignToUnit($id, $request->unit_id, $request->role_in_unit);
+            $this->service->assignToUnit($id, $request->unit_id);
             return response()->json(['success' => true, 'message' => 'Berhasil ditugaskan ke unit']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal menugaskan: ' . $e->getMessage()], 500);
@@ -154,6 +177,7 @@ class EmployeeController extends Controller
     {
         $this->authorize('assignToUnit', Employee::class);
         $request->validate(['unit_id' => 'required|exists:units,id']);
+
         try {
             $this->service->removeFromUnit($id, $request->unit_id);
             return response()->json(['success' => true, 'message' => 'Berhasil dihapus dari unit']);

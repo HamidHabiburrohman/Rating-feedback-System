@@ -68,6 +68,13 @@
     display: flex;
     flex-direction: column;
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;          /* Allows internal vertical scrolling */
+    scrollbar-width: none;     /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;  /* Hides scrollbar in IE/Edge */
+}
+
+.qr-preview-container::-webkit-scrollbar {
+    display: none;
 }
 
 .qr-preview-header {

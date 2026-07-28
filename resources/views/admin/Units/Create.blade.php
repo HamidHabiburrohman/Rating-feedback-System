@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 @section('title', 'Tambah Unit Baru')
 @section('admin-content')
-<div class="form-container">
+<div class="form-container m-5">
     <header class="page-header">
         <div>
             <h1 class="page-title">Tambah Unit Baru</h1>

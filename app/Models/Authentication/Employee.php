@@ -5,6 +5,7 @@ namespace App\Models\Authentication;
 use App\Models\Employee\EmployeeUnitAssignment;
 use App\Models\Feedback\RatingReply;
 use App\Models\Conversation\Message;
+use App\Models\Employee\EmployeePosition;
 use App\Models\Report\ReportReply;
 use App\Models\Unit\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -87,5 +88,10 @@ class Employee extends Authenticatable
     protected static function newFactory()
     {
         return \Database\Factories\Employee\EmployeeFactory::new();
+    }
+
+    public function Position ()
+    {
+        return $this->belongsTo(EmployeePosition::class, 'employee_position_id');
     }
 }

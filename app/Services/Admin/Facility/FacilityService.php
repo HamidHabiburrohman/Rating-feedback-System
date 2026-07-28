@@ -3,6 +3,7 @@
 namespace App\Services\Admin\Facility;
 
 use App\Models\Unit\Facility;
+use App\Services\Admin\Shared\BaseAdminService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

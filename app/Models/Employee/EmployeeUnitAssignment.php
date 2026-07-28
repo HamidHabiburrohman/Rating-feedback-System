@@ -4,7 +4,7 @@ namespace App\Models\Employee;
 
 use App\Models\Authentication\Admin;
 use App\Models\Authentication\Employee;
-use App\Models\Message\Message;
+use App\Models\Conversation\Message;
 use App\Models\Report\Report;
 use App\Models\Unit\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

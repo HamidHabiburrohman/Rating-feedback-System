@@ -91,8 +91,8 @@
         var senderName = getCurrentUserName();
         var senderRole = getCurrentUserRole();
         var escapedBody = U.escapeHtml(body).replace(/\n/g, '<br>');
-
         var replyHtml = '';
+
         if (replyTo) {
             replyHtml =
                 '<div class="conv-msg-reply-preview" data-reply-to-id="' + replyTo.id + '" onclick="window.Conversation.Workspace.scrollToAndHighlightMessage(' + replyTo.id + ')" title="Go to message">' +
@@ -174,7 +174,6 @@
             input.style.display = 'none';
             input.files = dt.files;
             state.elements.fileInputsContainer.appendChild(input);
-
             var ext = file.name.split('.').pop();
             var previewHtml = '';
             if (file.type.startsWith('image/')) {
@@ -183,7 +182,6 @@
             } else {
                 previewHtml = '<div style="width:40px;height:40px;border-radius:8px;background:#e2e8f0;color:#475569;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ' + U.getExtIcon(ext) + '" style="font-size:24px;"></i></div>';
             }
-
             var card = document.createElement('div');
             card.innerHTML =
                 '<div style="display:flex;align-items:center;gap:12px;background:#f8fafc;border:1px solid rgba(15,23,42,0.06);border-radius:12px;padding:8px;width:220px;max-width:100%;position:relative;">' +
@@ -304,9 +302,16 @@
         }
     }
 
-    function sendRequest(tempId, body, files) {
+    function sendRequest(tempId, body, files, replyTo) {
         var formData = new FormData(state.elements.form);
         formData.set('body', body);
+
+        if (replyTo && replyTo.id) {
+            formData.set('reply_to_id', replyTo.id);
+        } else {
+            formData.delete('reply_to_id');
+        }
+
         files.forEach(function (file) {
             formData.append('attachments[]', file);
         });
@@ -352,11 +357,14 @@
         if (!body && files.length === 0) return;
 
         var tempId = generateTempId();
-        var optimisticHtml = buildOptimisticBubbleHTML(body, files, tempId, state.replyTo);
+        var currentReplyTo = state.replyTo;
+
+        var optimisticHtml = buildOptimisticBubbleHTML(body, files, tempId, currentReplyTo);
         Workspace.appendOptimisticBubble(optimisticHtml, tempId, body, files);
+
         resetComposer();
         setSending(true);
-        sendRequest(tempId, body, files);
+        sendRequest(tempId, body, files, currentReplyTo);
     }
 
     function handleRetry(e) {
@@ -366,7 +374,7 @@
         if (!pending) return;
         Workspace.updateBubbleStatus(tempId, 'sending');
         setSending(true);
-        sendRequest(tempId, pending.body, pending.files);
+        sendRequest(tempId, pending.body, pending.files, null);
     }
 
     function handleDelete(e) {

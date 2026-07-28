@@ -3,8 +3,8 @@
 namespace Database\Seeders\QRCode;
 
 use App\Models\Authentication\Admin;
-use App\Models\Unit\QrCode;
 use App\Models\Unit\Unit;
+use App\Services\Admin\QRCode\QrCodeService;
 use Illuminate\Database\Seeder;
 
 class QrCodeSeeder extends Seeder
@@ -18,27 +18,34 @@ class QrCodeSeeder extends Seeder
             return;
         }
 
-        $units = Unit::all();
+        $units = Unit::where('is_active', true)
+            ->whereDoesntHave('qrCodes', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->inRandomOrder()
+            ->limit(20)
+            ->get();
 
         if ($units->isEmpty()) {
-            $this->command?->warn('No units found. Skipping QR Code seeding.');
+            $this->command?->warn('No eligible units found for QR Code seeding.');
             return;
         }
 
+        $qrCodeService = app(QrCodeService::class);
+        $generatedCount = 0;
+
+        $this->command?->info('Generating QR Codes for ' . $units->count() . ' units...');
+
         foreach ($units as $unit) {
-            $hasActiveQr = QrCode::where('unit_id', $unit->id)
-                ->where('is_active', true)
-                ->exists();
-
-            if ($hasActiveQr) {
-                continue;
+            try {
+                $qrCodeService->generate($unit->id, $admin->id);
+                $generatedCount++;
+                $this->command?->line("  ✔ Generated QR for Unit: {$unit->name}");
+            } catch (\Exception $e) {
+                $this->command?->warn("  ✘ Failed for Unit ID {$unit->id}: " . $e->getMessage());
             }
-
-            QrCode::factory()
-                ->forUnit($unit)
-                ->create([
-                    'generated_by_admin_id' => $admin->id,
-                ]);
         }
+
+        $this->command?->info("Successfully generated {$generatedCount} QR Codes.");
     }
 }

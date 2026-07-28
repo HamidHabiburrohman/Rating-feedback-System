@@ -3,6 +3,7 @@
 namespace App\Services\Admin\Rating;
 
 use App\Models\Feedback\RatingCategory;
+use App\Services\Admin\Shared\BaseAdminService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

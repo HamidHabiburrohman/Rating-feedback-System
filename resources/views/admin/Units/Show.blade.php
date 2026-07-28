@@ -700,7 +700,9 @@
                 <div class="stat-icon"><i class="ti ti-user-check"></i></div>
                 <div class="stat-info">
                     <span class="stat-label">Employees</span>
-                    <span class="stat-value">{{ $unit->employeeAssignments()->where('is_active', true)->count() }}</span>
+                    <span class="stat-value">
+                        {{-- {{ $unit->employeeAssignments()->where('is_active', true)->count() }} --}}
+                    </span>
                     <span class="stat-sub">Assigned staff</span>
                 </div>
             </div>

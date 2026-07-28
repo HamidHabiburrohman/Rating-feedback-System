@@ -1,24 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Admin\Employee;
 
 use App\Models\Authentication\Employee;
-use App\Models\Unit\Unit;
 use App\Models\Employee\EmployeeUnitAssignment;
+use App\Models\Unit\Unit;
 use App\Services\Admin\Shared\BaseAdminService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\Employee\WelcomeMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Mail\Employee\WelcomeMail;
 
 class EmployeeService extends BaseAdminService
 {
     public function getFilteredEmployees(array $filters = [])
     {
-        $query = Employee::with(['unitAssignments.unit']);
+        $query = Employee::with(['employeeAssignments.unit']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -30,18 +32,22 @@ class EmployeeService extends BaseAdminService
         }
 
         if (!empty($filters['unit_id'])) {
-            $unitIds = is_array($filters['unit_id']) ? $filters['unit_id'] : explode(',', $filters['unit_id']);
-            $query->whereHas('unitAssignments', function ($q) use ($unitIds) {
+            $unitIds = is_array($filters['unit_id'])
+                ? $filters['unit_id']
+                : explode(',', $filters['unit_id']);
+
+            $query->whereHas('employeeAssignments', function ($q) use ($unitIds) {
                 $q->whereIn('unit_id', $unitIds)
-                    ->where('is_active', true)
-                    ->where(function ($q2) {
-                        $q2->whereNull('ended_at')->orWhere('ended_at', '>', now());
-                    });
+                    ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                    ->whereNull('completed_at');
             });
         }
 
         if (isset($filters['status']) && $filters['status'] !== '') {
-            $statuses = is_array($filters['status']) ? $filters['status'] : explode(',', $filters['status']);
+            $statuses = is_array($filters['status'])
+                ? $filters['status']
+                : explode(',', $filters['status']);
+
             if (in_array('active', $statuses) && !in_array('inactive', $statuses)) {
                 $query->where('is_active', true);
             } elseif (in_array('inactive', $statuses) && !in_array('active', $statuses)) {
@@ -51,13 +57,15 @@ class EmployeeService extends BaseAdminService
 
         $sortField = $filters['sort'] ?? 'name';
         $sortOrder = $filters['order'] ?? 'asc';
-
         $allowedSorts = ['name', 'created_at'];
+
         if (!in_array($sortField, $allowedSorts)) {
             $sortField = 'name';
         }
 
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc'])
+            ? strtolower($sortOrder)
+            : 'asc';
 
         $query->orderBy($sortField, $sortOrder);
 
@@ -66,18 +74,30 @@ class EmployeeService extends BaseAdminService
 
     public function getUnitsForFilter()
     {
-        return Cache::tags(['employees', 'dropdown'])->remember('employee_filter_units', 3600, function () {
-            return Unit::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        });
+        return Cache::tags(['employees', 'dropdown'])->remember(
+            'employee_filter_units',
+            3600,
+            function () {
+                return Unit::where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name']);
+            }
+        );
     }
 
     public function getFormData(): array
     {
-        return Cache::tags(['employees', 'dropdown'])->remember('employee_form_data', 3600, function () {
-            return [
-                'units' => Unit::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code'])
-            ];
-        });
+        return Cache::tags(['employees', 'dropdown'])->remember(
+            'employee_form_data',
+            3600,
+            function () {
+                return [
+                    'units' => Unit::where('is_active', true)
+                        ->orderBy('name')
+                        ->get(['id', 'name', 'code']),
+                ];
+            }
+        );
     }
 
     public function create(array $data): Employee
@@ -89,18 +109,20 @@ class EmployeeService extends BaseAdminService
             $data['employee_id'] = $data['employee_id'] ?? 'EMP-' . strtoupper(Str::random(8));
 
             $unitId = $data['unit_id'] ?? null;
-            $roleInUnit = $data['role_in_unit'] ?? null;
             unset($data['unit_id'], $data['role_in_unit']);
 
             $employee = Employee::create($data);
 
             if ($unitId) {
+                $adminId = auth('admin')?->id();
+
                 EmployeeUnitAssignment::create([
                     'employee_id' => $employee->id,
                     'unit_id' => $unitId,
-                    'role_in_unit' => $roleInUnit,
-                    'is_active' => true,
-                    'started_at' => now(),
+                    'assigned_by_admin_id' => $adminId,
+                    'status' => 'assigned',
+                    'priority' => 'medium',
+                    'assigned_at' => now(),
                 ]);
             }
 
@@ -117,8 +139,9 @@ class EmployeeService extends BaseAdminService
                 Log::warning("Failed to send welcome email to {$employee->email}: " . $e->getMessage());
             }
 
-            Cache::tags(['employees', 'dashboard'])->flush();
-            return $employee->fresh(['unitAssignments.unit']);
+            $this->invalidateEmployeeCache($employee->id);
+
+            return $employee->fresh(['employeeAssignments.unit']);
         });
     }
 
@@ -132,43 +155,60 @@ class EmployeeService extends BaseAdminService
     public function getDetail(int $id): array
     {
         $cacheKey = "admin_employee_detail_{$id}";
-        return Cache::tags(['employees', "employee_{$id}"])->remember($cacheKey, 300, function () use ($id) {
-            $employee = Employee::with(['unitAssignments.unit'])->findOrFail($id);
-            return [
-                'employee' => $employee,
-                'stats' => ['total_units' => $employee->unitAssignments()
-                    ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
-                    ->count()],
-                'active_assignments' => $employee->unitAssignments()
-                    ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
-                    ->where(function ($q) {
-                        $q->whereNull('ended_at')->orWhere('ended_at', '>', now());
-                    })
-                    ->with('unit')->get()
-            ];
-        });
+
+        return Cache::tags(['employees', "employee_{$id}"])->remember(
+            $cacheKey,
+            300,
+            function () use ($id) {
+                $employee = Employee::with(['employeeAssignments.unit'])->findOrFail($id);
+
+                return [
+                    'employee' => $employee,
+                    'stats' => [
+                        'total_units' => $employee->employeeAssignments()
+                            ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                            ->whereNull('completed_at')
+                            ->count(),
+                    ],
+                    'active_assignments' => $employee->employeeAssignments()
+                        ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                        ->whereNull('completed_at')
+                        ->with('unit')
+                        ->get(),
+                ];
+            }
+        );
     }
 
     public function getEditData(int $id): array
     {
-        $employee = Employee::with(['unitAssignments.unit'])->findOrFail($id);
+        $employee = Employee::with(['employeeAssignments.unit'])->findOrFail($id);
         $formData = $this->getFormData();
-        return ['employee' => $employee, 'units' => $formData['units']];
+
+        return [
+            'employee' => $employee,
+            'units' => $formData['units'],
+        ];
     }
 
     public function update(int $id, array $data): Employee
     {
         return DB::transaction(function () use ($id, $data) {
             $employee = Employee::findOrFail($id);
+
             if (!empty($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
             } else {
                 unset($data['password']);
             }
+
             unset($data['unit_id'], $data['role_in_unit']);
+
             $employee->update($data);
-            Cache::tags(['employees', "employee_{$id}", 'dashboard'])->flush();
-            return $employee->fresh(['unitAssignments.unit']);
+
+            $this->invalidateEmployeeCache($id);
+
+            return $employee->fresh(['employeeAssignments.unit']);
         });
     }
 
@@ -176,11 +216,18 @@ class EmployeeService extends BaseAdminService
     {
         return DB::transaction(function () use ($id) {
             $employee = Employee::findOrFail($id);
-            $employee->unitAssignments()
+
+            $employee->employeeAssignments()
                 ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
-                ->update(['status' => 'cancelled', 'completed_at' => now()]);
+                ->update([
+                    'status' => 'cancelled',
+                    'completed_at' => now(),
+                ]);
+
             $employee->delete();
-            Cache::tags(['employees', "employee_{$id}", 'dashboard'])->flush();
+
+            $this->invalidateEmployeeCache($id);
+
             return true;
         });
     }
@@ -190,36 +237,47 @@ class EmployeeService extends BaseAdminService
         return DB::transaction(function () use ($id) {
             $employee = Employee::onlyTrashed()->findOrFail($id);
             $employee->restore();
-            Cache::tags(['employees', "employee_{$id}", 'dashboard'])->flush();
+
+            $this->invalidateEmployeeCache($id);
+
             return $employee;
         });
     }
 
-    public function assignToUnit(int $employeeId, int $unitId, ?string $roleInUnit = null): EmployeeUnitAssignment
+    public function assignToUnit(int $employeeId, int $unitId): EmployeeUnitAssignment
     {
-        return DB::transaction(function () use ($employeeId, $unitId, $roleInUnit) {
+        return DB::transaction(function () use ($employeeId, $unitId) {
             Employee::findOrFail($employeeId);
             Unit::findOrFail($unitId);
+
+            $adminId = auth('admin')?->id();
+
+            if (!$adminId) {
+                throw new \Exception('Authenticated admin is required to create assignments.');
+            }
 
             $existing = EmployeeUnitAssignment::where('employee_id', $employeeId)
                 ->where('unit_id', $unitId)
                 ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                ->whereNull('completed_at')
                 ->first();
 
             if ($existing) {
-                throw new \Exception('Karyawan sudah ditugaskan ke unit ini');
+                throw new \Exception('Karyawan sudah ditugaskan ke unit ini.');
             }
 
             $assignment = EmployeeUnitAssignment::create([
                 'employee_id' => $employeeId,
                 'unit_id' => $unitId,
-                'role_in_unit' => $roleInUnit,
-                'is_active' => true,
-                'started_at' => now(),
+                'assigned_by_admin_id' => $adminId,
+                'status' => 'assigned',
+                'priority' => 'medium',
+                'assigned_at' => now(),
             ]);
 
-            Cache::tags(['employees', "employee_{$employeeId}", 'units', "unit_{$unitId}"])->flush();
-            return $assignment;
+            $this->invalidateEmployeeCache($employeeId);
+
+            return $assignment->load('unit');
         });
     }
 
@@ -229,14 +287,20 @@ class EmployeeService extends BaseAdminService
             $assignment = EmployeeUnitAssignment::where('employee_id', $employeeId)
                 ->where('unit_id', $unitId)
                 ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                ->whereNull('completed_at')
                 ->first();
 
             if (!$assignment) {
-                throw new \Exception('Karyawan tidak ditugaskan ke unit ini');
+                throw new \Exception('Karyawan tidak ditugaskan ke unit ini.');
             }
 
-            $assignment->update(['is_active' => false, 'ended_at' => now()]);
-            Cache::tags(['employees', "employee_{$employeeId}", 'units', "unit_{$unitId}"])->flush();
+            $assignment->update([
+                'status' => 'cancelled',
+                'completed_at' => now(),
+            ]);
+
+            $this->invalidateEmployeeCache($employeeId);
+
             return true;
         });
     }
@@ -244,16 +308,31 @@ class EmployeeService extends BaseAdminService
     public function getAssignedUnits(int $employeeId): array
     {
         $cacheKey = "admin_employee_assigned_units_{$employeeId}";
-        return Cache::tags(['employees', "employee_{$employeeId}"])->remember($cacheKey, 300, function () use ($employeeId) {
-            return Employee::findOrFail($employeeId)
-                ->unitAssignments()
-                ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
-                ->where(function ($q) {
-                    $q->whereNull('ended_at')->orWhere('ended_at', '>', now());
-                })
-                ->with('unit')
-                ->get()
-                ->toArray();
-        });
+
+        return Cache::tags(['employees', "employee_{$employeeId}"])->remember(
+            $cacheKey,
+            300,
+            function () use ($employeeId) {
+                return Employee::findOrFail($employeeId)
+                    ->employeeAssignments()
+                    ->whereIn('status', ['assigned', 'accepted', 'in_progress', 'waiting_verification'])
+                    ->whereNull('completed_at')
+                    ->with('unit')
+                    ->get()
+                    ->toArray();
+            }
+        );
+    }
+
+    private function invalidateEmployeeCache(int $employeeId): void
+    {
+        try {
+            Cache::tags(['employees', "employee_{$employeeId}", 'dashboard'])->flush();
+        } catch (\BadMethodCallException $e) {
+            Cache::forget("admin_employee_detail_{$employeeId}");
+            Cache::forget("admin_employee_assigned_units_{$employeeId}");
+            Cache::forget('employee_filter_units');
+            Cache::forget('employee_form_data');
+        }
     }
 }

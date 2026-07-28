@@ -21,6 +21,6 @@ class EmployeePosition extends Model
 
     public function employees()
     {
-        return $this->hasMany(\App\Models\Authentication\Employee::class, 'position_id');
+        return $this->hasMany(\App\Models\Authentication\Employee::class, 'employee_position_id');
     }
 }
