@@ -1,0 +1,117 @@
+📊 Unit Feedback System - Development Progress Report
+
+Date: July 30, 2026
+
+Status: Events, Listeners, Notifications, & Models Domain Architecture Synchronized
+
+🎯 Executive Summary
+
+During this session, we completed the core Event-Driven Architecture (EDA), mapped all domain Models across 5 major domains, and resolved Intelephense static analysis issues (PHP0443 / P1119) by refactoring Notification constructors to properly accept injected payloads from Listeners.
+
+🏢 1. Cataloged Domain Models & Data Mapping
+
+All 21+ models across the application's core domains have been cataloged, along with their database fields, relationships, and cast attributes:
+
+Domain
+
+Models Cataloged
+
+Primary Relationships / Responsibilities
+
+Authentication
+
+Admin, Employee, Student
+
+User identity, RBAC checks, activity tracking, unit assignments.
+
+Feedback
+
+Rating, RatingAttachment, RatingCategory, RatingReply, RatingScore, UnitVisit
+
+Star scores, anonymous tracking codes, moderation statuses, QR visit validation (GPS radius).
+
+Report
+
+Report, ReportAttachment, ReportCategory, ReportReply, ReportStatusHistory
+
+Issue tickets, resolution workflows, admin/employee response logs, priority handling.
+
+System
+
+Export, ModerationLog, Notification, Setting
+
+Audit trails, data exports, system settings (dynamic type casting), database notifications.
+
+Unit
+
+Unit, QrCode, UnitDepartment, UnitFacility, UnitPhoto, UnitType, Facility
+
+Department structures, QR code generation, operational statuses, average rating aggregations.
+
+⚡ 2. Event-Driven Architecture (EDA) Overview
+
+We generated and linked 11 Domain Events with their respective Queueable Listeners:
+
+🔐 Auth Domain
+
+StudentRegisteredEvent $\rightarrow$ SendWelcomeEmailListener (Dispatches welcome notifications).
+
+AccountDeactivatedEvent $\rightarrow$ SendAccountDeactivatedNotificationListener, LogModerationActivityListener.
+
+PasswordResetRequestedEvent (Ready for token/email delivery).
+
+💬 Conversation Domain
+
+MessageSentEvent $\rightarrow$ BroadcastNewMessageListener (WebSocket via PrivateChannel), SendUnreadMessageNotificationListener.
+
+MessageReadEvent (Tracks read receipts).
+
+⭐ Rating Domain
+
+RatingSubmittedEvent $\rightarrow$ SendRatingNotificationListener, RecalculateUnitRatingListener (Updates average unit ratings).
+
+RatingRepliedEvent $\rightarrow$ SendRatingNotificationListener.
+
+RatingStatusUpdatedEvent $\rightarrow$ RecalculateUnitRatingListener, LogModerationActivityListener.
+
+🚨 Report Domain
+
+ReportSubmittedEvent $\rightarrow$ SendReportNotificationListener (Alerts unit employees).
+
+ReportStatusUpdatedEvent $\rightarrow$ SendReportNotificationListener, CreateReportHistoryLogListener, LogModerationActivityListener.
+
+ReportRepliedEvent $\rightarrow$ SendReportNotificationListener.
+
+🔔 3. Notifications Refactoring & Fixes
+
+To resolve constructor parameter mismatch alerts (PHP0443: Too many arguments, P1119), all Notification classes were refactored with typed constructors:
+
+AccountDeactivatedNotification: Accepts ?string $reason
+
+WelcomeNotification: Parameterless instantiation
+
+NewMessageNotification: Accepts Message $message
+
+RatingSubmittedNotification: Accepts Rating $rating
+
+RatingRepliedNotification: Accepts RatingReply $reply
+
+ReportSubmittedNotification: Accepts Report $report
+
+ReportStatusChangedNotification: Accepts Report $report, string $oldStatus, string $newStatus
+
+ReportRepliedNotification: Accepts ReportReply $reply
+
+📋 4. Next Steps (When You Return)
+
+When you're back from your break, the next logical steps for the project will be:
+
+Intelephense Re-index: Run Ctrl + Shift + P $\rightarrow$ Intelephense: Index workspace in VS Code to ensure all fixed Notification constructors are indexed and clean of diagnostic warnings.
+
+DTOs & Data Transfer Objects (app/Data/*): Implement the typed DTO classes (LoginData, CreateReportData, CreateRatingData, etc.).
+
+Custom Validation Rules (app/Rules/*): Implement GPS radius validation (ValidGpsRadiusRule), QR token verification (ValidQrCodeTokenRule), etc.
+
+Background Queue Jobs (app/Jobs/*): Build export generation jobs (ProcessReportExportJob) and image processing jobs (ProcessUnitPhotoJob).
+
+Enjoy your rest! All progress up to this point is securely generated and structured. ☕✨

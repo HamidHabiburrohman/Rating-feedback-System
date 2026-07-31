@@ -21,7 +21,7 @@ class DashboardController extends Controller
             $stats = $this->service->getStats();
             return view('admin.dashboard.index', compact('stats'));
         } catch (\Exception $e) {
-            return redirect()->route('admin.dashboard')
+            return redirect()->route('admin.dashboard.index')
                 ->with('error', 'Gagal memuat dashboard: ' . $e->getMessage());
         }
     }

@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css" />
 
-<link rel="stylesheet" href="{{ asset('assets/admin/css/styles.min.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/admin/css/admin.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/admin/css/shared/styles.min.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/admin/css/shared/admin.css') }}">
 
 <link rel="stylesheet" href="{{ asset('assets/common/css/components/modals.css') }}">
 

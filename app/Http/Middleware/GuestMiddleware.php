@@ -11,7 +11,7 @@ class GuestMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (auth('admin')->check()) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('admin.dashboard.index');
         }
 
         if (auth('employee')->check()) {

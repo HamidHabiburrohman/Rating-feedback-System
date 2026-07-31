@@ -1,14 +1,10 @@
-{{-- Admin Specific JS --}}
-<script defer src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
-<script defer src="{{ asset('assets/admin/js/app.min.js') }}"></script>
+<script defer src="{{ asset('assets/admin/js/shared/sidebarmenu.js') }}"></script>
+<script defer src="{{ asset('assets/admin/js/shared/app.min.js') }}"></script>
 
-{{-- CDN Libraries --}}
 <script defer src="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.js"></script>
 
-{{-- Updated: Moved to common/components --}}
 <script defer src="{{ asset('assets/common/components/components.js') }}"></script>
 
-{{-- Alpine.js (Legacy/Transitional) --}}
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <script>

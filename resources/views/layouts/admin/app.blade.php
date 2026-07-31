@@ -33,14 +33,14 @@
 
     @include('components.shared.delete-modal')
 
-    <script defer src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
+    {{-- <script defer src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
     <script defer src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
     <script defer src="{{ asset('assets/admin/js/sidebarmenu.js') }}"></script>
     <script defer src="{{ asset('assets/admin/js/app.min.js') }}"></script>
     <script defer src="{{ asset('assets/libs/simplebar/dist/simplebar.js') }}"></script>
     <script defer src="{{ asset('assets/components/components.js') }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> --}}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

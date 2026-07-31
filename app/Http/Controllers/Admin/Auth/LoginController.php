@@ -13,7 +13,7 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         if (Auth::guard('admin')->check()) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('admin.dashboard.index');
         }
         
         return view('auth.admin.login');
@@ -52,11 +52,11 @@ class LoginController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Login berhasil',
-                    'redirect' => route('admin.dashboard')
+                    'redirect' => route('admin.dashboard.index')
                 ]);
             }
 
-            return redirect()->intended(route('admin.dashboard'))
+            return redirect()->intended(route('admin.dashboard.index'))
                 ->with('success', 'Selamat datang kembali, ' . ($authenticatedAdmin->nama ?? 'Admin') . '!');
         }
 

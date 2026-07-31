@@ -1,7 +1,7 @@
 <aside class="left-sidebar" id="leftSidebar">
     <div class="sidebar-inner">
         <div class="brand-logo">
-            <a href="{{ route('admin.dashboard') }}" class="logo-anchor">
+            <a href="{{ route('admin.dashboard.index') }}" class="logo-anchor">
                 <div class="logo-mark">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -16,7 +16,7 @@
         <nav class="sidebar-nav">
             <div class="nav-section mt-3">
                 <div class="nav-header">Dashboard</div>
-                <a href="{{ route('admin.dashboard') }}"
+                <a href="{{ route('admin.dashboard.index') }}"
                     class="nav-item {{ request()->routeIs('admin.dashboard*') ? 'active' : '' }}">
                     <i class="ti ti-layout-dashboard"></i>
                     <span class="nav-label">Dashboard</span>
