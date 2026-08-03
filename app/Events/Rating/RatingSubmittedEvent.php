@@ -1,20 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Rating;
 
-use App\Models\Feedback\Rating;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class RatingSubmittedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param Rating $rating
-     */
-    public function __construct(public Rating $rating) {}
+    public function __construct(
+        public readonly int $ratingId,
+        public readonly int $unitId,
+        public readonly int $studentId,
+    ) {}
 }

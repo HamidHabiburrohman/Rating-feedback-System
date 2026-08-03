@@ -12,7 +12,7 @@
 
         <div class="card-body py-3">
             <div class="d-flex justify-content-between align-items-center gap-3">
-                <x-admin.search-button-component placeholder="Search by action or reason..." />
+                <x-admin.search-button placeholder="Search by action or reason..." />
                 <div class="d-flex align-items-center gap-2">
                     <div class="dropdown">
                         <button

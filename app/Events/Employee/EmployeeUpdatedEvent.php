@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Events\Auth;
+namespace App\Events\Employee;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-class AccountDeactivatedEvent
+final readonly class EmployeeUpdatedEvent
 {
     use Dispatchable;
 
     public function __construct(
-        public readonly int $studentId,
+        public int $employeeId,
     ) {}
 }

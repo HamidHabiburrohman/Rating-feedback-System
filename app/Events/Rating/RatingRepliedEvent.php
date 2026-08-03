@@ -1,20 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Rating;
 
-use App\Models\Feedback\RatingReply;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class RatingRepliedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param RatingReply $reply
-     */
-    public function __construct(public RatingReply $reply) {}
+    public function __construct(
+        public readonly int $ratingId,
+        public readonly int $replyId,
+        public readonly int $employeeId,
+    ) {}
 }

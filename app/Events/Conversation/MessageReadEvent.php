@@ -1,20 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Conversation;
 
-use App\Models\Conversation\MessageRead;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class MessageReadEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param MessageRead $messageRead
-     */
-    public function __construct(public MessageRead $messageRead) {}
+    public function __construct(
+        public readonly int $messageId,
+        public readonly int $conversationId,
+        public readonly int $readerId,
+    ) {}
 }

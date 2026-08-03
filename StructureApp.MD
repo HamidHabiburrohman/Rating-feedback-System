@@ -8,6 +8,8 @@
  ┃ ┃ ┣ 📜FixMissingControllers.php
  ┃ ┃ ┣ 📜FixServiceStructure.php
  ┃ ┃ ┣ 📜FlattenMigrations.php
+ ┃ ┃ ┣ 📜GenerateArchitectureStructure.php
+ ┃ ┃ ┣ 📜GenerateEventsAndListeners.php
  ┃ ┃ ┣ 📜MigrateOrdered.php
  ┃ ┃ ┣ 📜OrganizeAssetsCommand.php
  ┃ ┃ ┣ 📜ProjectStatusCommand.php
@@ -20,6 +22,38 @@
  ┃ ┃ ┗ 📜RestructureAdminServices.php
  ┃ ┗ 📂Traits
  ┃ ┃ ┗ 📜AuditsAssets.php
+ ┣ 📂Data
+ ┃ ┣ 📂Auth
+ ┃ ┃ ┣ 📜LoginData.php
+ ┃ ┃ ┗ 📜RegisterStudentData.php
+ ┃ ┣ 📂Conversation
+ ┃ ┃ ┗ 📜SendMessageData.php
+ ┃ ┣ 📂Rating
+ ┃ ┃ ┣ 📜CreateRatingData.php
+ ┃ ┃ ┗ 📜ReplyRatingData.php
+ ┃ ┣ 📂Report
+ ┃ ┃ ┣ 📜CreateReportData.php
+ ┃ ┃ ┗ 📜UpdateReportStatusData.php
+ ┃ ┣ 📂Unit
+ ┃ ┃ ┗ 📜CreateUnitData.php
+ ┃ ┗ 📂User
+ ┃ ┃ ┗ 📜CreateUserData.php
+ ┣ 📂Events
+ ┃ ┣ 📂Auth
+ ┃ ┃ ┣ 📜AccountDeactivatedEvent.php
+ ┃ ┃ ┣ 📜PasswordResetRequestedEvent.php
+ ┃ ┃ ┗ 📜StudentRegisteredEvent.php
+ ┃ ┣ 📂Conversation
+ ┃ ┃ ┣ 📜MessageReadEvent.php
+ ┃ ┃ ┗ 📜MessageSentEvent.php
+ ┃ ┣ 📂Rating
+ ┃ ┃ ┣ 📜RatingRepliedEvent.php
+ ┃ ┃ ┣ 📜RatingStatusUpdatedEvent.php
+ ┃ ┃ ┗ 📜RatingSubmittedEvent.php
+ ┃ ┗ 📂Report
+ ┃ ┃ ┣ 📜ReportRepliedEvent.php
+ ┃ ┃ ┣ 📜ReportStatusUpdatedEvent.php
+ ┃ ┃ ┗ 📜ReportSubmittedEvent.php
  ┣ 📂Helpers
  ┃ ┣ 📜CacheHelper.php
  ┃ ┣ 📜helpers.php
@@ -239,6 +273,29 @@
  ┃ ┃ ┃ ┗ 📂Report
  ┃ ┃ ┃ ┃ ┣ 📜StoreReportRequest.php
  ┃ ┃ ┃ ┃ ┗ 📜UpdateReportRequest.php
+ ┣ 📂Jobs
+ ┃ ┣ 📂Export
+ ┃ ┃ ┣ 📜ProcessRatingExportJob.php
+ ┃ ┃ ┗ 📜ProcessReportExportJob.php
+ ┃ ┣ 📂Image
+ ┃ ┃ ┣ 📜ProcessMessageAttachmentJob.php
+ ┃ ┃ ┗ 📜ProcessUnitPhotoJob.php
+ ┃ ┗ 📂QRCode
+ ┃ ┃ ┗ 📜GenerateQrCodeBatchJob.php
+ ┣ 📂Listeners
+ ┃ ┣ 📂Auth
+ ┃ ┃ ┣ 📜SendAccountDeactivatedNotificationListener.php
+ ┃ ┃ ┗ 📜SendWelcomeEmailListener.php
+ ┃ ┣ 📂Conversation
+ ┃ ┃ ┣ 📜BroadcastNewMessageListener.php
+ ┃ ┃ ┗ 📜SendUnreadMessageNotificationListener.php
+ ┃ ┣ 📂Rating
+ ┃ ┃ ┣ 📜RecalculateUnitRatingListener.php
+ ┃ ┃ ┗ 📜SendRatingNotificationListener.php
+ ┃ ┗ 📂Report
+ ┃ ┃ ┣ 📜CreateReportHistoryLogListener.php
+ ┃ ┃ ┣ 📜LogModerationActivityListener.php
+ ┃ ┃ ┗ 📜SendReportNotificationListener.php
  ┣ 📂Mail
  ┃ ┣ 📂Admin
  ┃ ┃ ┣ 📜AccountDeactivatedMail.php
@@ -299,6 +356,19 @@
  ┃ ┃ ┣ 📜UnitFacility.php
  ┃ ┃ ┣ 📜UnitPhoto.php
  ┃ ┃ ┗ 📜UnitType.php
+ ┣ 📂Notifications
+ ┃ ┣ 📂Auth
+ ┃ ┃ ┣ 📜AccountDeactivatedNotification.php
+ ┃ ┃ ┗ 📜WelcomeNotification.php
+ ┃ ┣ 📂Conversation
+ ┃ ┃ ┗ 📜NewMessageNotification.php
+ ┃ ┣ 📂Rating
+ ┃ ┃ ┣ 📜RatingRepliedNotification.php
+ ┃ ┃ ┗ 📜RatingSubmittedNotification.php
+ ┃ ┗ 📂Report
+ ┃ ┃ ┣ 📜ReportRepliedNotification.php
+ ┃ ┃ ┣ 📜ReportStatusChangedNotification.php
+ ┃ ┃ ┗ 📜ReportSubmittedNotification.php
  ┣ 📂Observers
  ┃ ┣ 📜FacilityObserver.php
  ┃ ┣ 📜RatingObserver.php
@@ -331,6 +401,33 @@
  ┃ ┣ 📜AppServiceProvider.php
  ┃ ┣ 📜AuthServiceProvider.php
  ┃ ┗ 📜RouteServiceProvider.php
+ ┣ 📂Rules
+ ┃ ┣ 📂Assignmennt
+ ┃ ┃ ┗ 📜AssignedToUnit.php
+ ┃ ┣ 📂Attachment
+ ┃ ┃ ┣ 📜MaxAttachmentCount.php
+ ┃ ┃ ┣ 📜MaxAttachmentSize.php
+ ┃ ┃ ┗ 📜ValidAttachment.php
+ ┃ ┣ 📂Employee
+ ┃ ┃ ┗ 📜ActiveEmployee.php
+ ┃ ┣ 📂GPS
+ ┃ ┃ ┣ 📜ValidCoordinates.php
+ ┃ ┃ ┗ 📜WithinUnitRadius.php
+ ┃ ┣ 📂QRCode
+ ┃ ┃ ┣ 📜ActiveQrCode.php
+ ┃ ┃ ┣ 📜AssignedQrCode.php
+ ┃ ┃ ┣ 📜QrNotExpired.php
+ ┃ ┃ ┣ 📜ValidQrSignature.php
+ ┃ ┃ ┗ 📜ValidQrToken.php
+ ┃ ┣ 📂Rating
+ ┃ ┃ ┣ 📜AlreadyRatedToday.php
+ ┃ ┃ ┣ 📜CanRateUnit.php
+ ┃ ┃ ┣ 📜RatingCooldown.php
+ ┃ ┃ ┗ 📜ValidRatingScore.php
+ ┃ ┗ 📂Security
+ ┃ ┃ ┣ 📜SafeFilename.php
+ ┃ ┃ ┣ 📜SignedRequest.php
+ ┃ ┃ ┗ 📜validApiToken.php
  ┣ 📂Services
  ┃ ┣ 📂Admin
  ┃ ┃ ┣ 📂Conversation

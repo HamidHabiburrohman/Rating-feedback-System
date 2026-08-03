@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\Moderation;
 
 use App\Http\Controllers\Controller;
 use App\Models\System\ModerationLog;
-use App\Services\Admin\ModerationLogService;
+use App\Services\Admin\Moderation\ModerationLogService;
 use Illuminate\Http\Request;
 
 class ModerationLogController extends Controller

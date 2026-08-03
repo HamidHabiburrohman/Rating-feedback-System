@@ -1,20 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Report;
 
-use App\Models\Report\Report;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class ReportSubmittedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param Report $report
-     */
-    public function __construct(public Report $report) {}
+    public function __construct(
+        public readonly int $reportId,
+        public readonly int $unitId,
+        public readonly int $studentId,
+    ) {}
 }

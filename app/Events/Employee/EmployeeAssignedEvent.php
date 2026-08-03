@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Events\Employee;
+
+use Illuminate\Foundation\Events\Dispatchable;
+
+final readonly class EmployeeAssignedEvent
+{
+    use Dispatchable;
+
+    public function __construct(
+        public int $employeeId,
+        public int $unitId,
+        public int $assignmentId,
+    ) {}
+}

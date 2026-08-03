@@ -1,24 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Auth;
 
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class PasswordResetRequestedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param Model $user
-     * @param string $token
-     */
     public function __construct(
-        public Model $user,
-        public string $token
+        public readonly int $studentId,
+        public readonly string $email,
     ) {}
 }

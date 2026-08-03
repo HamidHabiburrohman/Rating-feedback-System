@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Events\Auth;
+namespace App\Events\QRCode;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-class AccountDeactivatedEvent
+final readonly class QrCodeAssignedEvent
 {
     use Dispatchable;
 
     public function __construct(
-        public readonly int $studentId,
+        public int $qrCodeId,
+        public int $unitId,
     ) {}
 }

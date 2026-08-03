@@ -1,20 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events\Report;
 
-use App\Models\Report\ReportReply;
-use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class ReportRepliedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
 
-    /**
-     * Create a new event instance.
-     *
-     * @param ReportReply $reply
-     */
-    public function __construct(public ReportReply $reply) {}
+    public function __construct(
+        public readonly int $reportId,
+        public readonly int $replyId,
+    ) {}
 }

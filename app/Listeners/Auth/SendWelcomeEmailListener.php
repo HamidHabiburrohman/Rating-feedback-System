@@ -1,31 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners\Auth;
 
 use App\Events\Auth\StudentRegisteredEvent;
+use App\Mail\Student\WelcomeMail;
+use App\Models\Authentication\Student;
 use App\Notifications\Auth\WelcomeNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
-class SendWelcomeEmailListener implements ShouldQueue
+final class SendWelcomeEmailListener implements ShouldQueue
 {
-    use InteractsWithQueue;
-
-    /**
-     * Handle the event.
-     *
-     * @param StudentRegisteredEvent $event
-     * @return void
-     */
     public function handle(StudentRegisteredEvent $event): void
     {
-        try {
-            $event->student->notify(new WelcomeNotification());
-        } catch (\Throwable $e) {
-            Log::error('Failed to send welcome notification: ' . $e->getMessage(), [
-                'student_id' => $event->student->id,
-            ]);
+        $student = Student::find($event->studentId);
+
+        if (!$student) {
+            return;
         }
+
+        Mail::to($student->email)->send(
+            new WelcomeMail(
+                studentId: $student->id,
+                studentName: $student->name,
+                studentIdentifier: $student->student_identifier ?? ''
+            )
+        );
+
+        $student->notify(new WelcomeNotification());
     }
 }

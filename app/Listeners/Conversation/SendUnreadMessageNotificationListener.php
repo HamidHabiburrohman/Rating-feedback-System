@@ -1,46 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners\Conversation;
 
 use App\Events\Conversation\MessageSentEvent;
+use App\Models\Conversation\ConversationParticipant;
+use App\Models\Conversation\Message;
 use App\Notifications\Conversation\NewMessageNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 
-class SendUnreadMessageNotificationListener implements ShouldQueue
+final class SendUnreadMessageNotificationListener implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    /**
-     * Handle the event.
-     *
-     * @param MessageSentEvent $event
-     * @return void
-     */
     public function handle(MessageSentEvent $event): void
     {
-        try {
-            $message = $event->message;
-            $conversation = $message->conversation;
+        $message = Message::find($event->messageId);
 
-            if (!$conversation) {
-                return;
+        if (! $message) {
+            return;
+        }
+
+        $participants = ConversationParticipant::where('conversation_id', $event->conversationId)
+            ->where(function ($query) use ($message) {
+                $query->where('participant_type', '!=', $message->sender_type)
+                    ->orWhere('participant_id', '!=', $message->sender_id);
+            })
+            ->with('participant')
+            ->get();
+
+        foreach ($participants as $participantRecord) {
+            if ($participantRecord->participant) {
+                $participantRecord->participant->notify(new NewMessageNotification());
             }
-
-            $participants = $conversation->participants()
-                ->where('user_id', '!=', $message->sender_id)
-                ->get();
-
-            foreach ($participants as $participant) {
-                if ($participant->user && method_exists($participant->user, 'notify')) {
-                    $participant->user->notify(new NewMessageNotification($message));
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('Failed to send unread message notification: ' . $e->getMessage(), [
-                'message_id' => $event->message->id,
-            ]);
         }
     }
 }

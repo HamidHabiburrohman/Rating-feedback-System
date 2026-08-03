@@ -6,11 +6,11 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.1",
         "endroid/qr-code": "^6.0",
         "intervention/image": "^3.11",
-        "laravel/framework": "^11.0",
+        "laravel/framework": "^12.0",
         "laravel/reverb": "^1.10",
         "laravel/tinker": "^2.10.1",
         "maennchen/zipstream-php": "3.1.0",
@@ -97,9 +97,6 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "platform-check": false,
-        "platform": {
-            "php": "8.2.29"
-        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
